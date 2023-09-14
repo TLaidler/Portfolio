@@ -1,0 +1,75 @@
+\documentclass[11p, twocolumn]{article}
+\usepackage[brazil]{babel}
+\usepackage{physics}
+\usepackage[utf8]{inputenc}
+\usepackage{biblatex}
+\usepackage{lipsum}
+\usepackage{apacite}
+\usepackage{graphicx}
+\addbibresource{Bi.bib}
+\bibliographystyle{apacite}
+\bibliography{Bi}
+
+\title{Lista 2 (parte 1)}
+\author{Thiago Laidler}
+\date{January 2021}
+
+\begin{document}
+
+\maketitle
+
+\section{Questão}
+LaTeX é um sistema de preparação de documentos. Ao escrever, o escritor usa texto simples, ao invés do texto formatado encontrado em processadores de texto WYSIWYG como Microsoft Word, LibreOffice Writer e Apple Pages.
+No LaTeX o foco do autor é o conteúdo e não a formatação. A idéia é usar tags de formatação para definir a estrutura do texto,
+como número de colunas, formato da página e orientação, fontes e inserir citações e
+figuras.
+
+Vantagens:
+● A edição de fórmulas matemáticas é a mais robusta dentre todas ferramentas de
+edição existentes.
+● TeX e LaTeX são programas livres. Qualquer pessoa pode usar em praticamente
+qualquer sistema operacional, utilizando poucos recursos de hardware. Além disso um
+código em LaTeX, tendo os pacotes necessários instalados, pode ser sempre compilado
+corretamente.
+● Tabelas,bibliografia e citações são abstraídas. O que mantem a consistência ao longo do texto.
+● Os documentos ficam com uma aparência realmente profissional, como veremos a seguir. Como visto por \cite{Einstein16}
+
+\section{Matemática}
+$R_{\mu\nu}-\frac{1}{2}\mathcal{R}g_{\mu\nu}+\Lambda\ g_{\mu\nu}=\kappa\mathcal{T}_{\mu\nu} $ \\ \\
+$\mathcal{R}_{ij}=\sum_{a=1}^{n} \frac{\partial \Gamma^a_{ij}}{\partial x^a}-\sum_{a=1}^{n} \frac{\partial \Gamma^a_{aj}}{\partial x^i}+\sum_{a=1}^{n}\sum_{b=1}^{n} (\Gamma^a_{ab} \Gamma^b_{ij} - \Gamma^a_{ib}  \Gamma^b_{aj})$ \\ \\
+$(\mathcap{T}^{\mu\nu})_{\mu\nu=0,1,2,3}=\begin{pmatrix}T^{00} & T^{01} & T^{02} & T^{03} \\ T^{10} & T^{11} & T^{12} & T^{12}\\ T^{20} & T^{21} & T^{22} & T^{22}\\ T^{30} & T^{31} & T^{32} & T^{32}  \\\end{pmatrix} $ \\ \\
+$\mathcal{S}=\int [\frac{1}{2\kappa}(R-2\Lambda)+\tau_{M}]\sqrt{-g}d^4x\, dx $ \\ \\
+\\
+\section{Tabela}
+\\
+\begin{table}[htb]
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Model} & \textbf{BF}   & \textbf{DIC}  & \textbf{pD}  \\ \hline
+I              & 0             & 3658          & 489          \\ \hline
+II             & 26            & 3653          & 506          \\ \hline
+III            & -500          & 3659          & 565          \\ \hline
+IV             & -230          & 3646          & 541          \\ \hline
+V              & -142          & 3671          & 535          \\ \hline
+VI             & -214          & 3648          & 531          \\ \hline
+VII            & -138          & 3665          & 552          \\ \hline
+\textbf{Model} & \textbf{-142} & \textbf{3658} & \textbf{541} \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[htb]
+\centering
+\includegraphics[trim=7 7 4 4,clip,width=7cm,height=7cm]{GR_publication.png}
+\caption{Publicação 1915}
+\label{figura1}
+\end{figure}
+
+\begin{figure}[b]
+\centering
+\includegraphics[width=14cm,height=7cm]{Spacetime_curvature.png}
+\caption{Curvatura}
+\label{figura1}
+\end{figure}
+\bibliography{Bi}
+
+\end{document}

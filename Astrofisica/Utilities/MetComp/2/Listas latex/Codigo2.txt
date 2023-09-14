@@ -1,0 +1,105 @@
+\documentclass[xcolor=table]{beamer}
+\usepackage[fontsize=10pt]{scrextend}
+\usepackage[brazil]{babel}
+\usepackage{physics}
+\usepackage[utf8]{inputenc}
+\usepackage{biblatex}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage{eqnarray}
+\usepackage{amsmath}
+\newcommand{\dlim}{\displaystyle\lim}
+\newcommand{\thl}{Thiago Laidler Vidal Cunha}
+\usepackage{tcolorbox}
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{booktabs}
+\usepackage{setspace}
+
+
+\title{Lista 2 (parte 2)}
+\author{\thl}
+\date{January 2021}
+
+\begin{document}
+
+\begin{frame}
+\frametitle{a)}
+\tableofcontents
+Equações pedidas:
+\begin{eqnarray}
+a^\prime_{l^\prime m^\prime}=\sum_{lm} \int d \underline{\hat n} a_{lm} [\gamma(1+\hat n(\underline{\hat n})\cdot\vec \beta]^d Y^* _{l^\prime m^\prime} (\underline{\hat n}) Y_{lm}(\hat n(\underline{\hat n}))  \\
+ =\sum_{lm} \int d \underline{\hat n} \int d \hat n^\prime \delta (\hat n^\prime - \underline{\hat n})a_{lm}[\gamma(1+\hat n(\underline{\hat n})\cdot\vec \beta]^d Y^* _{l^\prime m^\prime} (\underline{\hat n}) Y_{lm}(\hat n(\underline{\hat n}))\\
+=\sum_{lm} \int d {\hat n^\prime} a_{lm} [\gamma(1+\hat n(\hat n^\prime)\cdot\vec \beta)]^d Y^* _{l^\prime m^\prime} (\hat n^\prime) Y_{lm}(\hat n(\hat n^\prime)) \\
+=\sum_{lm} \int d {\hat n^\prime} a_{lm} [\gamma(1+\hat n\cdot\vec \beta)]^{d-2} Y^* _{l^\prime m^\prime} (\hat n^\prime) Y_{lm^\prime}(\hat n) \\
+=\sum_{l} \int d {\hat n^\prime} a_{lm^\prime} [\gamma(1+\hat n\cdot\vec \beta)]^{d-2} Y^* _{l^\prime m^\prime} (\hat n^\prime) Y_{lm^\prime}(\hat n) 
+\end{eqnarray}
+\\
+\begin{equation}
+    \rowcolor[HTML]{3166FF} 
+    \boxed{{\hat \beta_{x} = \sqrt{2}(\sum_{lm} \frac{f^{1 obs}_{lm}f^{1 TH}_{lm}}{\mathfrak{C}_{l} \mathfrak{C}_{l+1}}}}
+\end{equation}
+$$Q(x)=\left\{1+\dfrac{\int_aˆx f(y)dy}{1+xˆ3} \right\}$$
+\textit{(Paginas 3,4,5)}
+\\ 
+\end{frame}
+
+b)
+A automatização pode ser feita com os comandos: 
+\begin{verbatim}
+\newcommand{\thl}{Thiago Laidler Vidal Cunha}
+\newcommand{\integral}{\int_{a}^{b}}
+\newcommand{\soma}{\sum_{a}^{b}}
+\end{verbatim}
+Assim como feito no cabeçalho deste trabalho.
+
+
+c)
+ \textit{(o uso da classe beamer foi devido à cor da tabela que não aparecia no tipo article. Não consegui achar outra maneira funcional de colorir a tabela).}
+
+\begin{table}[]
+\begin{tabular}{llll}
+\hline
+\rowcolor[HTML]{3100FF} 
+\textbf{Teste}                   & \textbf{1} & \textbf{2} & \textbf{3} \\ \hline
+\multicolumn{1}{|l|}{\textbf{1}} & lero       & lero       & lero       \\ \cline{1-1}
+\multicolumn{1}{|l|}{\textbf{2}} & lero       & lero       & leru       \\ \cline{1-1}
+\multicolumn{1}{|l|}{\textbf{3}} & leru       & lero       & bla        \\ \cline{1-1}
+\end{tabular}
+\end{table}
+
+\begin{table}[]
+\begin{tabular}{cccc}
+\hline
+\rowcolor[HTML]{3166FF} 
+\textbf{Teste} & \textbf{1} & \textbf{2} & \textbf{3} \\ \hline
+\textbf{1}     & lero       & lero       & lero       \\ \hline
+\textbf{2}     & lero       & lero       & leru       \\ \hline
+\textbf{3}     & leru       & lero       & bla        \\ \hline
+\end{tabular}
+\end{table}
+
+d) \lipsum[4]
+\onehalfspacing
+\setlenght{\parindent}{2cm}
+{\fontfamily{qcr}\selectfont
+\lipsum[4]
+}
+\doublespacing
+\setlenght{\parindent}{1cm}
+{\fontfamily{lmdh}\selectfont
+\lipsum[4]
+}
+\singlespacing
+\setlenght{\parindent}{3cm}
+{\fontfamily{ppl}\selectfont
+\lipsum[4]
+}
+\setlenght{\parindent}{4cm}
+{\fontfamily{cmss}\selectfont
+\lipsum[4]
+}
+
+
+\end{document}
