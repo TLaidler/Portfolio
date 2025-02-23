@@ -1,0 +1,6 @@
+
+*.json
+!**/function.json
+*.zip
+*.txt
+.env
