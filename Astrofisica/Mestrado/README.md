@@ -62,8 +62,5 @@ Contribuições são bem-vindas! Por favor, sinta-se à vontade para abrir issue
 
 ## Contato
 
-[Seus dados de contato e afiliação institucional]
-
-## Licença
-
-[Especificar a licença escolhida] 
+thiagolaidler@gmail.com
+thiagocunha@on.br
