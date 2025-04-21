@@ -61,6 +61,6 @@ Para aumentar o conjunto de treinamento, desenvolvemos um pipeline de geração 
 Contribuições são bem-vindas! Por favor, sinta-se à vontade para abrir issues ou pull requests.
 
 ## Contato
+📧  thiagolaidler@gmail.com
 
-thiagolaidler@gmail.com
-thiagocunha@on.br
+📧  thiagocunha@on.br
