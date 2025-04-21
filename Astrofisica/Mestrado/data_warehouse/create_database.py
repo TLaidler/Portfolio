@@ -17,6 +17,7 @@ def create_database():
             object_name TEXT NOT NULL,
             observation_date DATE NOT NULL,
             source_portal TEXT,
+            observer_name TEXT,
             additional_metadata TEXT
         )
         ''')
