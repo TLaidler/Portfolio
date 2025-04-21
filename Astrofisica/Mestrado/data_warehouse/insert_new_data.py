@@ -20,41 +20,51 @@ def get_data_from_website(url):
 
 ### script usando astropy para importar curvas de luz do Vizier
 
-# Configure Vizier to get all columns and remove row limits
-Vizier.ROW_LIMIT = -1  # Remove row limit
-Vizier.columns = ['*']  # Get all columns
+def fetch_vizier_data():
+    try:
+        # Configure Vizier to get all columns and remove row limits
+        v = Vizier(columns=['*'])
+        v.ROW_LIMIT = -1  # Remove row limit
+        
+        # Query the B/occ catalog
+        catalog = "B/occ/asteroid"  # Using the specific asteroid occultation table
+        
+        print("\nQuerying catalog data...")
+        # Query the actual data using query_constraints
+        result = v.query_constraints(catalog=catalog)
+        
+        if result is not None and len(result) > 0:
+            # Access the first table in the result
+            table = result[0]
+            
+            # See the column names
+            print("\nColumns available:")
+            print(table.colnames)
+            
+            # Convert to pandas DataFrame
+            df = table.to_pandas()
+            
+            # Save to a file
+            output_file = 'occultation_data.csv'
+            table.write(output_file, format='csv', overwrite=True)
+            print(f"\nData saved to {output_file}")
+            
+            # Print first few rows
+            print("\nFirst few rows of data:")
+            print(df.head())
+            
+            return df
+        else:
+            print("No data found in the catalog")
+            return None
+            
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return None
 
-# Query the B/occ catalog
-catalog = "B/occ"
-
-# Get metadata about the catalog first
-catalog_info = Vizier.get_catalog_metadata(catalog)
-print("\nCatalog Information:")
-print(catalog_info)
-
-# Now query the actual data
-result = Vizier.query_constraints(catalog=catalog)
-
-if result is not None and len(result) > 0:
-    # Access the first table in the result
-    table = result[0]
-    
-    # See the column names
-    print("\nColumns available:")
-    print(table.colnames)
-    
-    # Convert to pandas DataFrame
-    df = table.to_pandas()
-    
-    # Save to a file
-    table.write('occultation_data.csv', format='csv', overwrite=True)
-    print("\nData saved to occultation_data.csv")
-    
-    # Print first few rows
-    print("\nFirst few rows of data:")
-    print(df.head())
-else:
-    print("No data found in the catalog")
+if __name__ == "__main__":
+    print("Starting Vizier data fetch...")
+    df = fetch_vizier_data()
 
 # Example: To get data after a specific date
 # v = Vizier(column_filters={"Date": ">2020-01-01"})
