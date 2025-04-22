@@ -1,3 +1,5 @@
+## How it Works
+
 1. First, let's look at how observations are uniquely identified:
 
 When you insert a new observation, the database automatically creates a unique ID. For example:
