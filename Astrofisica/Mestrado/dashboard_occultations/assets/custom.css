@@ -1,0 +1,184 @@
+/* Tema personalizado para o Dashboard de Ocultações Estelares */
+
+:root {
+  --primary-color: #1e3a8a;       /* Azul escuro */
+  --secondary-color: #3b82f6;     /* Azul médio */
+  --accent-color: #60a5fa;        /* Azul claro */
+  --background-color: #f8fafc;    /* Branco acinzentado */
+  --text-color: #0f172a;          /* Quase preto */
+  --light-gray: #e2e8f0;          /* Cinza claro para bordas */
+  --dark-gray: #475569;           /* Cinza escuro para texto secundário */
+  --card-background: #ffffff;     /* Branco puro para cards */
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+}
+
+.app-header {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.main-container {
+  padding: 1rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-card {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--light-gray);
+}
+
+.dashboard-card h2 {
+  margin-top: 0;
+  color: var(--primary-color);
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--light-gray);
+  padding-bottom: 0.5rem;
+}
+
+/* Estilo para os controles dropdown */
+.dash-dropdown {
+  border: 1px solid var(--light-gray);
+  border-radius: 4px;
+  background-color: white;
+  margin-bottom: 1rem;
+}
+
+.dash-dropdown .Select-control {
+  border-color: var(--light-gray);
+}
+
+.dash-dropdown .Select-control:hover {
+  border-color: var(--accent-color);
+}
+
+.dash-dropdown .Select-menu-outer {
+  border-color: var(--light-gray);
+}
+
+.dash-dropdown .Select-value-label {
+  color: var(--text-color) !important;
+}
+
+/* Estilo para os botões */
+button, .button {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+button:hover, .button:hover {
+  background-color: var(--primary-color);
+}
+
+/* Estilo para os gráficos */
+.graph-container {
+  background-color: var(--card-background);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid var(--light-gray);
+  height: 500px;
+}
+
+/* Estilo para os radio items */
+.dash-radio-items label {
+  margin-right: 1rem;
+  color: var(--text-color);
+}
+
+.dash-radio-items input[type="radio"] {
+  margin-right: 0.5rem;
+}
+
+/* Estilo para tabelas */
+.dash-table-container {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--light-gray);
+}
+
+.dash-spreadsheet {
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.dash-spreadsheet-container .dash-spreadsheet-inner th {
+  background-color: var(--secondary-color);
+  color: white;
+  font-weight: 500;
+  padding: 0.75rem 1rem;
+}
+
+.dash-spreadsheet-container .dash-spreadsheet-inner td {
+  padding: 0.5rem 1rem;
+  border-color: var(--light-gray);
+}
+
+.dash-spreadsheet-container .dash-spreadsheet-inner tr:nth-child(even) {
+  background-color: var(--light-gray);
+}
+
+/* Barra de navegação à esquerda */
+.sidebar {
+  background-color: var(--primary-color);
+  color: white;
+  width: 240px;
+  padding: 1rem;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+}
+
+.sidebar-title {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar-item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-item:hover, .sidebar-item.active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item i {
+  margin-right: 0.5rem;
+}
+
+/* Área de conteúdo principal com ajuste para a barra lateral */
+.content-with-sidebar {
+  margin-left: 240px;
+  padding: 1rem 2rem;
+} 

@@ -1,0 +1,277 @@
+/* Estilos específicos para o Dashboard de Ocultações Estelares */
+
+.app-header-title {
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+/* Cards de estatísticas */
+.stats-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.stats-card {
+    flex: 1;
+    min-width: 200px;
+    background-color: var(--card-background);
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-top: 4px solid var(--secondary-color);
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    margin: 0;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.stats-label {
+    font-size: 1.1rem;
+    color: var(--dark-gray);
+    margin-top: 0.5rem;
+}
+
+/* Layout em grade */
+.grid-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.grid-column {
+    flex: 1;
+    min-width: 300px;
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.section-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--light-gray);
+    margin: 2rem 0;
+}
+
+/* Informações do objeto */
+.object-info {
+    margin-top: 1rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--light-gray);
+}
+
+.info-label {
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+.info-value {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+/* Lista de observadores */
+.observers-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    border: 1px solid var(--light-gray);
+    border-radius: 4px;
+}
+
+.observers-checklist {
+    padding: 0.5rem;
+}
+
+.observer-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.observer-item:last-child {
+    border-bottom: none;
+}
+
+.observer-checkbox {
+    margin-right: 0.5rem;
+}
+
+.observer-info {
+    flex: 1;
+}
+
+.observer-name {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.observer-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.observer-tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    background-color: var(--light-gray);
+}
+
+.observer-tag.positive {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.observer-tag.negative {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.observer-tag.points {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+/* Botões */
+.buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.secondary-button {
+    background-color: var(--light-gray);
+    color: var(--text-color);
+}
+
+.secondary-button:hover {
+    background-color: var(--dark-gray);
+    color: white;
+}
+
+/* Controles do gráfico */
+.plot-controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--light-gray);
+}
+
+.plot-control {
+    min-width: 200px;
+}
+
+.control-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Detalhes dos dados */
+.details-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.detail-card {
+    flex: 1;
+    min-width: 200px;
+    border: 1px solid var(--light-gray);
+    border-radius: 6px;
+    padding: 1rem;
+    background-color: #f9fafb;
+}
+
+.detail-title {
+    font-size: 1.1rem;
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--light-gray);
+    color: var(--primary-color);
+}
+
+.detail-stats p {
+    margin: 0.4rem 0;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: var(--dark-gray);
+}
+
+.detail-value {
+    font-weight: 400;
+}
+
+/* Tabela de dados */
+.data-table-title {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    color: var(--primary-color);
+}
+
+.data-table-description {
+    margin-bottom: 1rem;
+    color: var(--dark-gray);
+}
+
+.truncated-message {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--dark-gray);
+    margin-bottom: 1rem;
+}
+
+/* Rodapé */
+.app-footer {
+    margin-top: 3rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--light-gray);
+    color: var(--dark-gray);
+    font-size: 0.9rem;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .stats-container {
+        flex-direction: column;
+    }
+    
+    .grid-column {
+        flex: 100%;
+    }
+    
+    .footer-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .app-header-title {
+        font-size: 1.4rem;
+    }
+} 
