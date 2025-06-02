@@ -201,6 +201,87 @@ def fetch_vizier_data():
         print(f"An error occurred: {str(e)}")
         return None
 
+import asyncio
+import aiohttp
+import os
+import shutil
+import re
+
+# Função assíncrona para buscar uma curva de luz
+async def fetch_curve(session, dur, date, seq, name, obs_name):
+    url = (
+        'https://cdsarc.cds.unistra.fr/viz-bin/vizgraph?'
+        f'-s=B/occ&-i=.graph_sql&sec={dur}&date={date}&num={seq}&--output=tsv'
+    )
+
+    try:
+        async with session.get(url) as resp:
+            if resp.status != 200:
+                print(f"Failed to fetch {name} with status {resp.status}")
+                return
+
+            content = await resp.read()
+            lines = io.BytesIO(content).readlines()
+
+            time = []
+            flux = []
+
+            for line in lines[4:-2]:  # Ignora cabeçalho e rodapé
+                decoded = line.decode('utf-8').strip().split()
+                if len(decoded) == 2:
+                    time.append(float(decoded[0]))
+                    flux.append(float(decoded[1]))
+
+            time = np.array(time)
+            flux = np.array(flux)
+
+            filename_base = f'lc_{name}_obs_by_{obs_name}_{date[:7]}'.replace(" ", "").replace("/", "-")
+
+            # Salvar .dat
+            np.savetxt(f'data_warehouse/data/{filename_base}.dat', 
+                       np.column_stack((time, flux)), 
+                       delimiter=' ')
+            print(f'{filename_base}.dat saved')
+
+            # Plotar e salvar
+            plt.figure(figsize=(10, 6))
+            plt.plot(time, flux, '.')
+            plt.xlabel('Time')
+            plt.ylabel('Flux')
+            plt.title(f'Light Curve from Vizier (ID: {name})')
+            plt.savefig(f'data_warehouse/plots/{filename_base}.png')
+            plt.close()
+            print(f'{filename_base}.png saved')
+
+    except Exception as e:
+        print(f"Error fetching {name}: {str(e)}")
+
+
+# Função principal para rodar tudo
+async def fetch_vizier_data_paralel():
+    try:
+        v = Vizier(catalog='B/occ/asteroid')
+        v.ROW_LIMIT = 10000000
+        df = v.query_constraints()[0]
+
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+
+            for n in range(len(df)):
+                dur = str(df['Dur'][n])
+                date = str(df['Date'][n])
+                seq = str(df['Seq'][n])
+                name = str(df['Name'][n])
+                obs_name = str(df['ObsName'][n])
+
+                task = fetch_curve(session, dur, date, seq, name, obs_name)
+                tasks.append(task)
+
+            await asyncio.gather(*tasks)
+
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
 import os
 import shutil
 import re
@@ -217,7 +298,8 @@ def organize_dat_files():
     }
     
     # Padrão regex para extrair informações do nome do arquivo
-    pattern = r'lc_([A-Za-z0-9]+)_obs_by_([A-Za-z0-9]+)_(\d{4})-(\d{2})\.dat'
+    pattern = r"lc_([A-Za-z0-9'\-]+)_obs_by_([A-Za-z0-9.\-&]+)_(\d{4})-(\d{2})\.dat"
+
     
     # Lista todos os arquivos .dat no diretório
     for filename in os.listdir(base_dir):
@@ -248,11 +330,62 @@ def organize_dat_files():
                 shutil.move(old_file_path, new_file_path)
                 print(f"Arquivo {filename} movido para {folder_path}/{new_filename}")
 
-if __name__ == "__main__":
-    print("Starting Vizier data fetch...")
-    df = fetch_vizier_data()
-    organize_dat_files()
 
+import os
+import shutil
+
+def organize_dat_folders():
+    """
+    Organiza as pastas que contêm apenas arquivos .dat, criando subpastas 'positive' e 'negative'
+    e movendo os arquivos .dat para a pasta 'positive'.
+    """
+    # Diretório base
+    base_dir = "data_warehouse/data"
+    
+    # Lista todas as pastas no diretório base
+    for folder_name in os.listdir(base_dir):
+        folder_path = os.path.join(base_dir, folder_name)
+        
+        # Verifica se é um diretório
+        if os.path.isdir(folder_path):
+            # Lista todos os itens dentro da pasta
+            items = os.listdir(folder_path)
+            
+            # Verifica se há apenas arquivos .dat
+            has_only_dat = all(
+                os.path.isfile(os.path.join(folder_path, item)) and 
+                item.endswith('.dat') 
+                for item in items
+            )
+            
+            # Se houver apenas arquivos .dat
+            if has_only_dat and items:  # Verifica também se a pasta não está vazia
+                # Cria as pastas 'positive' e 'negative'
+                positive_path = os.path.join(folder_path, 'positive')
+                negative_path = os.path.join(folder_path, 'negative')
+                
+                # Cria as pastas se não existirem
+                os.makedirs(positive_path, exist_ok=True)
+                os.makedirs(negative_path, exist_ok=True)
+                
+                # Move todos os arquivos .dat para a pasta 'positive'
+                for dat_file in items:
+                    old_path = os.path.join(folder_path, dat_file)
+                    new_path = os.path.join(positive_path, dat_file)
+                    shutil.move(old_path, new_path)
+                    print(f"Arquivo {dat_file} movido para {positive_path}")
+                
+                print(f"Pasta {folder_name} organizada com sucesso!")
+            else:
+                print(f"Pasta {folder_name} ignorada - contém outros tipos de arquivos ou está vazia")
+
+
+if __name__ == "__main__":
+    #print("Starting Vizier data fetch...")
+    #asyncio.run(fetch_vizier_data_paralel())
+    #df = fetch_vizier_data()
+    #organize_dat_files()
+    organize_dat_folders()
 # Example: To get data after a specific date
 # v = Vizier(column_filters={"Date": ">2020-01-01"})
 # result = v.query_constraints(catalog=catalog)
