@@ -345,8 +345,8 @@ def main():
         return
     
     print("Objetos disponíveis:")
-    for obj in objects:
-        print(f"- {obj}")
+    #for obj in objects:
+    #    print(f"- {obj}")
     
     # Demonstração com o primeiro objeto
     selected_object = objects[0]
@@ -382,9 +382,11 @@ def main():
             print("time\tflux\tflux_normalized")
             for j in range(len(times)):
                 print(f"{times[j]:.6f}\t{fluxes[j]:.6f}\t{norm_fluxes[j]:.6f}")
+    
+    
         
         # Salva os dados em arquivos CSV
-        save_data_to_csv(curves, observers, selected_object, selected_date)
+        #save_data_to_csv(curves, observers, selected_object, selected_date)
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
