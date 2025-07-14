@@ -123,7 +123,7 @@ def search_light_curves(object_name, date):
             SELECT id, additional_metadata 
             FROM observations 
             WHERE object_name = ? AND observation_date = ?
-            ORDER BY additional_metadata
+            ORDER BY id
         """, (object_name, date))
         
         results = []
