@@ -13,11 +13,13 @@ def fetch_best_decks():
     time.sleep(5)  # Wait for JS to load
 
     all_rows = []
+    page = 1
     while True:
+        # Wait for table to load
+        time.sleep(2)
         try:
             table = driver.find_element(By.XPATH, "/html/body/div[2]/main/div/div[6]/div[1]/div/table")
             tbody = table.find_element(By.TAG_NAME, "tbody")
-            # Each row is a <span class="table-row ...">
             rows = tbody.find_elements(By.XPATH, ".//span[contains(@class, 'table-row')]")
             for row in rows:
                 tds = row.find_elements(By.TAG_NAME, "td")
@@ -40,14 +42,25 @@ def fetch_best_decks():
             print("Table not found or structure changed:", e)
             break
 
-        # Pagination: look for a "Next" button and click if enabled
+        # Find the pagination container and all page number spans
         try:
-            next_btn = driver.find_element(By.XPATH, "//button[contains(.,'Next')]")
-            if not next_btn.is_enabled() or "disabled" in next_btn.get_attribute("class"):
+            pagination = driver.find_element(By.XPATH, "/html/body/div[2]/main/div/div[6]/div[1]/div/div[2]/div/div[3]")
+            page_spans = pagination.find_elements(By.XPATH, ".//span[@data-page-number]")
+            # Find the next page span (not selected)
+            next_page = None
+            for span in page_spans:
+                if span.get_attribute("class") and "selected" not in span.get_attribute("class"):
+                    if int(span.get_attribute("data-page-number")) == page + 1:
+                        next_page = span
+                        break
+            if next_page:
+                next_page.click()
+                page += 1
+                time.sleep(2)
+            else:
                 break
-            next_btn.click()
-            time.sleep(2)
-        except Exception:
+        except Exception as e:
+            print("Pagination not found or finished:", e)
             break
 
     driver.quit()
