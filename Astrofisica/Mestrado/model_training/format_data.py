@@ -16,6 +16,8 @@ import os
 import sqlite3
 import re
 from datetime import datetime
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Caminho para o banco de dados
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
@@ -336,57 +338,89 @@ def save_data_to_csv(curves, observers, object_name, date):
         
         print(f"Dados salvos em {output_file}")
 
-def main():
-    """Função principal para demonstração."""
-    # Lista objetos disponíveis
+def fetch_and_plot_first_curves(max_curves):
     objects = get_available_objects()
-    if not objects:
-        print("Nenhum objeto encontrado no banco de dados.")
-        return
-    
-    print("Objetos disponíveis:")
-    #for obj in objects:
-    #    print(f"- {obj}")
-    
-    # Demonstração com o primeiro objeto
-    selected_object = objects[0]
-    print(f"\nDatas disponíveis para {selected_object}:")
-    
-    dates = get_observation_dates(selected_object)
-    for date in dates:
-        print(f"- {date}")
-    
-    if not dates:
-        return
-    
-    # Demonstração com a primeira data
-    selected_date = dates[0]
-    light_curves = search_light_curves(selected_object, selected_date)
-    
-    print(f"\nObservadores para {selected_object} em {selected_date}:")
-    for lc in light_curves:
-        print(f"- {lc.get('observer_name')} (Positivo: {lc.get('is_positive')}, Pontos: {lc.get('point_count')})")
-    
-    # Demonstração de formato dos dados (primeiras 3 curvas)
-    x = min(3, len(light_curves))
-    curves, observers = format_light_curve_data(x, selected_object, selected_date)
-    
-    if curves:
-        print(f"\nDados formatados para as primeiras {len(curves)} curvas:")
-        for i, (curve, observer) in enumerate(zip(curves, observers)):
-            print(f"\n{observer} - Primeiros 5 pontos:")
-            times = curve["time"][:5]
-            fluxes = curve["flux"][:5]
-            norm_fluxes = curve["flux_normalized"][:5]
-            
-            print("time\tflux\tflux_normalized")
-            for j in range(len(times)):
-                print(f"{times[j]:.6f}\t{fluxes[j]:.6f}\t{norm_fluxes[j]:.6f}")
-    
-    
-        
-        # Salva os dados em arquivos CSV
-        #save_data_to_csv(curves, observers, selected_object, selected_date)
+    curves_plotted = 0
+    curves_to_plot = []
 
-#if __name__ == "__main__":
-#    main()
+    for obj in objects:
+        dates = get_observation_dates(obj)
+        for date in dates:
+            # Fetch only 1 curve per object/date
+            curves, observers = format_light_curve_data(1, obj, date)
+            for curve, observer in zip(curves, observers):
+                curves_to_plot.append((curve, obj, date, observer))
+                curves_plotted += 1
+                if curves_plotted >= max_curves:
+                    break
+            if curves_plotted >= max_curves:
+                break
+        if curves_plotted >= max_curves:
+            break
+
+    # Plot one by one
+    for i, (curve, obj, date, observer) in enumerate(curves_to_plot):
+        plt.figure(figsize=(10, 5))
+        plt.plot(curve['time'], curve['flux_normalized'], marker='o', linestyle='-', markersize=2)
+        plt.title(f"Curve {i+1}: {obj} - {date} - {observer}")
+        plt.xlabel("Time")
+        plt.ylabel("Normalized Flux")
+        plt.grid(True)
+        plt.show()
+        # If you want to pause between plots, uncomment:
+        # input("Press Enter to see the next curve...")
+
+def fetch_object_curves(object_name):
+    """
+    Fetches all light curves for a specific object.
+    
+    Args:
+        object_name (str): Name of the celestial object.
+    
+    Returns:
+        List[Tuple[curve, object_name, date, observer]]
+    """
+    total_curves = []
+    dates = get_observation_dates(object_name)
+    for date in dates:
+        # Fetch all curves for this object/date
+        curves, observers = format_light_curve_data(None, object_name, date)
+        for curve, observer in zip(curves, observers):
+            total_curves.append((curve, object_name, date, observer))
+    return total_curves
+
+def fetch_first_curves(max_curves):
+    objects = get_available_objects()
+    curves_found = 0
+    total_curves = []
+
+    for obj in objects:
+        dates = get_observation_dates(obj)
+        for date in dates:
+            # Fetch only 1 curve per object/date
+            curves, observers = format_light_curve_data(1, obj, date)
+            for curve, observer in zip(curves, observers):
+                total_curves.append((curve, obj, date, observer))
+                curves_found += 1
+                if curves_found >= max_curves:
+                    break
+            if curves_found >= max_curves:
+                break
+        if curves_found >= max_curves:
+            break
+
+    return total_curves
+
+def remove_outliers(time, flux, z_thresh=3):
+    """
+    Remove outliers do fluxo usando z-score.
+    """
+    flux = np.array(flux)
+    time = np.array(time)
+    mean = np.mean(flux)
+    std = np.std(flux)
+    if std == 0:
+        return time, flux  # Nenhum outlier possível
+    z = (flux - mean) / std
+    mask = np.abs(z) < z_thresh
+    return time[mask], flux[mask]
