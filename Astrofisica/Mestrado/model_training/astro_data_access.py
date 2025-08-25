@@ -437,6 +437,31 @@ def get_sampled_light_curves(limit=None):
         sampled_refs = all_curve_refs
     return sampled_refs
 
+def get_sampled_light_curves_by_type(_type='positive', limit=None):
+    """
+    Busca uma amostra aleatória de curvas de luz do banco de dados.
+    Se limit for fornecido, retorna até 'limit' curvas aleatórias (de vários objetos).
+    
+    Args:
+        limit (int, opcional): Número máximo de curvas a buscar.
+    
+    Returns:
+        List[Tuple[curve, object_name, date, observer]]
+    """
+    all_curve_refs = []
+    objects = get_available_objects()
+    for obj in objects:
+        dates = get_observation_dates(obj)
+        for date in dates:
+            curves, observers = fetch_light_curves_from_observation(1, obj, date)
+            for curve, observer in zip(curves, observers):
+                all_curve_refs.append((curve, obj, date, observer))
+    if limit and limit < len(all_curve_refs):
+        sampled_refs = random.sample(all_curve_refs, limit)
+    else:
+        sampled_refs = all_curve_refs
+    return sampled_refs
+
 def plot_raw_curves(curves, pause=False):
     """
     Plota uma lista de curvas de luz, uma por vez.
@@ -524,3 +549,106 @@ def get_all_curves():
             for curve in curves:
                 all_curves.append(curve)
     return all_curves
+
+
+
+def get_light_curves_by_type(_type='positive', normalized=False, limit=None):
+    """
+    Busca todas as curvas de luz onde additional_metadata contém is_positive: True/False.
+
+    Args:
+        _type (str|bool): 'positive'/'negative' ou True/False.
+        normalized (bool): Se True, adiciona 'flux_normalized' em cada curva.
+        limit (int|None): Se informado, limita a quantidade de curvas retornadas.
+
+    Returns:
+        List[Tuple[curve, object_name, date, observer]]:
+            Onde 'curve' é um dicionário com 'time', 'flux' (e opcionalmente 'flux_normalized').
+    """
+    # Normaliza o alvo para bool
+    if isinstance(_type, bool):
+        want_positive = _type
+    else:
+        key = (_type or '').strip().lower()
+        if key in ('positive', 'pos', 'true', '1'):
+            want_positive = True
+        elif key in ('negative', 'neg', 'false', '0'):
+            want_positive = False
+        else:
+            raise ValueError("type deve ser 'positive'/'negative' ou True/False.")
+
+    conn = connect_to_database()
+    if not conn:
+        return []
+
+    try:
+        cursor = conn.cursor()
+        if want_positive:
+            cursor.execute("""
+                SELECT id, object_name, observation_date, additional_metadata
+                FROM observations
+                WHERE additional_metadata IS NOT NULL
+                AND LOWER(additional_metadata) LIKE '%is_positive: True%'
+                ORDER BY object_name, observation_date, id
+            """)
+        else:
+            cursor.execute("""
+                SELECT id, object_name, observation_date, additional_metadata
+                FROM observations
+                WHERE additional_metadata IS NOT NULL
+                AND LOWER(additional_metadata) LIKE '%is_positive: False%'
+                ORDER BY object_name, observation_date, id
+            """)
+        rows = cursor.fetchall()
+        results = []
+
+        for obs_id, obj, date, add_meta in rows:
+            flag = extract_is_positive(add_meta)
+            if flag is None or flag != want_positive:
+                continue
+
+            cursor.execute("""
+                SELECT time, flux
+                FROM light_curves
+                WHERE observation_id = ?
+                ORDER BY time
+            """, (obs_id,))
+            data = cursor.fetchall()
+            if not data:
+                continue
+
+            times = [r[0] for r in data]
+            fluxes = [r[1] for r in data]
+            curve = {"time": times, "flux": fluxes}
+            if normalized:
+                curve["flux_normalized"] = normalize_flux(fluxes)
+
+            observer = extract_observer_name(add_meta)
+            results.append((curve, obj, date, observer))
+
+            if limit is not None and len(results) >= limit:
+                break
+
+        return results
+
+    except sqlite3.Error as e:
+        print(f"Erro ao recuperar curvas por tipo '{_type}': {e}")
+        return []
+    finally:
+        conn.close()
+
+def extract_is_positive(additional_metadata):
+    """
+    Extrai o valor booleano de is_positive do campo additional_metadata.
+    Aceita variações como True/False/1/0 (case-insensitive) e ':' ou '='.
+    Returns:
+        bool | None
+    """
+    if not additional_metadata:
+        return None
+    m = re.search(r'is_positive\s*[:=]\s*(true|false|1|0)', additional_metadata, re.IGNORECASE)
+    if not m:
+        return None
+    v = m.group(1).lower()
+    return v in ('true', '1')
+
