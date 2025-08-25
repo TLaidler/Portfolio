@@ -221,26 +221,64 @@ def get_single_light_curve(object_name, date, observer):
 
 def normalize_flux(flux_values):
     """
-    Normaliza valores de fluxo pela média.
-    
-    Args:
-        flux_values (list): Lista de valores de fluxo.
-        
-    Returns:
-        list: Lista de valores de fluxo normalizados.
+    Normaliza valores de fluxo usando como baseline a média dos dois quartis
+    contíguos com maior média (aproxima a parte fora da ocultação).
+
+    Estratégia:
+    - Divide a série, na ordem temporal, em 4 segmentos contíguos (quartis).
+    - Calcula a média de cada segmento.
+    - Descarte os dois segmentos com menor média.
+    - O baseline é a média das duas maiores médias.
+    - Divide o fluxo inteiro por esse baseline.
+
+    Em casos degenerados (poucos pontos, baseline <= 0 ou não finito),
+    faz fallback para a média global positiva; se não for possível, retorna original.
     """
     if not flux_values:
         return []
-    
-    # Calcula a média dos valores
-    mean_flux = sum(flux_values) / len(flux_values)
-    
-    if mean_flux > 0:
-        # Normaliza pela média
-        return [flux / mean_flux for flux in flux_values]
-    else:
-        # Se a média for zero ou negativa, retorna os valores originais
+
+    arr = np.asarray(flux_values, dtype=float)
+    if arr.size == 0:
+        return []
+
+    # Considera apenas pontos finitos para estimar baseline
+    finite_mask = np.isfinite(arr)
+    if not finite_mask.any():
         return flux_values[:]
+    arr_valid = arr[finite_mask]
+
+    # Se poucos pontos, fallback para média global positiva
+    if arr_valid.size < 4:
+        mean_flux = float(np.mean(arr_valid))
+        if np.isfinite(mean_flux) and mean_flux > 0:
+            return (arr / mean_flux).tolist()
+        return flux_values[:]
+
+    # Quartis contíguos em ordem temporal
+    segments = np.array_split(arr_valid, 4)
+    means = [float(np.mean(s)) for s in segments if s.size > 0 and np.isfinite(np.mean(s))]
+
+    if not means:
+        return flux_values[:]
+
+    # Seleciona as duas maiores médias
+    order = np.argsort(means)  # crescente
+    top_two = []
+    top_two.append(means[order[-1]])
+    if len(means) >= 2:
+        top_two.append(means[order[-2]])
+
+    baseline = float(np.mean(top_two)) if top_two else float('nan')
+
+    # Validação do baseline
+    if not np.isfinite(baseline) or baseline <= 0:
+        # fallback: média global positiva dos pontos válidos
+        mean_flux = float(np.mean(arr_valid))
+        if np.isfinite(mean_flux) and mean_flux > 0:
+            return (arr / mean_flux).tolist()
+        return flux_values[:]
+
+    return (arr / baseline).tolist()
 
 def fetch_light_curves_from_observation(n_curves, object_name, date):
     """
@@ -437,30 +475,84 @@ def get_sampled_light_curves(limit=None):
         sampled_refs = all_curve_refs
     return sampled_refs
 
-def get_sampled_light_curves_by_type(_type='positive', limit=None):
+def get_sampled_light_curves_by_type(_type='positive', limit=None, normalized=False):
     """
-    Busca uma amostra aleatória de curvas de luz do banco de dados.
-    Se limit for fornecido, retorna até 'limit' curvas aleatórias (de vários objetos).
-    
+    Busca uma amostra aleatória de curvas de luz do banco de dados,
+    filtrando por is_positive: True/False no campo additional_metadata.
+
     Args:
-        limit (int, opcional): Número máximo de curvas a buscar.
-    
+        _type (str|bool): 'positive'/'negative' ou True/False.
+        limit (int, opcional): Número máximo de curvas a retornar (amostradas).
+        normalized (bool): Se True, adiciona 'flux_normalized' em cada curva.
+
     Returns:
         List[Tuple[curve, object_name, date, observer]]
     """
-    all_curve_refs = []
-    objects = get_available_objects()
-    for obj in objects:
-        dates = get_observation_dates(obj)
-        for date in dates:
-            curves, observers = fetch_light_curves_from_observation(1, obj, date)
-            for curve, observer in zip(curves, observers):
-                all_curve_refs.append((curve, obj, date, observer))
-    if limit and limit < len(all_curve_refs):
-        sampled_refs = random.sample(all_curve_refs, limit)
+    if isinstance(_type, bool):
+        want_positive = _type
     else:
-        sampled_refs = all_curve_refs
-    return sampled_refs
+        key = (_type or '').strip().lower()
+        if key in ('positive', 'pos', 'true', '1'):
+            want_positive = True
+        elif key in ('negative', 'neg', 'false', '0'):
+            want_positive = False
+        else:
+            raise ValueError("type deve ser 'positive'/'negative' ou True/False.")
+
+    conn = connect_to_database()
+    if not conn:
+        return []
+
+    try:
+        cursor = conn.cursor()
+        if want_positive:
+            cursor.execute("""
+                SELECT id, object_name, observation_date, additional_metadata
+                FROM observations
+                WHERE additional_metadata IS NOT NULL
+                  AND LOWER(additional_metadata) LIKE '%is_positive: True%'
+                ORDER BY object_name, observation_date, id
+            """)
+        else:
+            cursor.execute("""
+                SELECT id, object_name, observation_date, additional_metadata
+                FROM observations
+                WHERE additional_metadata IS NOT NULL
+                  AND LOWER(additional_metadata) LIKE '%is_positive: False%'
+                ORDER BY object_name, observation_date, id
+            """)
+        rows = cursor.fetchall()
+
+        refs = []
+        for obs_id, obj, date, add_meta in rows:
+            cursor.execute("""
+                SELECT time, flux
+                FROM light_curves
+                WHERE observation_id = ?
+                ORDER BY time
+            """, (obs_id,))
+            data = cursor.fetchall()
+            if not data:
+                continue
+
+            times = [r[0] for r in data]
+            fluxes = [r[1] for r in data]
+            curve = {"time": times, "flux": fluxes}
+            if normalized:
+                curve["flux_normalized"] = normalize_flux(fluxes)
+
+            observer = extract_observer_name(add_meta)
+            refs.append((curve, obj, date, observer))
+
+        if limit and limit < len(refs):
+            return random.sample(refs, limit)
+        return refs
+
+    except sqlite3.Error as e:
+        print(f"Erro ao recuperar amostra por tipo '{_type}': {e}")
+        return []
+    finally:
+        conn.close()
 
 def plot_raw_curves(curves, pause=False):
     """
@@ -545,7 +637,7 @@ def get_all_curves():
     for obj in objects:
         dates = get_observation_dates(obj)
         for date in dates:
-            curves, observers = fetch_light_curves_from_observation(1, obj, date)
+            curves, observers = fetch_light_curves_from_observation(None, obj, date)
             for curve in curves:
                 all_curves.append(curve)
     return all_curves
