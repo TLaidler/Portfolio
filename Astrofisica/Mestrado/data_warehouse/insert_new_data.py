@@ -381,10 +381,10 @@ def organize_dat_folders():
 
 
 if __name__ == "__main__":
-    #print("Starting Vizier data fetch...")
-    #asyncio.run(fetch_vizier_data_paralel())
-    #df = fetch_vizier_data()
-    #organize_dat_files()
+    print("Starting Vizier data fetch...")
+    asyncio.run(fetch_vizier_data_paralel())
+    df = fetch_vizier_data()
+    organize_dat_files()
     organize_dat_folders()
 # Example: To get data after a specific date
 # v = Vizier(column_filters={"Date": ">2020-01-01"})

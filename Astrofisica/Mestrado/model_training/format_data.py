@@ -18,6 +18,7 @@ import re
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 # Caminho para o banco de dados
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
@@ -159,7 +160,7 @@ def search_light_curves(object_name, date):
     finally:
         conn.close()
 
-def get_specific_light_curve(object_name, date, observer):
+def get_single_light_curve(object_name, date, observer):
     """
     Retorna dados de uma curva de luz específica.
     
@@ -241,14 +242,14 @@ def normalize_flux(flux_values):
         # Se a média for zero ou negativa, retorna os valores originais
         return flux_values[:]
 
-def format_light_curve_data(x, y, z):
+def fetch_light_curves_from_observation(n_curves, object_name, date):
     """
     Função principal para formatação de dados de curvas de luz.
     
     Args:
-        x (int): Número de curvas de luz a serem recuperadas.
-        y (str): Nome do objeto celeste.
-        z (str): Data da observação no formato YYYY-MM-DD.
+        n_curves (int): Número de curvas de luz a serem recuperadas.
+        object_name (str): Nome do objeto celeste.
+        date (str): Data da observação no formato YYYY-MM-DD.
         
     Returns:
         list: Lista de dicionários contendo as curvas de luz formatadas.
@@ -256,28 +257,28 @@ def format_light_curve_data(x, y, z):
     """
     # Verifica se o objeto existe
     available_objects = get_available_objects()
-    if y not in available_objects:
-        print(f"Objeto '{y}' não encontrado. Objetos disponíveis: {available_objects}")
+    if object_name not in available_objects:
+        print(f"Objeto '{object_name}' não encontrado. Objetos disponíveis: {available_objects}")
         return [], []
     
     # Verifica se a data existe para esse objeto
-    available_dates = get_observation_dates(y)
-    if z not in available_dates:
-        print(f"Data '{z}' não disponível para '{y}'. Datas disponíveis: {available_dates}")
+    available_dates = get_observation_dates(object_name)
+    if date not in available_dates:
+        print(f"Data '{date}' não disponível para '{object_name}'. Datas disponíveis: {available_dates}")
         return [], []
     
     # Obtém informações sobre as curvas de luz disponíveis
-    light_curves_info = search_light_curves(y, z)
+    light_curves_info = search_light_curves(object_name, date)
     
     if not light_curves_info:
-        print(f"Nenhuma curva de luz encontrada para {y} em {z}")
+        print(f"Nenhuma curva de luz encontrada para {object_name} em {date}")
         return [], []
     
     # Ordena por nome do observador em ordem alfabética
     light_curves_info.sort(key=lambda info: info.get("observer_name", "") or "")
     
     # Limita ao número solicitado
-    light_curves_info = light_curves_info[:x]
+    light_curves_info = light_curves_info[:n_curves]
     
     # Extrai os dados para cada curva de luz
     curves = []
@@ -288,7 +289,61 @@ def format_light_curve_data(x, y, z):
         if not observer_name:
             continue
             
-        data = get_specific_light_curve(y, z, observer_name)
+        data = get_single_light_curve(object_name, date, observer_name)
+        if data is not None and data.get("time") and data.get("flux"):
+            curves.append(data)
+            observers.append(observer_name)
+    
+    return curves, observers
+
+def fetch_and_normalize_light_curves_from_observation(n_curves, object_name, date):
+    """
+    Função principal para formatação de dados de curvas de luz.
+    
+    Args:
+        n_curves (int): Número de curvas de luz a serem recuperadas.
+        object_name (str): Nome do objeto celeste.
+        date (str): Data da observação no formato YYYY-MM-DD.
+        
+    Returns:
+        list: Lista de dicionários contendo as curvas de luz formatadas.
+        list: Lista com nomes dos observadores correspondentes.
+    """
+    # Verifica se o objeto existe
+    available_objects = get_available_objects()
+    if object_name not in available_objects:
+        print(f"Objeto '{object_name}' não encontrado. Objetos disponíveis: {available_objects}")
+        return [], []
+    
+    # Verifica se a data existe para esse objeto
+    available_dates = get_observation_dates(object_name)
+    if date not in available_dates:
+        print(f"Data '{date}' não disponível para '{object_name}'. Datas disponíveis: {available_dates}")
+        return [], []
+    
+    # Obtém informações sobre as curvas de luz disponíveis
+    light_curves_info = search_light_curves(object_name, date)
+    
+    if not light_curves_info:
+        print(f"Nenhuma curva de luz encontrada para {object_name} em {date}")
+        return [], []
+    
+    # Ordena por nome do observador em ordem alfabética
+    light_curves_info.sort(key=lambda info: info.get("observer_name", "") or "")
+    
+    # Limita ao número solicitado
+    light_curves_info = light_curves_info[:n_curves]
+    
+    # Extrai os dados para cada curva de luz
+    curves = []
+    observers = []
+    
+    for info in light_curves_info:
+        observer_name = info.get("observer_name")
+        if not observer_name:
+            continue
+            
+        data = get_single_light_curve(object_name, date, observer_name)
         if data is not None and data.get("time") and data.get("flux"):
             # Normaliza os fluxos
             normalized_flux = normalize_flux(data["flux"])
@@ -338,28 +393,76 @@ def save_data_to_csv(curves, observers, object_name, date):
         
         print(f"Dados salvos em {output_file}")
 
-def fetch_and_plot_first_curves(max_curves):
-    objects = get_available_objects()
-    curves_plotted = 0
-    curves_to_plot = []
+def get_all_light_curves_from_object(object_name):
+    """
+    Busca todas as curvas de luz de um objeto específico.
+    
+    Args:
+        object_name (str): Nome do objeto celeste.
+    
+    Returns:
+        List[Tuple[curve, object_name, date, observer]]
+    """
+    all_curves = []
+    objects = [object_name]
+    dates = get_observation_dates(object_name)
+    for date in dates:
+        curves, observers = fetch_light_curves_from_observation(None, object_name, date)
+        for curve, observer in zip(curves, observers):
+            all_curves.append((curve, object_name, date, observer))
+    return all_curves
 
+def get_sampled_light_curves(limit=None):
+    """
+    Busca uma amostra aleatória de curvas de luz do banco de dados.
+    Se limit for fornecido, retorna até 'limit' curvas aleatórias (de vários objetos).
+    
+    Args:
+        limit (int, opcional): Número máximo de curvas a buscar.
+    
+    Returns:
+        List[Tuple[curve, object_name, date, observer]]
+    """
+    all_curve_refs = []
+    objects = get_available_objects()
     for obj in objects:
         dates = get_observation_dates(obj)
         for date in dates:
-            # Fetch only 1 curve per object/date
-            curves, observers = format_light_curve_data(1, obj, date)
+            curves, observers = fetch_light_curves_from_observation(1, obj, date)
             for curve, observer in zip(curves, observers):
-                curves_to_plot.append((curve, obj, date, observer))
-                curves_plotted += 1
-                if curves_plotted >= max_curves:
-                    break
-            if curves_plotted >= max_curves:
-                break
-        if curves_plotted >= max_curves:
-            break
+                all_curve_refs.append((curve, obj, date, observer))
+    if limit and limit < len(all_curve_refs):
+        sampled_refs = random.sample(all_curve_refs, limit)
+    else:
+        sampled_refs = all_curve_refs
+    return sampled_refs
 
-    # Plot one by one
-    for i, (curve, obj, date, observer) in enumerate(curves_to_plot):
+def plot_raw_curves(curves, pause=False):
+    """
+    Plota uma lista de curvas de luz, uma por vez.
+    Args:
+        curves: lista de tuplas (curve, obj, date, observer)
+        pause: se True, pausa entre os plots
+    """
+    for i, (curve, obj, date, observer) in enumerate(curves):
+        plt.figure(figsize=(10, 5))
+        plt.plot(curve['time'], curve['flux'], marker='o', linestyle='-', markersize=2)
+        plt.title(f"Curve {i+1}: {obj} - {date} - {observer}")
+        plt.xlabel("Time")
+        plt.ylabel("Flux")
+        plt.grid(True)
+        plt.show()
+        if pause:
+            input("Press Enter to see the next curve...")
+
+def plot_normalized_curves(curves, pause=False):
+    """
+    Plota uma lista de curvas de luz, uma por vez.
+    Args:
+        curves: lista de tuplas (curve, obj, date, observer)
+        pause: se True, pausa entre os plots
+    """
+    for i, (curve, obj, date, observer) in enumerate(curves):
         plt.figure(figsize=(10, 5))
         plt.plot(curve['time'], curve['flux_normalized'], marker='o', linestyle='-', markersize=2)
         plt.title(f"Curve {i+1}: {obj} - {date} - {observer}")
@@ -367,49 +470,8 @@ def fetch_and_plot_first_curves(max_curves):
         plt.ylabel("Normalized Flux")
         plt.grid(True)
         plt.show()
-        # If you want to pause between plots, uncomment:
-        # input("Press Enter to see the next curve...")
-
-def fetch_object_curves(object_name):
-    """
-    Fetches all light curves for a specific object.
-    
-    Args:
-        object_name (str): Name of the celestial object.
-    
-    Returns:
-        List[Tuple[curve, object_name, date, observer]]
-    """
-    total_curves = []
-    dates = get_observation_dates(object_name)
-    for date in dates:
-        # Fetch all curves for this object/date
-        curves, observers = format_light_curve_data(None, object_name, date)
-        for curve, observer in zip(curves, observers):
-            total_curves.append((curve, object_name, date, observer))
-    return total_curves
-
-def fetch_first_curves(max_curves):
-    objects = get_available_objects()
-    curves_found = 0
-    total_curves = []
-
-    for obj in objects:
-        dates = get_observation_dates(obj)
-        for date in dates:
-            # Fetch only 1 curve per object/date
-            curves, observers = format_light_curve_data(1, obj, date)
-            for curve, observer in zip(curves, observers):
-                total_curves.append((curve, obj, date, observer))
-                curves_found += 1
-                if curves_found >= max_curves:
-                    break
-            if curves_found >= max_curves:
-                break
-        if curves_found >= max_curves:
-            break
-
-    return total_curves
+        if pause:
+            input("Press Enter to see the next curve...")
 
 def remove_outliers(time, flux, z_thresh=3):
     """
@@ -424,3 +486,41 @@ def remove_outliers(time, flux, z_thresh=3):
     z = (flux - mean) / std
     mask = np.abs(z) < z_thresh
     return time[mask], flux[mask]
+
+def get_first_or_last_n_curves(n, first=True):
+    """
+    Busca as primeiras ou últimas n curvas do banco de dados.
+    Args:
+        n (int): Número de curvas a buscar.
+        first (bool): Se True, retorna as primeiras n; se False, retorna as últimas n.
+    Returns:
+        List[dict]: Lista de curvas (cada curva é um dicionário com 'time' e 'flux').
+    """
+    all_curve_refs = []
+    objects = get_available_objects()
+    for obj in objects:
+        dates = get_observation_dates(obj)
+        for date in dates:
+            curves, observers = fetch_light_curves_from_observation(1, obj, date)
+            for curve, observer in zip(curves, observers):
+                all_curve_refs.append(curve)
+    if first:
+        return all_curve_refs[:n]
+    else:
+        return all_curve_refs[-n:]
+
+def get_all_curves():
+    """
+    Busca todas as curvas do banco de dados.
+    Returns:
+        List[dict]: Lista de curvas (cada curva é um dicionário com 'time' e 'flux').
+    """
+    all_curves = []
+    objects = get_available_objects()
+    for obj in objects:
+        dates = get_observation_dates(obj)
+        for date in dates:
+            curves, observers = fetch_light_curves_from_observation(1, obj, date)
+            for curve in curves:
+                all_curves.append(curve)
+    return all_curves
