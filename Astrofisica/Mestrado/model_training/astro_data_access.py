@@ -234,7 +234,7 @@ def normalize_flux(flux_values):
     Em casos degenerados (poucos pontos, baseline <= 0 ou não finito),
     faz fallback para a média global positiva; se não for possível, retorna original.
     """
-    if not flux_values:
+    if len(flux_values) == 0:
         return []
 
     arr = np.asarray(flux_values, dtype=float)
