@@ -3,6 +3,7 @@ import sqlite3
 import re
 from datetime import datetime
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Caminho para o banco de dados
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.getcwd())), 
@@ -86,12 +87,16 @@ artificially_negatives_from_sample = []
 for curve in common_curves_from_sample:
     sub_curves = recortar_negativos(curve, margem=len(curve[0]['time'])/4, threshold=0.75, min_tamanho=4, z_thresh=3)
     for curv in sub_curves:
-        if len(curv[0]) > 0:
+        if curv is not None:
             df_curv = pd.DataFrame(curv[0])
             df_curv.plot(x='time', y='flux_normalized')
+            plt.show()
+
             resp = input("Guardar curva? (s/n)")
             if resp == 's':
                 artificially_negatives_from_sample.extend(curv)
-print(len(artificially_negatives_from_sample))
+
+astro_data_access.save_data_to_csv(artificially_negatives_from_sample, [curve[3] for curve in artificially_negatives_from_sample], curve[1], curve[2])
+
 
 print(len(artificially_negatives_from_sample))
