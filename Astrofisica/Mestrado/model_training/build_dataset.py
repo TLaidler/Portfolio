@@ -73,30 +73,56 @@ def separar_curvas_especiais(amostra):
             curvas_nao_especiais.append(curve)
     return curvas_especiais, curvas_nao_especiais
 
+def fetch_all_except(exeptions: list, limit: int):
+    """
+    Separa curvas especiais da amostra.
+
+    Args:
+        amostra (list): Amostra de curvas de luz.
+    
+    Returns:
+        list: List  of tuples [(object, date, observer)] 
+    """
+    amostra = astro_data_access.get_first_or_last_n_curves(n = limit, first = True)
+    #sampled_positives = astro_data_access.get_sampled_light_curves_by_type(_type='positive', limit=100, normalized=True)
+    curvas_especiais = []
+    curvas_nao_especiais = []
+    for curve in amostra:
+        tuple_obs = (curve[1], curve[2], curve[3])
+        if tuple_obs in observacoes_especiais:
+            curvas_especiais.append(curve)
+        else:
+            curvas_nao_especiais.append(curve)
+    return curvas_especiais, curvas_nao_especiais
+
 ## guardar dataset negativo:
+#all_negatives_from_db = astro_data_access.get_light_curves_by_type(_type='negative', normalized=True)
+def create_and_save_artificially_negative_curves():
+    limit = input("Digite o limite de curvas a serem analisadas: ")
+    sampled_positives = astro_data_access.get_sampled_light_curves_by_type(_type='positive', limit=int(limit), normalized=True)
 
-all_negatives_from_db = astro_data_access.get_light_curves_by_type(_type='negative', normalized=True)
+    specials_curves_from_sample, common_curves_from_sample = separar_curvas_especiais(sampled_positives)
 
-sampled_positives = astro_data_access.get_sampled_light_curves_by_type(_type='positive', limit=100, normalized=True)
+    artificially_negatives_from_sample = []
 
-specials_curves_from_sample, common_curves_from_sample = separar_curvas_especiais(sampled_positives)
+    try:
+        for curve in common_curves_from_sample:
+            count = 1
+            sub_curves = recortar_negativos(curve, margem=len(curve[0]['time'])/4, threshold=0.75, min_tamanho=4, z_thresh=3)
+            for curv in sub_curves:
+                if curv is not None:
+                    df_curv = pd.DataFrame(curv[0])
+                    df_curv.plot(x='time', y='flux_normalized')
+                    plt.show()
+                    resp = input("Guardar curva? (s/n)")
+                    if resp == 's':
+                        artificially_negatives_from_sample.append(curv)  # <-- append, não extend!
+                        df_curv.to_csv(f'outputs/artific_neg_{curv[3]}_{curv[2]}_{curv[1]}_{count}.csv')
+                        count = count + 1
+    except Exception as e:
+        print(f"Ocorreu um erro: {e}")
+    return True
 
-artificially_negatives_from_sample = []
 
 
-for curve in common_curves_from_sample:
-    sub_curves = recortar_negativos(curve, margem=len(curve[0]['time'])/4, threshold=0.75, min_tamanho=4, z_thresh=3)
-    for curv in sub_curves:
-        if curv is not None:
-            df_curv = pd.DataFrame(curv[0])
-            df_curv.plot(x='time', y='flux_normalized')
-            plt.show()
 
-            resp = input("Guardar curva? (s/n)")
-            if resp == 's':
-                artificially_negatives_from_sample.extend(curv)
-
-astro_data_access.save_data_to_csv(artificially_negatives_from_sample, [curve[3] for curve in artificially_negatives_from_sample], curve[1], curve[2])
-
-
-print(len(artificially_negatives_from_sample))
