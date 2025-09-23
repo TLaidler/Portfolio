@@ -253,6 +253,52 @@ def selecionar_top30(all_stocks_df):
 
     return closes
 
+
+
+def AVISO_DIVIDENDOS():
+    import yfinance as yf
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    # Baixar dados da PETR4 (ajustado automaticamente pelo Yahoo)
+    ticker = yf.Ticker("PETR4.SA")
+    data = ticker.history(start="2022-01-01", end="2025-01-01", auto_adjust=True)
+
+    # Colunas relevantes
+    df = data[["Close", "Dividends"]].copy()
+
+    # Calcular Total Return (reinvestindo dividendos)
+    shares = 1.0
+    values = []
+
+    for i in range(len(df)):
+        price = df["Close"].iloc[i]
+        div = df["Dividends"].iloc[i]
+        
+        # Se houve dividendo, compra mais ações com ele
+        if div > 0:
+            shares += div / price
+        
+        values.append(shares * price)
+
+    df["Total Return"] = values
+
+    # Normalizar para começar em 100
+    df["Adj Close (Preço Ajustado)"] = df["Close"] / df["Close"].iloc[0] * 100
+    df["Total Return (Reinvestido)"] = df["Total Return"] / df["Total Return"].iloc[0] * 100
+
+    # Plotar comparação
+    plt.figure(figsize=(10,5))
+    plt.plot(df.index, df["Adj Close (Preço Ajustado)"], label="Preço Ajustado (TradingView style)")
+    plt.plot(df.index, df["Total Return (Reinvestido)"], label="Total Return (Dividendos reinvestidos)", linestyle="--")
+    plt.legend()
+    plt.title("PETR4: Preço Ajustado vs Total Return")
+    plt.ylabel("Base 100")
+    plt.grid(True)
+    plt.show()
+    return "Cuidado!! Tem que considerar os dividendos reinvestidos!"
+
+
 if __name__ == "__main__":
     # Parâmetros
     inicio = '2010-01-01'
