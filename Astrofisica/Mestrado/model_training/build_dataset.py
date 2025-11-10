@@ -78,7 +78,7 @@ def fetch_all_except(exeptions: list, limit: int):
     Separa curvas especiais da amostra.
 
     Args:
-        amostra (list): Amostra de curvas de luz.
+        exeptions (list): Amostra de curvas de luz (lista de tuplas).
     
     Returns:
         list: List  of tuples [(object, date, observer)] 
@@ -89,7 +89,7 @@ def fetch_all_except(exeptions: list, limit: int):
     curvas_nao_especiais = []
     for curve in amostra:
         tuple_obs = (curve[1], curve[2], curve[3])
-        if tuple_obs in observacoes_especiais:
+        if tuple_obs in exeptions:
             curvas_especiais.append(curve)
         else:
             curvas_nao_especiais.append(curve)
@@ -97,8 +97,7 @@ def fetch_all_except(exeptions: list, limit: int):
 
 ## guardar dataset negativo:
 #all_negatives_from_db = astro_data_access.get_light_curves_by_type(_type='negative', normalized=True)
-def create_and_save_artificially_negative_curves():
-    limit = input("Digite o limite de curvas a serem analisadas: ")
+def create_and_save_artificially_negative_curves(limit: int):
     sampled_positives = astro_data_access.get_sampled_light_curves_by_type(_type='positive', limit=int(limit), normalized=True)
 
     specials_curves_from_sample, common_curves_from_sample = separar_curvas_especiais(sampled_positives)
