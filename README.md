@@ -1,6 +1,6 @@
 # Portfolio
 
-<h1 align="center">Thiago Laidler</h1>
+<h1 align="center">Thiago Laidler Vidal Cunha</h1>
 <table>
   <tbody>
     <tr>
@@ -12,7 +12,10 @@
     <tr>
       <td>
         <ul>
+          <li><span style="font-size: 14px;">Analista Quantitativo Pleno em Transfero Asset Management</li>
          <li><span style="font-size: 14px;">Bacharel em Astronomia/Astrofísica pela Universidade Federal do Rio de Janeiro (UFRJ)</li>
+           <li><span style="font-size: 14px;">Mestre em Astronomia/Astrofísica pelo Observatório Nacional (ON - MCTI)</li>
+           <li><span style="font-size: 14px;">Certificado CEA - Especialista em Investimentos - pela ANBIMA</li>
           <li>thiagolaidler@gmail.com</li>
          <li><a href="https://www.linkedin.com/in/thiago-laidler">Perfil Linkedin</a></li>
         </ul>
