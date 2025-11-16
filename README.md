@@ -6,7 +6,7 @@
     <tr>
       <td><b>Information</b></td>
       <td width="50%" rowspan="4">
-        <img alt="Photo" src="./imgs/foto1.jpg" />
+        <img alt="Photo" src="./imgs/TLaidler.png" />
       </td>
     </tr>
     <tr>
@@ -41,7 +41,7 @@
     <tr>
       <td width="50%">
         <ul>
-          <li><a href="./pdfs/TL_CDJunior.pdf">Curriculo em pdf</a></li>
+          <li><a href="./pdfs/CV_ThiagoLaidler.pdf">Curriculo em pdf</a></li>
         </ul>
       </td>
     </tr>
