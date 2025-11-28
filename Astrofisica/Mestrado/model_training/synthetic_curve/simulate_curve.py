@@ -336,6 +336,8 @@ class SyntheticLightCurveSimulator:
         satellites: Optional[List[Tuple[float, float]]] = None,
         normalize_method: str = "top_quartiles",
         random_seed: Optional[int] = None,
+        subsamples_per_exposure: int = 1,   # integração temporal intra-exposição
+        star_angular_mas: float = 0.0,      # diâmetro angular da estrela (mas)
     ) -> None:
         self.mag_star = float(mag_star)
         self.distance_km = float(distance_km)
@@ -348,6 +350,8 @@ class SyntheticLightCurveSimulator:
         self.rings = rings if rings is not None else []
         self.satellites = satellites if satellites is not None else []
         self.normalize_method = normalize_method
+        self.subsamples_per_exposure = int(subsamples_per_exposure)
+        self.star_angular_mas = float(star_angular_mas)
 
         self.rng = np.random.default_rng(random_seed)
         self.noise = NoiseModel(
@@ -376,31 +380,45 @@ class SyntheticLightCurveSimulator:
         - Normaliza o fluxo
         """
         t, x = self._build_time_and_chord()
+        t0 = 0.5 * (t[0] + t[-1])
+        dt_s = t[1] - t[0] if len(t) > 1 else self.exposure_time_s
 
-        # Corpo principal (faixa opaca)
-        T_body = FresnelPhysics.opaque_strip_transmission(
-            x, center_km=0.0, width_km=self.diameter_km,
-            distance_km=self.distance_km, wavelength_nm=self.wavelength_nm
-        )
-
-        # Anéis (faixas parcialmente opacas)
-        T_rings = np.ones_like(T_body)
-        for (offset_km, width_km, opacity) in self.rings:
-            T_rings *= FresnelPhysics.partial_strip_transmission(
-                x, center_km=float(offset_km), width_km=float(width_km), opacity=float(opacity),
+        def compute_T_total_for_x(xx: np.ndarray) -> np.ndarray:
+            T_body = FresnelPhysics.opaque_strip_transmission(
+                xx, center_km=0.0, width_km=self.diameter_km,
                 distance_km=self.distance_km, wavelength_nm=self.wavelength_nm
             )
+            T_rings = np.ones_like(T_body)
+            for (offset_km, width_km, opacity) in self.rings:
+                T_rings *= FresnelPhysics.partial_strip_transmission(
+                    xx, center_km=float(offset_km), width_km=float(width_km), opacity=float(opacity),
+                    distance_km=self.distance_km, wavelength_nm=self.wavelength_nm
+                )
+            T_sats = np.ones_like(T_body)
+            for (offset_km, diameter_km) in self.satellites:
+                T_sats *= FresnelPhysics.opaque_strip_transmission(
+                    xx, center_km=float(offset_km), width_km=float(diameter_km),
+                    distance_km=self.distance_km, wavelength_nm=self.wavelength_nm
+                )
+            return np.clip(T_body * T_rings * T_sats, 0.0, 1.0)
 
-        # Satélites (faixas opacas deslocadas)
-        T_sats = np.ones_like(T_body)
-        for (offset_km, diameter_km) in self.satellites:
-            T_sats *= FresnelPhysics.opaque_strip_transmission(
-                x, center_km=float(offset_km), width_km=float(diameter_km),
-                distance_km=self.distance_km, wavelength_nm=self.wavelength_nm
-            )
+        # Integração temporal intra-exposição
+        if self.subsamples_per_exposure > 1:
+            shifts = np.linspace(-0.5 * self.exposure_time_s,
+                                 +0.5 * self.exposure_time_s,
+                                 self.subsamples_per_exposure)
+            acc = 0.0
+            for s in shifts:
+                x_s = (t + s - t0) * self.velocity_kms
+                acc += compute_T_total_for_x(x_s)
+            T_total = acc / float(self.subsamples_per_exposure)
+        else:
+            T_total = compute_T_total_for_x(x)
 
-        # Transmitância total
-        T_total = np.clip(T_body * T_rings * T_sats, 0.0, 1.0)
+        # Suavização por fonte estendida (estrela com diâmetro finito)
+        win = self._star_window_samples(dt_s)
+        if win > 1:
+            T_total = self._boxcar_smooth(T_total, win)
 
         # Fluxo relativo esperado (sem ruído)
         base_flux = magnitude_to_relative_flux(self.mag_star)
@@ -502,6 +520,30 @@ class SyntheticLightCurveSimulator:
         if self.time_s is None or self.flux is None or self.flux_norm is None:
             raise RuntimeError("Simulação ainda não executada. Chame simulate() antes.")
 
+    # ---------------------- suavizações físicas opcionais ---------------------
+    def _boxcar_smooth(self, y: np.ndarray, window_samples: int) -> np.ndarray:
+        """
+        Convolução boxcar (média móvel) para simular fonte estendida.
+        """
+        if window_samples <= 1:
+            return y
+        k = np.ones(int(window_samples), dtype=float)
+        k /= k.sum()
+        return np.convolve(y, k, mode="same")
+
+    def _star_window_samples(self, dt_s: float) -> int:
+        """
+        Converte o diâmetro angular da estrela (mas) em largura temporal (amostras)
+        para um kernel boxcar simples.
+        """
+        if self.star_angular_mas <= 0:
+            return 1
+        theta_rad = self.star_angular_mas * (np.pi / (648000.0 * 1000.0))  # mas -> rad
+        star_proj_km = self.distance_km * theta_rad                         # km
+        dx_km = self.velocity_kms * max(dt_s, 1e-12)                       # km por amostra
+        n = int(round(star_proj_km / max(dx_km, 1e-9)))
+        return max(n, 1)
+
 
 # =============================================================================
 # Testes extras com corpos pequenos (Umbriel e Chariklo)
@@ -583,6 +625,61 @@ def testes_extras() -> None:
           float(df_u.flux_norm.max()))
     print("Chariklo: amostras =", len(df_c), " min/max flux_norm =", float(df_c.flux_norm.min()),
           float(df_c.flux_norm.max()))
+
+    # --------------------- Corpo fictício tipo "Umbriel com anéis" ---------------------
+    # Ideia: corpo com diâmetro ~Umbriel, porém com um sistema de anéis "grande"
+    # escalonado pela proporção típica de Saturno (raios de anéis ~ 1.7–2.4 vezes o raio do planeta,
+    # com larguras fracionárias significativas). Usamos três anéis com opacidades relativamente altas,
+    # para produzir quedas fortes e estruturas visíveis.
+    umb_like_diam_km = 1169.0
+    umb_like_rad_km = 0.5 * umb_like_diam_km
+    # Raios proporcionais (em múltiplos do raio do corpo)
+    rC = 1.30 * umb_like_rad_km   # anel interno (análog. C)
+    rB = 1.70 * umb_like_rad_km   # anel intermediário (análog. B)
+    rA = 2.30 * umb_like_rad_km   # anel externo (análog. A)
+    # Larguras proporcionais ao raio do corpo (valores inspirados nas frações em Saturno)
+    wC = 0.25 * umb_like_rad_km
+    wB = 0.44 * umb_like_rad_km
+    wA = 0.30 * umb_like_rad_km
+    # Profundidades óticas aproximadas (mais opacos para quedas fortes)
+    tauC, tauB, tauA = 0.3, 0.9, 0.6
+    opC = 1.0 - math.exp(-tauC)
+    opB = 1.0 - math.exp(-tauB)
+    opA = 1.0 - math.exp(-tauA)
+
+    rings_umb_like: List[Tuple[float, float, float]] = [
+        (+rC, wC, opC), (-rC, wC, opC),
+        (+rB, wB, opB), (-rB, wB, opB),
+        (+rA, wA, opA), (-rA, wA, opA),
+    ]
+
+    # Janela temporal suficiente para cobrir o anel externo
+    outer_r = max(rA, rB, rC)
+    margin_km = 100.0
+    half_span_km = outer_r + 0.5 * umb_like_diam_km + margin_km
+    total_duration_s = 2.0 * half_span_km / 20.0  # vel = 20 km/s
+
+    umbriel_like_with_rings = SyntheticLightCurveSimulator(
+        mag_star=12.5,
+        distance_km=2.9e9,         # mesma ordem de Umbriel/Urano
+        diameter_km=umb_like_diam_km,
+        velocity_kms=20.0,
+        exposure_time_s=0.1,
+        wavelength_nm=550.0,
+        seeing_arcsec=1.1,         # leve aumento de seeing ajuda a suavizar
+        rings=rings_umb_like,
+        satellites=[],
+        normalize_method="top_quartiles",
+        total_duration_s=total_duration_s,
+        random_seed=777,
+        subsamples_per_exposure=7, # integração temporal intra-exposição
+        star_angular_mas=0.12,     # estrela com diâmetro finito (~0.12 mas)
+    )
+    df_ul = umbriel_like_with_rings.simulate()
+    umbriel_like_with_rings.plot_curve(save=True, show=False, title="Umbriel-like com anéis — V~550 nm")
+    umbriel_like_with_rings.export_data(save=True)
+    print("Umbriel-like: amostras =", len(df_ul), " min/max flux_norm =", float(df_ul.flux_norm.min()),
+          float(df_ul.flux_norm.max()))
 
 
 # =============================================================================
