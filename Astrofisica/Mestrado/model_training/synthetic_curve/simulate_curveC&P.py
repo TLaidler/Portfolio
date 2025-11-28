@@ -9,13 +9,13 @@ import pandas as pd
 
 ### Simulador de Curva de Luz ###
 
-ua = 149597870
-ang_km = 1*10**-13
-ano = 365*24*3600
-mu0 = 1.256637061 * 10 ** -6 #N A**-2
-ep0 = 8.854187817 * 10 **(-12) #C**2 N**-1 m**-2
-c = 1/(mu0*ep0)**(1/2)
-Cn2 = 1 
+ua = 149597870 #unidade astronômica em km
+ang_km = 1*10**-13 #angstrom para km
+ano = 365*24*3600 #segundos em um ano
+mu0 = 1.256637061 * 10 ** -6 #N A**-2 #permeabilidade magnética vácuo
+ep0 = 8.854187817 * 10 **(-12) #C**2 N**-1 m**-2 #permeabilidade elétrica vácuo
+c = 1/(mu0*ep0)**(1/2) #velocidade da luz no vácuo
+Cn2 = 1 #condutividade térmica do ar
 
 def calculo_magnitude(magnitude_absoluta, distancia): #em UA
     magnitude_aparente = magnitude_absoluta + 5*np.log10(distancia*(distancia-1))
