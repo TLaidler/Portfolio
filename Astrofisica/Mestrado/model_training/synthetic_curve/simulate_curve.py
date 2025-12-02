@@ -686,25 +686,161 @@ def testes_extras() -> None:
 # Execução direta (exemplo mínimo)
 # =============================================================================
 
+def gerar_curvas_aleatorias(n_curvas: int, positivas: bool = True, seed: Optional[int] = None) -> List[Tuple[pd.DataFrame, str]]:
+    """
+    Gera 'n_curvas' curvas sintéticas com parâmetros aleatórios.
+    Permite curvas positivas (com evento) ou negativas (sem evento).
+
+    Cada curva pode ter:
+      - corpo sem anel
+      - corpo com 1–3 anéis
+      - evento "rasante" (grazing) via estrela finita e integração
+      - corpo com atmosfera (perfil em camadas)
+      - curva negativa (diâmetro = 0 e sem anéis)
+
+    Retorna uma lista de tuplas (DataFrame, titulo).
+    """
+    rng = np.random.default_rng(seed)
+    resultados: List[Tuple[pd.DataFrame, str]] = []
+
+    def rand_between(a: float, b: float) -> float:
+        return float(rng.uniform(a, b))
+
+    def make_rings(num_rings: int, body_radius_km: float) -> List[Tuple[float, float, float]]:
+        rings: List[Tuple[float, float, float]] = []
+        for _ in range(num_rings):
+            r = rand_between(1.2, 2.6) * body_radius_km
+            w = rand_between(0.02, 0.45) * body_radius_km
+            tau = rand_between(0.05, 0.9)
+            op = 1.0 - math.exp(-tau)
+            rings.append((+r, w, op))
+            rings.append((-r, w, op))
+        return rings
+
+    def make_atmosphere_layers(radius_km: float) -> List[Tuple[float, float, float]]:
+        width = rand_between(0.15, 0.40) * radius_km
+        tau = rand_between(0.2, 0.8)
+        op_peak = 1.0 - math.exp(-tau)
+        n_layers = rng.integers(12, 28)
+        dx = width / float(n_layers)
+        rings: List[Tuple[float, float, float]] = []
+        for side in (-1.0, +1.0):
+            for i in range(int(n_layers)):
+                frac = (i + 1) / float(n_layers)
+                op_i = op_peak * frac
+                center = side * (radius_km + (i + 0.5) * dx)
+                rings.append((center, dx, op_i))
+        return rings
+
+    for i in range(n_curvas):
+        # Escolhe cenário
+        cenarios_pos = ["bare", "rings", "grazing", "atmosphere", "satellite"]
+        cenarios_neg = ["negative", "bare", "rings"]  # negativas podem incluir caso quase neutro
+        scenario = rng.choice(cenarios_pos if positivas else cenarios_neg)
+
+        # Parâmetros base aleatórios
+        distance_km = rand_between(1.5e9, 3.5e9)
+        velocity_kms = rand_between(15.0, 30.0)
+        wavelength_nm = rng.choice([550.0, 650.0, 800.0])
+        mag_star = rand_between(11.0, 14.5)
+        exposure_time_s = rand_between(0.05, 0.25)
+        seeing_arcsec = rand_between(0.8, 1.6)
+
+        diameter_km = float(0.0) if scenario == "negative" else rand_between(80.0, 2800.0)
+        body_radius = 0.5 * max(diameter_km, 1.0)
+
+        rings: List[Tuple[float, float, float]] = []
+        satellites: List[Tuple[float, float]] = []
+
+        subsamples = rng.integers(1, 10)
+        star_mas = rand_between(0.0, 0.2)
+
+        title_tag = ""
+
+        if scenario == "bare":
+            title_tag = "Bare"
+        elif scenario == "rings":
+            n_rings = int(rng.integers(1, 4))
+            rings = make_rings(n_rings, body_radius)
+            title_tag = f"Rings x{n_rings}"
+        elif scenario == "grazing":
+            # Realçamos suavização para simular passagem próxima ao limbo
+            subsamples = max(subsamples, 7)
+            star_mas = max(star_mas, 0.12)
+            title_tag = "Grazing-like"
+        elif scenario == "atmosphere":
+            rings = make_atmosphere_layers(body_radius)
+            subsamples = max(subsamples, 7)
+            star_mas = max(star_mas, 0.10)
+            title_tag = "Atmosphere"
+        elif scenario == "satellite":
+            # Um satélite simples com offset
+            sat_diam = rand_between(50.0, 600.0)
+            sat_off = rand_between(2.0, 5.0) * body_radius
+            satellites = [(+sat_off, sat_diam)]
+            if rng.random() < 0.5:
+                satellites.append((-sat_off, sat_diam * rand_between(0.7, 1.2)))
+            title_tag = f"Satellite x{len(satellites)}"
+        elif scenario == "negative":
+            title_tag = "Negative"
+
+        # Duração para cobrir corpo + maior anel/satélite
+        max_extent = body_radius
+        if rings:
+            max_extent = max(max_extent, max(abs(r) + w for (r, w, _op) in rings))
+        if satellites:
+            max_extent = max(max_extent, max(abs(off) + 0.5 * d for (off, d) in satellites))
+        margin_km = rand_between(30.0, 120.0)
+        total_duration_s = 2.0 * (max_extent + margin_km) / velocity_kms if diameter_km > 0.0 or rings or satellites else rand_between(20.0, 60.0)
+
+        sim = SyntheticLightCurveSimulator(
+            mag_star=mag_star,
+            distance_km=distance_km,
+            diameter_km=diameter_km,
+            velocity_kms=velocity_kms,
+            exposure_time_s=exposure_time_s,
+            wavelength_nm=wavelength_nm,
+            seeing_arcsec=seeing_arcsec,
+            rings=rings,
+            satellites=satellites,
+            normalize_method="top_quartiles",
+            total_duration_s=total_duration_s,
+            random_seed=int(rng.integers(0, 1_000_000)),
+            subsamples_per_exposure=int(subsamples),
+            star_angular_mas=float(star_mas),
+        )
+        df = sim.simulate()
+        posneg = "Positiva" if (diameter_km > 0.0 or rings or satellites) else "Negativa"
+        titulo = f"Aleatória {i+1} — {posneg} — {title_tag}"
+        sim.plot_curve(save=True, show=False, title=titulo)
+        sim.export_data(save=True)
+        resultados.append((df, titulo))
+        print(f"[{i+1}/{n_curvas}] {titulo}: amostras={len(df)}, min/max={float(df.flux_norm.min())}/{float(df.flux_norm.max())}")
+
+    return resultados
+
 if __name__ == "__main__":
     # Exemplo mínimo de uso "out of the box"
-    sim = SyntheticLightCurveSimulator(
-        mag_star=12.5,
-        distance_km=4_000.0,
-        diameter_km=1_200.0,
-        velocity_kms=20.0,
-        exposure_time_s=0.1,
-        wavelength_nm=550.0,
-        seeing_arcsec=1.0,
-        rings=[],
-        satellites=[],
-        random_seed=42,
-    )
-    df = sim.simulate()
-    png = sim.plot_curve(save=True, show=False)
-    dat_df, dat_path = sim.export_data(save=True)
-    print("Arquivo de dados:", dat_path)
-    print("Arquivo da figura:", png)
+    #sim = SyntheticLightCurveSimulator(
+    #    mag_star=12.5,
+    #    distance_km=4_000.0,
+    #    diameter_km=1_200.0,
+    #    velocity_kms=20.0,
+    #    exposure_time_s=0.1,
+    #    wavelength_nm=550.0,
+    #    seeing_arcsec=1.0,
+    #    rings=[],
+    #    satellites=[],
+    #    random_seed=42,
+    #)
+    #df = sim.simulate()
+    #png = sim.plot_curve(save=True, show=False)
+    #dat_df, dat_path = sim.export_data(save=True)
+    #print("Arquivo de dados:", dat_path)
+    #print("Arquivo da figura:", png)
 
     # Rodar os testes extras com Umbriel e Chariklo
-    testes_extras()
+    #testes_extras()
+
+    #
+    gerar_curvas_aleatorias(n_curvas=40, positivas=False, seed=422)
