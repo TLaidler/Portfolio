@@ -20,6 +20,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 from scipy.stats import skew, kurtosis, ttest_ind, ks_2samp
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 # Importa funções do módulo de acesso a dados
 import astro_data_access as ada
@@ -433,6 +435,72 @@ def extract_features(curve, curve_name):
 
 
 # =============================================================================
+# K-MEANS FEATURE ENGINEERING
+# =============================================================================
+
+def add_kmeans_features(df, n_clusters=3, random_state=42):
+    """
+    Adiciona features baseadas em K-Means ao DataFrame.
+    
+    Esta função usa K-Means para criar features adicionais que capturam
+    a posição de cada amostra no espaço de features em relação aos 
+    centroides dos clusters.
+    
+    Features adicionadas:
+    - kmeans_cluster: Label do cluster atribuído (0, 1, ..., n_clusters-1)
+    - kmeans_dist_c0, kmeans_dist_c1, ...: Distância euclidiana a cada centroide
+    
+    Args:
+        df: DataFrame com as features originais
+        n_clusters: Número de clusters para K-Means (default: 3)
+        random_state: Seed para reprodutibilidade
+    
+    Returns:
+        tuple: (df_with_kmeans, kmeans_model, scaler)
+    """
+    print("\n--- Adicionando features de K-Means ---")
+    
+    # Seleciona apenas colunas numéricas de features (exclui metadados)
+    feature_cols = [c for c in df.columns 
+                    if c not in ['curve_name', 'source', 'occ']]
+    
+    print(f"  Features usadas para clustering: {len(feature_cols)}")
+    
+    # Preenche NaN com 0 e extrai matriz de features
+    X = df[feature_cols].fillna(0).values
+    
+    # Normaliza antes do K-Means (essencial para K-Means funcionar corretamente)
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+    
+    # Treina K-Means
+    print(f"  Treinando K-Means com K={n_clusters}...")
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
+    kmeans.fit(X_scaled)
+    
+    # Adiciona label do cluster
+    df = df.copy()  # Evita SettingWithCopyWarning
+    df['kmeans_cluster'] = kmeans.labels_
+    
+    # Adiciona distância a cada centroide
+    distances = kmeans.transform(X_scaled)  # Shape: (n_samples, n_clusters)
+    for i in range(n_clusters):
+        df[f'kmeans_dist_c{i}'] = distances[:, i]
+    
+    # Estatísticas dos clusters
+    print(f"\n  Distribuição dos clusters:")
+    for i in range(n_clusters):
+        count = (df['kmeans_cluster'] == i).sum()
+        pos_count = ((df['kmeans_cluster'] == i) & (df['occ'] == 1)).sum()
+        neg_count = ((df['kmeans_cluster'] == i) & (df['occ'] == 0)).sum()
+        print(f"    Cluster {i}: {count} amostras (pos={pos_count}, neg={neg_count})")
+    
+    print(f"\n  Features K-Means adicionadas: kmeans_cluster + {n_clusters} distâncias")
+    
+    return df, kmeans, scaler
+
+
+# =============================================================================
 # ETAPA 5: Construir e salvar dataset final
 # =============================================================================
 
@@ -527,9 +595,16 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     print("\nMontando DataFrame final...")
     df = pd.DataFrame(all_features)
     
-    # Reordena colunas (20 features + 3 metadados)
+    # --- Adiciona features de K-Means ---
+    if len(df) >= 3:  # Precisa de pelo menos 3 amostras para K=3
+        df, kmeans_model, scaler = add_kmeans_features(df, n_clusters=3)
+    else:
+        print("\n[AVISO] Poucas amostras para K-Means, pulando...")
+        kmeans_model, scaler = None, None
+    
+    # Reordena colunas (20 features originais + 4 K-Means + 3 metadados)
     cols_order = ['curve_name', 'source', 'occ',
-                  # Features básicas (9)
+                  # Features básicas (8)
                   'Feature_Amp', 'Feature_mv_av_Max', 'Feature_mv_av_Min', 
                   'Feature_Flux_std', 'Feature_Savgol_Max', 'Feature_Savgol_Min',
                   'Feature_Savgol_std', 'Max_Drawdown',
@@ -538,7 +613,9 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
                   # Features de derivadas (9)
                   'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std',
                   'Deriv_Skew', 'Deriv_Kurtosis',
-                  'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std']
+                  'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std',
+                  # Features de K-Means (4)
+                  'kmeans_cluster', 'kmeans_dist_c0', 'kmeans_dist_c1', 'kmeans_dist_c2']
     
     # Usa apenas colunas que existem
     cols_final = [c for c in cols_order if c in df.columns]
