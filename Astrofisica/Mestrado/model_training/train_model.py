@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
-from scipy.stats import skew, kurtosis
+from scipy.stats import skew, kurtosis, ttest_ind, ks_2samp
 
 # Importa funções do módulo de acesso a dados
 import astro_data_access as ada
@@ -281,6 +281,11 @@ def extract_features(curve, curve_name):
     """
     Extrai features de uma curva de luz para classificação.
     
+    Metodologia baseada em lc_processing_pipeline.ipynb:
+    - Janela adaptativa baseada no tamanho da curva
+    - Derivadas calculadas sobre série suavizada (savgol)
+    - Features de comparação entre quartis (testes estatísticos)
+    
     Args:
         curve: dict com 'time', 'flux', 'flux_normalized'
         curve_name: Nome identificador da curva
@@ -297,13 +302,28 @@ def extract_features(curve, curve_name):
     
     features = {'curve_name': curve_name}
     
-    # --- Features básicas ---
+    # ==========================================================================
+    # JANELA ADAPTATIVA (seguindo metodologia do notebook)
+    # ==========================================================================
+    if len(flux) < 40:
+        window = max(3, int(len(flux) / 3))
+    else:
+        window = max(3, int(len(flux) / 40))
+    
+    # Janela do savgol precisa ser ímpar
+    if window % 2 == 0:
+        window += 1
+    
+    # ==========================================================================
+    # FEATURES BÁSICAS
+    # ==========================================================================
     features['Feature_Amp'] = float(np.max(flux) - np.min(flux))
     features['Feature_Flux_std'] = float(np.std(flux))
     
-    # --- Moving Average Features ---
-    window = min(5, len(flux) // 3)
-    if window >= 1:
+    # ==========================================================================
+    # MOVING AVERAGE FEATURES
+    # ==========================================================================
+    if window >= 1 and window <= len(flux):
         mv_avg = np.convolve(flux, np.ones(window)/window, mode='valid')
         features['Feature_mv_av_Max'] = float(np.max(mv_avg))
         features['Feature_mv_av_Min'] = float(np.min(mv_avg))
@@ -311,14 +331,13 @@ def extract_features(curve, curve_name):
         features['Feature_mv_av_Max'] = float(np.max(flux))
         features['Feature_mv_av_Min'] = float(np.min(flux))
     
-    # --- Savitzky-Golay Filter Features ---
+    # ==========================================================================
+    # SAVITZKY-GOLAY FILTER FEATURES
+    # ==========================================================================
+    sg_filtered = flux.copy()  # Fallback
     try:
-        # Window deve ser ímpar e menor que len(flux)
-        sg_window = min(11, len(flux) - 1)
-        if sg_window % 2 == 0:
-            sg_window -= 1
-        if sg_window >= 3:
-            sg_filtered = savgol_filter(flux, sg_window, polyorder=2)
+        if window >= 3 and window <= len(flux):
+            sg_filtered = savgol_filter(flux, window_length=window, polyorder=2)
             features['Feature_Savgol_Max'] = float(np.max(sg_filtered))
             features['Feature_Savgol_Min'] = float(np.min(sg_filtered))
             features['Feature_Savgol_std'] = float(np.std(sg_filtered))
@@ -326,60 +345,89 @@ def extract_features(curve, curve_name):
             features['Feature_Savgol_Max'] = float(np.max(flux))
             features['Feature_Savgol_Min'] = float(np.min(flux))
             features['Feature_Savgol_std'] = float(np.std(flux))
-    except Exception:
+    except ValueError:
+        # Fallback se savgol falhar
+        sg_filtered = flux.copy()
         features['Feature_Savgol_Max'] = float(np.max(flux))
         features['Feature_Savgol_Min'] = float(np.min(flux))
         features['Feature_Savgol_std'] = float(np.std(flux))
     
-    # --- Max Drawdown ---
-    # Maior queda cumulativa do pico
+    # ==========================================================================
+    # MAX DRAWDOWN
+    # ==========================================================================
     cummax = np.maximum.accumulate(flux)
     drawdown = flux - cummax
     features['Max_Drawdown'] = float(np.min(drawdown))
     
-    # --- Derivative Features ---
-    if len(flux) > 1:
-        # Primeira derivada (diferença finita)
-        if len(time) > 1:
-            dt = np.diff(time)
-            dt[dt == 0] = 1e-10  # Evita divisão por zero
-            deriv = np.diff(flux) / dt
-        else:
-            deriv = np.diff(flux)
+    # ==========================================================================
+    # DERIVADAS (SOBRE O SAVGOL - metodologia do notebook)
+    # ==========================================================================
+    # Primeira derivada usando np.gradient (preserva tamanho do array)
+    d_flux = np.gradient(sg_filtered)
+    
+    # Segunda derivada
+    dd_flux = np.gradient(d_flux)
+    
+    # Features de primeira derivada
+    features['Deriv_Min'] = float(np.min(d_flux))
+    features['Deriv_Max'] = float(np.max(d_flux))
+    features['Deriv_Mean'] = float(np.mean(d_flux))
+    features['Deriv_Std'] = float(np.std(d_flux))
+    features['Deriv_Skew'] = float(pd.Series(d_flux).skew()) if len(d_flux) > 2 else 0.0
+    features['Deriv_Kurtosis'] = float(pd.Series(d_flux).kurtosis()) if len(d_flux) > 3 else 0.0
+    
+    # Features de segunda derivada
+    features['SecondDeriv_Min'] = float(np.min(dd_flux))
+    features['SecondDeriv_Max'] = float(np.max(dd_flux))
+    features['SecondDeriv_Std'] = float(np.std(dd_flux))
+    
+    # ==========================================================================
+    # FEATURES DE QUARTIS (testes estatísticos entre segmentos)
+    # ==========================================================================
+    # Remove NaN antes de dividir em quartis
+    flux_clean = pd.Series(flux).dropna().values
+    
+    if len(flux_clean) >= 4:
+        quartis = np.array_split(flux_clean, 4)
         
-        features['Deriv_Min'] = float(np.min(deriv))
-        features['Deriv_Max'] = float(np.max(deriv))
-        features['Deriv_Mean'] = float(np.mean(deriv))
-        features['Deriv_Std'] = float(np.std(deriv))
-        features['Deriv_Skew'] = float(skew(deriv)) if len(deriv) > 2 else 0.0
-        features['Deriv_Kurtosis'] = float(kurtosis(deriv)) if len(deriv) > 3 else 0.0
+        # Combinações de pares de quartis para comparação
+        comb = [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)]
+        t_pvals = []
+        ks_pvals = []
         
-        # Segunda derivada
-        if len(deriv) > 1:
-            if len(time) > 2:
-                dt2 = dt[:-1]
-                dt2[dt2 == 0] = 1e-10
-                second_deriv = np.diff(deriv) / dt2
+        for i, j in comb:
+            if len(quartis[i]) > 1 and len(quartis[j]) > 1:
+                try:
+                    _, t_p = ttest_ind(quartis[i], quartis[j], equal_var=False)
+                    _, ks_p = ks_2samp(quartis[i], quartis[j])
+                except Exception:
+                    t_p, ks_p = np.nan, np.nan
             else:
-                second_deriv = np.diff(deriv)
+                t_p, ks_p = np.nan, np.nan
             
-            features['SecondDeriv_Min'] = float(np.min(second_deriv))
-            features['SecondDeriv_Max'] = float(np.max(second_deriv))
-            features['SecondDeriv_Std'] = float(np.std(second_deriv))
+            t_pvals.append(t_p)
+            ks_pvals.append(ks_p)
+        
+        # Remove NaN antes de calcular mínimos
+        t_pvals_clean = [p for p in t_pvals if not np.isnan(p)]
+        ks_pvals_clean = [p for p in ks_pvals if not np.isnan(p)]
+        
+        # Evita log(0)
+        eps = 1e-300
+        
+        # Menor p-valor em escala log (mais discriminativo)
+        if t_pvals_clean:
+            features['MinLogP_Ttest'] = float(-np.log10(min(t_pvals_clean) + eps))
         else:
-            features['SecondDeriv_Min'] = 0.0
-            features['SecondDeriv_Max'] = 0.0
-            features['SecondDeriv_Std'] = 0.0
+            features['MinLogP_Ttest'] = np.nan
+        
+        if ks_pvals_clean:
+            features['MinLogP_KS'] = float(-np.log10(min(ks_pvals_clean) + eps))
+        else:
+            features['MinLogP_KS'] = np.nan
     else:
-        features['Deriv_Min'] = 0.0
-        features['Deriv_Max'] = 0.0
-        features['Deriv_Mean'] = 0.0
-        features['Deriv_Std'] = 0.0
-        features['Deriv_Skew'] = 0.0
-        features['Deriv_Kurtosis'] = 0.0
-        features['SecondDeriv_Min'] = 0.0
-        features['SecondDeriv_Max'] = 0.0
-        features['SecondDeriv_Std'] = 0.0
+        features['MinLogP_Ttest'] = np.nan
+        features['MinLogP_KS'] = np.nan
     
     return features
 
@@ -479,11 +527,15 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     print("\nMontando DataFrame final...")
     df = pd.DataFrame(all_features)
     
-    # Reordena colunas
+    # Reordena colunas (20 features + 3 metadados)
     cols_order = ['curve_name', 'source', 'occ',
+                  # Features básicas (9)
                   'Feature_Amp', 'Feature_mv_av_Max', 'Feature_mv_av_Min', 
                   'Feature_Flux_std', 'Feature_Savgol_Max', 'Feature_Savgol_Min',
                   'Feature_Savgol_std', 'Max_Drawdown',
+                  # Features de quartis (2)
+                  'MinLogP_Ttest', 'MinLogP_KS',
+                  # Features de derivadas (9)
                   'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std',
                   'Deriv_Skew', 'Deriv_Kurtosis',
                   'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std']
