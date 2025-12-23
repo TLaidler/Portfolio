@@ -840,7 +840,7 @@ if __name__ == "__main__":
     #print("Arquivo da figura:", png)
 
     # Rodar os testes extras com Umbriel e Chariklo
-    #testes_extras()
+    testes_extras()
 
     #
-    gerar_curvas_aleatorias(n_curvas=40, positivas=False, seed=422)
+    #gerar_curvas_aleatorias(n_curvas=40, positivas=False, seed=422)
