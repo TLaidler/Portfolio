@@ -110,7 +110,7 @@ CAT_PARAMS = {
 # FUNÇÕES DE CARREGAMENTO DE DADOS
 # =============================================================================
 
-def load_dataset(from_csv=None, skip_cropping=True):
+def load_dataset(from_csv=None, skip_cropping=False):
     """
     Carrega o dataset para treinamento.
     
@@ -132,7 +132,7 @@ def load_dataset(from_csv=None, skip_cropping=True):
     else:
         # Carrega via build_dataset (pode demorar se precisar construir do zero)
         print("  Construindo dataset via build_dataset.py...")
-        df = bd.build_dataset(skip_cropping=skip_cropping)
+        df = bd.build_dataset(sample_size_for_cropping=50, skip_cropping=skip_cropping)
     
     return df
 
@@ -572,7 +572,7 @@ def run_pipeline(
     csv_path=None,
     test_curve_names=None,
     test_size=TEST_SIZE,
-    skip_cropping=True,
+    skip_cropping=False,
     show_plots=True,
     save_plots=True
 ):
@@ -745,3 +745,5 @@ if __name__ == "__main__":
         show_plots=True,
         save_plots=True
     )
+
+    print(results)
