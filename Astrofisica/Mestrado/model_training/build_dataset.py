@@ -709,7 +709,9 @@ def plot_kmeans_hist_by_class(
 # EXECUÇÃO
 # =============================================================================
 
-if __name__ == "__main__":
+#if __name__ == "__main__":
+def build_dataset(sample_size_for_cropping=None, skip_cropping=False):
+
     import argparse
     
     parser = argparse.ArgumentParser(
@@ -748,4 +750,5 @@ if __name__ == "__main__":
     plot_kmeans_hist_by_class(df)
     print("\nPipeline concluído!")
 
+    return df
     
