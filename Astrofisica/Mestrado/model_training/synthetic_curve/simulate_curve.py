@@ -735,7 +735,7 @@ def gerar_curvas_aleatorias(n_curvas: int, positivas: bool = True, seed: Optiona
     for i in range(n_curvas):
         # Escolhe cenário
         cenarios_pos = ["bare", "rings", "grazing", "atmosphere", "satellite"]
-        cenarios_neg = ["negative", "bare", "rings"]  # negativas podem incluir caso quase neutro
+        cenarios_neg = ["negative"]  # negativas podem incluir caso quase neutro
         scenario = rng.choice(cenarios_pos if positivas else cenarios_neg)
 
         # Parâmetros base aleatórios
@@ -840,7 +840,7 @@ if __name__ == "__main__":
     #print("Arquivo da figura:", png)
 
     # Rodar os testes extras com Umbriel e Chariklo
-    testes_extras()
+    #testes_extras()
 
     #
-    #gerar_curvas_aleatorias(n_curvas=40, positivas=False, seed=422)
+    gerar_curvas_aleatorias(n_curvas=720, positivas=False, seed=422)

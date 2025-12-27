@@ -116,7 +116,7 @@ def create_and_save_artificially_negative_curves(limit: int):
                     resp = input("Guardar curva? (s/n)")
                     if resp == 's':
                         artificially_negatives_from_sample.append(curv)  # <-- append, não extend!
-                        df_curv.to_csv(f'outputs/artific_neg_{curv[3]}_{curv[2]}_{curv[1]}_{count}.csv')
+                        df_curv.to_csv(f'negative_slices/artific_neg_{curv[3]}_{curv[2]}_{curv[1]}_{count}.csv')
                         count = count + 1
     except Exception as e:
         print(f"Ocorreu um erro: {e}")
