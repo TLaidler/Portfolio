@@ -14,7 +14,7 @@ O objetivo é aproximar o que seria esperado observar para um corpo específico,
 ### 1) Fotometria e conversões
 - Conversão magnitude → fluxo (escala relativa) usando a relação fotométrica padrão:
 
-\[ F \propto 10^{-0{,}4\,m} \]
+$\ F \propto 10^{-0{,}4\,m} \$
 
 - Conversão fluxo → contagem de fótons (usando a energia do fóton \(E = h c / \lambda\)).
 
@@ -24,7 +24,7 @@ Essas rotinas são usadas para escalonar a taxa de fótons observados e, posteri
 ### 2) Escala e difração de Fresnel
 - A escala de Fresnel é dada por:
 
-\[ F = \sqrt{\frac{\lambda\,D}{2}} \]
+$\ F = \sqrt{\frac{\lambda\,D}{2}} \$
 
 onde \( \lambda \) é o comprimento de onda efetivo e \( D \) a distância ao objeto. O código calcula esta escala e usa integrais de Fresnel (SciPy) para modelar o perfil difrativo de uma “faixa” opaca (imersão/emersão).
 
@@ -129,76 +129,56 @@ Comentários:
 - Usar um baseline robusto para normalização e vetorização para desempenho.
 - Separar nitidamente: “ótica/física” (difração, geometria) vs “detector/atmosfera” (ruídos).
 
+## Como o simulador funciona
 
-### Como o simulador funciona:
+O simulador tenta gerar **curvas de luz sintéticas de ocultações estelares**, combinando:
 
-Ele tenta gerar curvas de luz sintéticas de ocultações estelares, combinando:
-Difração de Fresnel nos instantes de imersão/emersão do corpo principal.
-Contribuições opcionais de anéis (opacidade parcial) e de um satélite (ocultação secundária).
-Efeitos atmosféricos (cintilação/seeing) e ruídos instrumentais.
-Conversões fotométricas simples (magnitude → fluxo; fluxo → fótons).
-Normalização “pós-fotometria” (trazendo o nível de fora da ocultação para ≈1).
-Plots da curva resultante.
-A ideia é aproximar o que você esperaria observar para um corpo específico, dados diâmetro, distância, velocidade do evento, anéis, etc.
-Blocos principais do código
-Fotometria e conversões
-Fluxo_lambda(magnitude): aproxima o fluxo em função da magnitude da estrela.
-fluxo_fotons(fluxo, lamb): converte fluxo em contagem de fótons.
-Algumas variantes tentam injetar ruído lognormal na irradiância para simular cintilação.
-Escala e difração de Fresnel
-calc_fresnel(distance, bandpass): calcula a escala de Fresnel 
-F
-=
-λ
-D
-/
-2
-F= 
-λD/2
-​
-  para distância do corpo e comprimento de onda efetivo.
-bar_fresnel(X, X01, X02, opacity, distance, bandpass): modelo de faixa (bar) com dois “knife-edges” (imersão/emersão) usando integrais de Fresnel de SciPy para gerar o perfil de difração:
-simulate_curveC&P.pyLines 138-156
-    import scipy.special as scsp    ...    s1, c1 = scsp.fresnel(x1)    s2, c2 = scsp.fresnel(x2)    cc = c1 - c2    ss = s1 - s2    r_ampli = - (cc + ss) * (opacity / 2.)    i_ampli = (cc - ss) * (opacity / 2.)    flux_fresnel = (1.0 + r_ampli) ** 2 + i_ampli ** 2
-Turbulência atmosférica e seeing
-A partir de um valor de seeing, escolhe um perfil empírico de turbulência (coeficientes A, B, C, D e escalas de altura) e obtém grandezas como r0, variância de fase e variância de irradiância. Isso determina a intensidade da cintilação (ruído multiplicativo).
-Usa integrais e fatores de atenuação de abertura para estimar a variância da irradiância (modelo de Saha/Hardy/Tyson em versões simplificadas).
-Ruídos instrumentais
-Funções esboçadas para ruído térmico e de leitura; em outras rotinas o ruído é injetado via Poisson (contagem de fótons) e ruído lognormal (cintilação).
-Geometria da ocultação e linha do tempo
-Define o tempo de simulação, o vetor temporal times e a coordenada ao longo da corda Xs = v * t.
-Determina início/fim da ocultação principal a partir do diâmetro do corpo e da velocidade.
-Define segmentos para anéis (com opacidade parcial) e, se desejado, um satélite (offset e diâmetro), criando pares (X01, X02) para cada “faixa” que cruza a estrela.
-Geração das curvas “ópticas” (sem ruído) e combinação
-Calcula curvas de Fresnel para corpo principal, anéis e satélite; depois multiplica tudo para obter a transmissão total:
-simulate_curveC&P.pyLines 870-879
-Fres=bar_fresnel(Xs,X01,X02,1,distancia,band)...Fres_tot = (Fres*Fres_sat*Fres_an1*Fres_an2*Fres_an3*Fres_an4)plt.plot(times,Fres_tot, 'o-', ... )plt.title("Simulação com Difração de Fresnel")
-Síntese de observação com ruído e normalização
-Em um laço temporal, integra o fluxo observável em cada exposição, aplicando o “estado” geométrico (dentro/fora do corpo, anel, satélite) e ruídos.
-Normaliza a curva para que a média/mediana fora da ocultação fique ≈1:
-simulate_curveC&P.pyLines 904-931
-med=np.median(flua[0:40])for i in range(len(flua)):    flua[i]=flua[i]/med...Flua_fresn=[]for j in range(len(Flua_fres)):    Flua_fresn.append(Flua_fres[j]/med)
-Visualização
-Plota e salva figuras (curvas de Fresnel individuais e a curva final normalizada).
-Como os parâmetros controlam a curva
-Corpo principal
-diametro_corpo, distancia, vel (velocidade do evento) → definem começo/fim da ocultação e o espaçamento das franjas (via Fresnel).
-Anéis
-Conjuntos início/fim e opacidades → criam atenuações parciais adicionais (franjas mais suaves).
-Satélite
-Offset e diâmetro → gera uma pequena ocultação separada com sua própria difração.
-Observação
-tempexp (tempo de exposição) e banda band → definem amostragem e a escala de Fresnel.
-diam_teles, readout_noise, temperatura → afetam contagem e ruído.
-Seeing → controla a cintilação (ruído multiplicativo).
-O que usar para “pós-fotometria”
-A pipeline faz a normalização final (fora da ocultação ≈1), então o resultado imita uma curva “pós-fotometria”.
-Para um corpo específico: ajuste diametro_corpo, distancia, vel, posição dos anéis/satélite e band. Ajuste tempexp para o seu cadence e seeing/diam_teles para o local/instrumento.
-Limitações e cuidados
-Há problemas de implementação:
-Mistura de unidades e constantes; várias prints/experimentos deixados no código.
-Trechos com bug de atribuição (== onde deveria ser =) e referência a self.d_star em contexto sem classe.
-Uso extensivo de variáveis globais; funções redundantes e loop não vetorizado (lento).
-Cientificamente, o cerne (difração de Fresnel × geometrias de faixas) está no caminho certo, mas:
-A física da atmosfera está muito simplificada/heurística.
-A normalização e a soma com ruído poderiam ser mais consistentes e vetorizadas.
+- Difração de Fresnel nos instantes de imersão e emersão do corpo principal  
+- Contribuições opcionais de **anéis** (com opacidade parcial) e de um **satélite** (ocultação secundária)  
+- Efeitos atmosféricos (cintilação / seeing) e ruídos instrumentais  
+- Conversões fotométricas simples (magnitude → fluxo; fluxo → fótons)  
+- Normalização *pós-fotometria* (trazendo o nível fora da ocultação para ≈ 1)  
+- Visualização (plots) da curva resultante  
+
+A ideia é aproximar o que se esperaria observar para um corpo específico, dados **diâmetro, distância, velocidade do evento, presença de anéis**, etc.
+
+---
+
+## Blocos principais do código
+
+### Fotometria e conversões
+
+- `Fluxo_lambda(magnitude)`: aproxima o fluxo em função da magnitude da estrela.  
+- `fluxo_fotons(fluxo, lamb)`: converte fluxo em contagem de fótons.  
+
+Algumas variantes tentam injetar **ruído lognormal** na irradiância para simular cintilação.
+
+---
+
+### Escala e difração de Fresnel
+
+- `calc_fresnel(distance, bandpass)`: calcula a **escala de Fresnel**
+
+$$
+F = \sqrt{\frac{\lambda D}{2}}
+$$
+
+para a distância do corpo e o comprimento de onda efetivo.
+
+- `bar_fresnel(X, X01, X02, opacity, distance, bandpass)`: modelo de faixa (*bar*) com dois *knife-edges* (imersão / emersão), usando integrais de Fresnel da SciPy para gerar o perfil de difração.
+
+Trecho representativo do código:
+
+```python
+import scipy.special as scsp
+
+s1, c1 = scsp.fresnel(x1)
+s2, c2 = scsp.fresnel(x2)
+
+cc = c1 - c2
+ss = s1 - s2
+
+r_ampli = - (cc + ss) * (opacity / 2.)
+i_ampli =   (cc - ss) * (opacity / 2.)
+
+flux_fresnel = (1.0 + r_ampli) ** 2 + i_ampli ** 2
