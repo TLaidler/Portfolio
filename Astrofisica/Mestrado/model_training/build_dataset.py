@@ -122,6 +122,7 @@ def create_and_save_artificially_negative_curves(limit: int):
         print(f"Ocorreu um erro: {e}")
     return True
 
+create_and_save_artificially_negative_curves(limit=50)
 
 
 
