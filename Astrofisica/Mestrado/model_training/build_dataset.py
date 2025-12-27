@@ -709,46 +709,112 @@ def plot_kmeans_hist_by_class(
 # EXECUÇÃO
 # =============================================================================
 
-#if __name__ == "__main__":
-def build_dataset(sample_size_for_cropping=None, skip_cropping=False):
+def build_dataset(sample_size_for_cropping=50, skip_cropping=False):
+    """
+    Executa o pipeline de construção do dataset para detecção de ocultações estelares.
 
-    import argparse
-    
-    parser = argparse.ArgumentParser(
-        description='Pipeline de construção do dataset para detecção de ocultações estelares'
-    )
-    parser.add_argument(
-        '--sample', '-s',
-        type=int,
-        default=50,
-        help='Número de curvas positivas a usar no recorte interativo (default: todas)'
-    )
-    parser.add_argument(
-        '--skip-cropping',
-        action='store_true',
-        help='Pular a etapa de recorte interativo'
-    )
-    
-    args = parser.parse_args()
-    
-    # Executa o pipeline
-    dataset = run_pipeline(
-        sample_size_for_cropping=args.sample,
-        skip_cropping=args.skip_cropping
+    Parameters
+    ----------
+    sample_size_for_cropping : int or None
+        Número de curvas positivas usadas no recorte interativo.
+        Use None para usar todas.
+    skip_cropping : bool
+        Se True, pula a etapa de recorte interativo.
+
+    Returns
+    -------
+    df : pandas.DataFrame
+        DataFrame final pronto para uso em ML.
+    """
+
+    # Executa o pipeline principal
+    df = run_pipeline(
+        sample_size_for_cropping=sample_size_for_cropping,
+        skip_cropping=skip_cropping
     )
 
-    df = dataset
+    # Checagem mínima de colunas esperadas
+    required_cols = ['occ', 'kmeans_centroid_dist']
+    missing = [c for c in required_cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Colunas ausentes no dataset: {missing}")
 
-    df.groupby('occ').describe().to_csv("data_set_resume.csv")
+    # Estatísticas gerais por classe
+    df.groupby('occ').describe().to_csv(
+        "data_set_resume.csv",
+        index=True
+    )
 
-    df[(df['occ'] == 1) & (df['kmeans_centroid_dist'] < 0.15)].to_csv("outliers_positives_kmeansVERYlow.csv")
+    # Exportação de outliers (diagnóstico)
+    df[
+        (df['occ'] == 1) & (df['kmeans_centroid_dist'] < 0.15)
+    ].to_csv(
+        "outliers_positives_kmeansVERYlow.csv",
+        index=False
+    )
 
-    df[(df['occ'] == 1) & (df['kmeans_centroid_dist'] > 1.5)].to_csv("outliers_positives_kmeansVERYhigh.csv")
+    df[
+        (df['occ'] == 1) & (df['kmeans_centroid_dist'] > 1.5)
+    ].to_csv(
+        "outliers_positives_kmeansVERYhigh.csv",
+        index=False
+    )
 
-    df[(df['occ'] == 0) & (df['kmeans_centroid_dist'] > 1)].to_csv("outliers_positives_kmeansVERYhigh.csv")
+    df[
+        (df['occ'] == 0) & (df['kmeans_centroid_dist'] > 1)
+    ].to_csv(
+        "outliers_negatives_kmeansVERYhigh.csv",
+        index=False
+    )
 
+    # Plots de diagnóstico
     plot_kmeans_hist_by_class(df)
-    print("\nPipeline concluído!")
+
+    print("\nPipeline de construção do dataset concluído com sucesso!")
 
     return df
+
+
+
+#if __name__ == "__main__":
+
+#    import argparse
+    
+#    parser = argparse.ArgumentParser(
+#        description='Pipeline de construção do dataset para detecção de ocultações estelares'
+#    )
+#    parser.add_argument(
+#        '--sample', '-s',
+#        type=int,
+#        default=50,
+#        help='Número de curvas positivas a usar no recorte interativo (default: todas)'
+#    )
+#    parser.add_argument(
+#        '--skip-cropping',
+#        action='store_true',
+#        help='Pular a etapa de recorte interativo'
+#    )
+    
+#    args = parser.parse_args()
+    
+    # Executa o pipeline
+#    dataset = run_pipeline(
+#        sample_size_for_cropping=args.sample,
+#        skip_cropping=args.skip_cropping
+#    )
+
+#    df = dataset
+
+#    df.groupby('occ').describe().to_csv("data_set_resume.csv")
+
+#    df[(df['occ'] == 1) & (df['kmeans_centroid_dist'] < 0.15)].to_csv("outliers_positives_kmeansVERYlow.csv")
+
+#    df[(df['occ'] == 1) & (df['kmeans_centroid_dist'] > 1.5)].to_csv("outliers_positives_kmeansVERYhigh.csv")
+#
+#   df[(df['occ'] == 0) & (df['kmeans_centroid_dist'] > 1)].to_csv("outliers_negatives_kmeansVERYhigh.csv")
+
+#    plot_kmeans_hist_by_class(df)
+#    print("\nPipeline concluído!")
+
+#    return df
     
