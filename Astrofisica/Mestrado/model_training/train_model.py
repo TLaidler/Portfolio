@@ -61,7 +61,7 @@ def fetch_all_curves_from_db():
 # ETAPA 2: Recortar segmentos negativos de curvas positivas
 # =============================================================================
 
-def recortar_negativos_interativo(positives, threshold=0.8, min_tamanho=20, z_thresh=3):
+def recortar_negativos_interativo(positives, threshold=0.78, min_tamanho=20, z_thresh=3):
     """
     Recorta segmentos negativos (sem ocultação) de curvas positivas,
     permitindo revisão manual de cada recorte.
@@ -139,11 +139,11 @@ def recortar_negativos_interativo(positives, threshold=0.8, min_tamanho=20, z_th
         
         # Mostra a curva completa e os segmentos
         fig, axes = plt.subplots(1, len(segments) + 1, figsize=(5 * (len(segments) + 1), 4))
-        if len(segments) == 1:
-            axes = [axes, axes]  # Ajusta para indexação
+        #if len(segments) == 1:
+        #    axes = [axes, axes]  # Ajusta para indexação
         
         # Plot da curva completa
-        ax_full = axes[0] if len(segments) > 0 else axes
+        ax_full = axes[0] #if len(segments) > 0 else axes
         ax_full.plot(time_clean, flux_clean, 'b.-', markersize=2, linewidth=0.5)
         ax_full.axhline(y=threshold, color='r', linestyle='--', label=f'Threshold={threshold}')
         ax_full.axvspan(time_clean[inicio_occ], time_clean[fim_occ], alpha=0.3, color='red', label='Ocultação')
@@ -438,7 +438,7 @@ def extract_features(curve, curve_name):
 # K-MEANS FEATURE ENGINEERING
 # =============================================================================
 
-def add_kmeans_features(df, n_clusters=3, random_state=42):
+def add_kmeans_features(df, n_clusters=2, random_state=42):
     """
     Adiciona features baseadas em K-Means ao DataFrame.
     
@@ -596,11 +596,11 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     df = pd.DataFrame(all_features)
     
     # --- Adiciona features de K-Means ---
-    if len(df) >= 3:  # Precisa de pelo menos 3 amostras para K=3
-        df, kmeans_model, scaler = add_kmeans_features(df, n_clusters=3)
-    else:
-        print("\n[AVISO] Poucas amostras para K-Means, pulando...")
-        kmeans_model, scaler = None, None
+    #if len(df) >= 2:  # Precisa de pelo menos 3 amostras para K=3
+    #    df, kmeans_model, scaler = add_kmeans_features(df, n_clusters=2)
+    #else:
+    #    print("\n[AVISO] Poucas amostras para K-Means, pulando...")
+    #    kmeans_model, scaler = None, None
     
     # Reordena colunas (20 features originais + 4 K-Means + 3 metadados)
     cols_order = ['curve_name', 'source', 'occ',
@@ -615,7 +615,8 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
                   'Deriv_Skew', 'Deriv_Kurtosis',
                   'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std',
                   # Features de K-Means (4)
-                  'kmeans_cluster', 'kmeans_dist_c0', 'kmeans_dist_c1', 'kmeans_dist_c2']
+                  #'kmeans_cluster', 'kmeans_dist_c0', 'kmeans_dist_c1', 'kmeans_dist_c2']
+                  ]
     
     # Usa apenas colunas que existem
     cols_final = [c for c in cols_order if c in df.columns]
@@ -710,7 +711,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '--sample', '-s',
         type=int,
-        default=None,
+        default=50,
         help='Número de curvas positivas a usar no recorte interativo (default: todas)'
     )
     parser.add_argument(
