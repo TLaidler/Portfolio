@@ -56,7 +56,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 RANDOM_STATE = 42
 np.random.seed(RANDOM_STATE)
 random.seed(RANDOM_STATE)
-
+SIZE_CROPPING = 250
 
 # =============================================================================
 # CONFIGURAÇÕES E HIPERPARÂMETROS
@@ -143,12 +143,12 @@ def load_dataset(from_csv=None, skip_cropping=False, use_filter='savgol'):
     """
     if from_csv and os.path.exists(from_csv):
         print(f"  Carregando dataset de: {from_csv}")
-        df = pd.read_csv(from_csv)
+        df = pd.read_csv(from_csv, sep=';').dropna() #pd.read_csv(from_csv)
     else:
         # Carrega via build_dataset (pode demorar se precisar construir do zero)
         print("  Construindo dataset via build_dataset.py...")
         df = bd.build_dataset(
-            sample_size_for_cropping=60,
+            sample_size_for_cropping=SIZE_CROPPING,
             skip_cropping=skip_cropping,
             use_filter=use_filter
         )
@@ -1007,7 +1007,7 @@ if __name__ == "__main__":
     results = run_pipeline(
         csv_path=CSV_PATH if os.path.exists(CSV_PATH) else None,
         test_curve_names=TEST_CURVES,
-        test_size=0.2,
+        test_size=TEST_SIZE,
         skip_cropping=False,
         use_filter='savgol',
         test_on_real_only=TEST_ON_REAL_ONLY,
