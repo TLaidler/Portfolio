@@ -15,16 +15,19 @@ Autor: Pipeline gerado para mestrado em Astrofísica
 
 import os
 import glob
+from typing import Optional
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
-from scipy.stats import skew, kurtosis, ttest_ind, ks_2samp
+from scipy.stats import ttest_ind, ks_2samp
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
 
 # Importa funções do módulo de acesso a dados
 import astro_data_access as ada
+
+# Diretório de saída
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 # =============================================================================
@@ -279,23 +282,26 @@ def load_synthetic_curves():
 # ETAPA 4: Extração de Features
 # =============================================================================
 
-def extract_features(curve, curve_name):
+def extract_features(curve, curve_name, use_filter: Optional[str] = 'savgol'):
     """
     Extrai features de uma curva de luz para classificação.
     
-    Metodologia baseada em lc_processing_pipeline.ipynb:
-    - Janela adaptativa baseada no tamanho da curva
-    - Derivadas calculadas sobre série suavizada (savgol)
-    - Features de comparação entre quartis (testes estatísticos)
+    use_filter controla quais features dependentes de filtro são incluídas:
+    - None: apenas features raw (Amp, Flux_std, Max_Drawdown, MinLogP_*)
+    - 'mv_avg': raw + features baseadas em média móvel (kmeans, derivadas em mv_avg)
+    - 'savgol': raw + features baseadas em Savitzky-Golay (kmeans, derivadas em savgol)
+    
+    A normalização do fluxo é obrigatória (usa flux_normalized).
     
     Args:
         curve: dict com 'time', 'flux', 'flux_normalized'
         curve_name: Nome identificador da curva
+        use_filter: None, 'mv_avg' ou 'savgol'
     
     Returns:
-        dict: Dicionário com todas as features extraídas
+        dict: Dicionário com features extraídas
     """
-    # Obtém o fluxo normalizado (preferencial) ou bruto
+    # Obtém o fluxo normalizado (obrigatório para features)
     flux = np.array(curve.get('flux_normalized', curve.get('flux', [])))
     time = np.array(curve.get('time', []))
     
@@ -304,116 +310,70 @@ def extract_features(curve, curve_name):
     
     features = {'curve_name': curve_name}
     
-    # ==========================================================================
-    # JANELA ADAPTATIVA (seguindo metodologia do notebook)
-    # ==========================================================================
+    # Janela adaptativa
     if len(flux) < 40:
         window = max(3, int(len(flux) / 3))
     else:
         window = max(3, int(len(flux) / 40))
-    
-    # Janela do savgol precisa ser ímpar
     if window % 2 == 0:
         window += 1
     
-    # ==========================================================================
-    # FEATURES BÁSICAS
-    # ==========================================================================
+    # FEATURES RAW (sempre incluídas)
     features['Feature_Amp'] = float(np.max(flux) - np.min(flux))
     features['Feature_Flux_std'] = float(np.std(flux))
-    
-    # ==========================================================================
-    # MOVING AVERAGE FEATURES
-    # ==========================================================================
-    if window >= 1 and window <= len(flux):
-        mv_avg = np.convolve(flux, np.ones(window)/window, mode='valid')
-        features['Feature_mv_av_Max'] = float(np.max(mv_avg))
-        features['Feature_mv_av_Min'] = float(np.min(mv_avg))
-    else:
-        features['Feature_mv_av_Max'] = float(np.max(flux))
-        features['Feature_mv_av_Min'] = float(np.min(flux))
-    
-    # ==========================================================================
-    # SAVITZKY-GOLAY FILTER FEATURES
-    # ==========================================================================
-    sg_filtered = flux.copy()  # Fallback
-    try:
-        if window >= 3 and window <= len(flux):
-            sg_filtered = savgol_filter(flux, window_length=window, polyorder=2)
-            features['Feature_Savgol_Max'] = float(np.max(sg_filtered))
-            features['Feature_Savgol_Min'] = float(np.min(sg_filtered))
-            features['Feature_Savgol_std'] = float(np.std(sg_filtered))
-        else:
-            features['Feature_Savgol_Max'] = float(np.max(flux))
-            features['Feature_Savgol_Min'] = float(np.min(flux))
-            features['Feature_Savgol_std'] = float(np.std(flux))
-    except ValueError:
-        # Fallback se savgol falhar
-        sg_filtered = flux.copy()
-        features['Feature_Savgol_Max'] = float(np.max(flux))
-        features['Feature_Savgol_Min'] = float(np.min(flux))
-        features['Feature_Savgol_std'] = float(np.std(flux))
-    
-    # ==========================================================================
-    # K-MEANS NO FLUXO (separação fora/dentro da ocultação)
-    # ==========================================================================
-    # Aplica K-Means K=2 nos pontos do fluxo suavizado para detectar
-    # separação entre estados (fora da ocultação ~1 vs dentro ~0)
-    # A distância entre centroides indica a "profundidade" da ocultação
-    
-    if len(sg_filtered) >= 2:
-        try:
-            # KMeans precisa de array 2D: (n_samples, n_features)
-            flux_2d = sg_filtered.reshape(-1, 1)
-            
-            kmeans_flux = KMeans(n_clusters=2, random_state=42, n_init=10)
-            kmeans_flux.fit(flux_2d)
-            
-            # Centroides ordenados (menor primeiro)
-            centroids = sorted(kmeans_flux.cluster_centers_.flatten())
-            
-            # Feature: distância entre centroides
-            # Grande = ocultação profunda, Pequena = sem ocultação (apenas ruído)
-            features['kmeans_centroid_dist'] = float(abs(centroids[1] - centroids[0]))
-            
-        except Exception:
-            # Fallback se K-Means falhar
-            features['kmeans_centroid_dist'] = 0.0
-    else:
-        features['kmeans_centroid_dist'] = 0.0
-    
-    # ==========================================================================
-    # MAX DRAWDOWN
-    # ==========================================================================
     cummax = np.maximum.accumulate(flux)
     drawdown = flux - cummax
     features['Max_Drawdown'] = float(np.min(drawdown))
     
-    # ==========================================================================
-    # DERIVADAS (SOBRE O SAVGOL - metodologia do notebook)
-    # ==========================================================================
-    # Primeira derivada usando np.gradient (preserva tamanho do array)
-    d_flux = np.gradient(sg_filtered)
+    # Série suavizada para features dependentes de filtro
+    smoothed = flux.copy()
+    if use_filter == 'mv_avg' and window >= 1 and window <= len(flux):
+        mv_avg_full = np.convolve(flux, np.ones(window) / window, mode='same')
+        features['Feature_mv_av_Max'] = float(np.max(mv_avg_full))
+        features['Feature_mv_av_Min'] = float(np.min(mv_avg_full))
+        smoothed = mv_avg_full
+    elif use_filter == 'savgol':
+        try:
+            if window >= 3 and window <= len(flux):
+                sg_filtered = savgol_filter(flux, window_length=window, polyorder=2)
+                features['Feature_Savgol_Max'] = float(np.max(sg_filtered))
+                features['Feature_Savgol_Min'] = float(np.min(sg_filtered))
+                features['Feature_Savgol_std'] = float(np.std(sg_filtered))
+                smoothed = sg_filtered
+            else:
+                features['Feature_Savgol_Max'] = float(np.max(flux))
+                features['Feature_Savgol_Min'] = float(np.min(flux))
+                features['Feature_Savgol_std'] = float(np.std(flux))
+        except ValueError:
+            features['Feature_Savgol_Max'] = float(np.max(flux))
+            features['Feature_Savgol_Min'] = float(np.min(flux))
+            features['Feature_Savgol_std'] = float(np.std(flux))
     
-    # Segunda derivada
-    dd_flux = np.gradient(d_flux)
+    # K-MEANS, DERIVADAS (apenas se use_filter está ativo)
+    if use_filter in ('mv_avg', 'savgol') and len(smoothed) >= 2:
+        try:
+            flux_2d = smoothed.reshape(-1, 1)
+            kmeans_flux = KMeans(n_clusters=2, random_state=42, n_init=10)
+            kmeans_flux.fit(flux_2d)
+            centroids = sorted(kmeans_flux.cluster_centers_.flatten())
+            features['kmeans_centroid_dist'] = float(abs(centroids[1] - centroids[0]))
+        except Exception:
+            features['kmeans_centroid_dist'] = 0.0
+        
+        d_flux = np.gradient(smoothed)
+        dd_flux = np.gradient(d_flux)
+        features['Deriv_Min'] = float(np.min(d_flux))
+        features['Deriv_Max'] = float(np.max(d_flux))
+        features['Deriv_Mean'] = float(np.mean(d_flux))
+        features['Deriv_Std'] = float(np.std(d_flux))
+        features['Deriv_Skew'] = float(pd.Series(d_flux).skew()) if len(d_flux) > 2 else 0.0
+        features['Deriv_Kurtosis'] = float(pd.Series(d_flux).kurtosis()) if len(d_flux) > 3 else 0.0
+        features['SecondDeriv_Min'] = float(np.min(dd_flux))
+        features['SecondDeriv_Max'] = float(np.max(dd_flux))
+        features['SecondDeriv_Std'] = float(np.std(dd_flux))
+    # use_filter is None: não inclui kmeans nem derivadas
     
-    # Features de primeira derivada
-    features['Deriv_Min'] = float(np.min(d_flux))
-    features['Deriv_Max'] = float(np.max(d_flux))
-    features['Deriv_Mean'] = float(np.mean(d_flux))
-    features['Deriv_Std'] = float(np.std(d_flux))
-    features['Deriv_Skew'] = float(pd.Series(d_flux).skew()) if len(d_flux) > 2 else 0.0
-    features['Deriv_Kurtosis'] = float(pd.Series(d_flux).kurtosis()) if len(d_flux) > 3 else 0.0
-    
-    # Features de segunda derivada
-    features['SecondDeriv_Min'] = float(np.min(dd_flux))
-    features['SecondDeriv_Max'] = float(np.max(dd_flux))
-    features['SecondDeriv_Std'] = float(np.std(dd_flux))
-    
-    # ==========================================================================
-    # FEATURES DE QUARTIS (testes estatísticos entre segmentos)
-    # ==========================================================================
+    # FEATURES DE QUARTIS (sempre incluídas)
     # Remove NaN antes de dividir em quartis
     flux_clean = pd.Series(flux).dropna().values
     
@@ -467,7 +427,8 @@ def extract_features(curve, curve_name):
 # =============================================================================
 
 def build_and_save_dataset(positives, negatives_db, artificial_negatives, 
-                           synthetic_curves, excluded_positives):
+                           synthetic_curves, excluded_positives,
+                           use_filter: Optional[str] = 'savgol'):
     """
     Constrói o dataset final unificando todas as fontes de dados.
     
@@ -498,7 +459,7 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
             continue
         
         curve_name = f"{obj}_{date}_{observer}"
-        feats = extract_features(curve, curve_name)
+        feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
             feats['source'] = 'db_positive'
@@ -513,7 +474,7 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     count_neg_db = 0
     for curve, obj, date, observer in negatives_db:
         curve_name = f"{obj}_{date}_{observer}"
-        feats = extract_features(curve, curve_name)
+        feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
             feats['source'] = 'db_negative'
@@ -528,7 +489,7 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     count_art = 0
     for curve, obj, date, observer, seg_name in artificial_negatives:
         curve_name = f"{obj}_{date}_{observer}_{seg_name}_artificial"
-        feats = extract_features(curve, curve_name)
+        feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
             feats['source'] = 'artificial_negative'
@@ -543,7 +504,7 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     count_syn = 0
     for curve, name in synthetic_curves:
         curve_name = f"synthetic_{name}"
-        feats = extract_features(curve, curve_name)
+        feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
             feats['source'] = 'synthetic'
@@ -577,10 +538,9 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     df = df[cols_final]
     
     # --- Salva o dataset ---
-    output_dir = os.path.join(os.path.dirname(__file__), 'outputs')
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    output_path = os.path.join(output_dir, 'dataset_final.csv')
+    output_path = os.path.join(OUTPUT_DIR, 'dataset_final.csv')
     df.to_csv(output_path, index=False)
     
     print(f"\n{'=' * 60}")
@@ -601,7 +561,8 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
 # PIPELINE PRINCIPAL
 # =============================================================================
 
-def run_pipeline(sample_size_for_cropping=None, skip_cropping=False):
+def run_pipeline(sample_size_for_cropping=None, skip_cropping=False,
+                 use_filter: Optional[str] = 'savgol'):
     """
     Executa o pipeline completo de construção do dataset.
     
@@ -609,6 +570,7 @@ def run_pipeline(sample_size_for_cropping=None, skip_cropping=False):
         sample_size_for_cropping: Número de curvas positivas a usar no recorte
                                   (None = usar todas)
         skip_cropping: Se True, pula a etapa de recorte interativo
+        use_filter: None, 'mv_avg' ou 'savgol' - controla features dependentes de filtro
     
     Returns:
         pd.DataFrame: Dataset final
@@ -628,6 +590,7 @@ def run_pipeline(sample_size_for_cropping=None, skip_cropping=False):
         # Usa amostra se especificado
         if sample_size_for_cropping and sample_size_for_cropping < len(positives):
             import random
+            random.seed(42)
             sample = random.sample(positives, sample_size_for_cropping)
             print(f"\nUsando amostra de {sample_size_for_cropping} curvas para recorte...")
         else:
@@ -646,7 +609,8 @@ def run_pipeline(sample_size_for_cropping=None, skip_cropping=False):
         negatives_db=negatives_db,
         artificial_negatives=artificial_negatives,
         synthetic_curves=synthetic_curves,
-        excluded_positives=excluded_positives
+        excluded_positives=excluded_positives,
+        use_filter=use_filter
     )
     
     return df
@@ -659,16 +623,16 @@ def plot_kmeans_hist_by_class(
     feature='kmeans_centroid_dist',
     occ_col='occ',
     pmin=1,
-    pmax=99
+    pmax=99,
+    save_path=None
 ):
     """
     Plota histogramas da feature kmeans_centroid_dist por classe occ,
     descartando outliers via percentis antes do plot.
     
     pmin, pmax: percentis usados para corte de outliers (default 1%–99%)
+    save_path: caminho para salvar a figura em disco
     """
-    import matplotlib.pyplot as plt
-
     if feature not in df.columns or occ_col not in df.columns:
         print(f"Coluna '{feature}' ou '{occ_col}' não encontrada no DataFrame!")
         return
@@ -688,19 +652,21 @@ def plot_kmeans_hist_by_class(
 
     xmax = data_filt[feature].max()
 
-    plt.figure(figsize=(8, 5))
-    plt.hist(pos, bins=30, alpha=0.6, label='Positivas (Ocultações)')
-    plt.hist(neg, bins=30, alpha=0.6, label='Negativas')
-
-    plt.xlim(0, xmax)
-    plt.xlabel(feature)
-    plt.ylabel('N')
-    plt.title(
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.hist(pos, bins=30, alpha=0.6, label='Positivas (Ocultações)')
+    ax.hist(neg, bins=30, alpha=0.6, label='Negativas')
+    ax.set_xlim(0, xmax)
+    ax.set_xlabel(feature)
+    ax.set_ylabel('N')
+    ax.set_title(
         f'Histograma de {feature} (outliers removidos: {pmin}–{pmax} percentil)'
     )
-    plt.legend()
-    plt.grid(alpha=0.3)
-    plt.tight_layout()
+    ax.legend()
+    ax.grid(alpha=0.3)
+    fig.tight_layout()
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"  -> Histograma salvo em: {save_path}")
     plt.show()
 
 
@@ -709,7 +675,8 @@ def plot_kmeans_hist_by_class(
 # EXECUÇÃO
 # =============================================================================
 
-def build_dataset(sample_size_for_cropping=50, skip_cropping=False):
+def build_dataset(sample_size_for_cropping=50, skip_cropping=False,
+                  use_filter: Optional[str] = 'savgol'):
     """
     Executa o pipeline de construção do dataset para detecção de ocultações estelares.
 
@@ -720,6 +687,8 @@ def build_dataset(sample_size_for_cropping=50, skip_cropping=False):
         Use None para usar todas.
     skip_cropping : bool
         Se True, pula a etapa de recorte interativo.
+    use_filter : str or None
+        'savgol', 'mv_avg' ou None - controla features dependentes de filtro.
 
     Returns
     -------
@@ -730,45 +699,45 @@ def build_dataset(sample_size_for_cropping=50, skip_cropping=False):
     # Executa o pipeline principal
     df = run_pipeline(
         sample_size_for_cropping=sample_size_for_cropping,
-        skip_cropping=skip_cropping
+        skip_cropping=skip_cropping,
+        use_filter=use_filter
     )
 
     # Checagem mínima de colunas esperadas
-    required_cols = ['occ', 'kmeans_centroid_dist']
+    required_cols = ['occ']
+    if use_filter in ('savgol', 'mv_avg'):
+        required_cols.append('kmeans_centroid_dist')
     missing = [c for c in required_cols if c not in df.columns]
     if missing:
         raise ValueError(f"Colunas ausentes no dataset: {missing}")
 
-    # Estatísticas gerais por classe
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    # Estatísticas gerais por classe (salva em outputs/)
     df.groupby('occ').describe().to_csv(
-        "data_set_resume.csv",
+        os.path.join(OUTPUT_DIR, "data_set_resume.csv"),
         index=True
     )
 
-    # Exportação de outliers (diagnóstico)
-    df[
-        (df['occ'] == 1) & (df['kmeans_centroid_dist'] < 0.15)
-    ].to_csv(
-        "outliers_positives_kmeansVERYlow.csv",
-        index=False
-    )
+    # Exportação de outliers (apenas se kmeans_centroid_dist existir)
+    if 'kmeans_centroid_dist' in df.columns:
+        df[(df['occ'] == 1) & (df['kmeans_centroid_dist'] < 0.15)].to_csv(
+            os.path.join(OUTPUT_DIR, "outliers_positives_kmeansVERYlow.csv"),
+            index=False
+        )
+        df[(df['occ'] == 1) & (df['kmeans_centroid_dist'] > 1.5)].to_csv(
+            os.path.join(OUTPUT_DIR, "outliers_positives_kmeansVERYhigh.csv"),
+            index=False
+        )
+        df[(df['occ'] == 0) & (df['kmeans_centroid_dist'] > 1)].to_csv(
+            os.path.join(OUTPUT_DIR, "outliers_negatives_kmeansVERYhigh.csv"),
+            index=False
+        )
 
-    df[
-        (df['occ'] == 1) & (df['kmeans_centroid_dist'] > 1.5)
-    ].to_csv(
-        "outliers_positives_kmeansVERYhigh.csv",
-        index=False
-    )
-
-    df[
-        (df['occ'] == 0) & (df['kmeans_centroid_dist'] > 1)
-    ].to_csv(
-        "outliers_negatives_kmeansVERYhigh.csv",
-        index=False
-    )
-
-    # Plots de diagnóstico
-    plot_kmeans_hist_by_class(df)
+    # Plots de diagnóstico (apenas se kmeans_centroid_dist existir)
+    if 'kmeans_centroid_dist' in df.columns:
+        hist_path = os.path.join(OUTPUT_DIR, "histograma_kmeans_por_classe.png")
+        plot_kmeans_hist_by_class(df, save_path=hist_path)
 
     print("\nPipeline de construção do dataset concluído com sucesso!")
 

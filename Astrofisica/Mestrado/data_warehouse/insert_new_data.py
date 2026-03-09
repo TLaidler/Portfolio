@@ -5,9 +5,13 @@
 # Vizier occ.lightcurves = https://vizier.cds.unistra.fr/viz-bin/VizieR-3?-source=B/occ&-out.max=50&-out.form=HTML%20Table&-out.add=_r&-out.add=_RAJ,_DEJ&-sort=_r&-oc.form=sexa
 # Vizier só busca metadados de cada curva de luz, não dá para baixar as curvas de luz em sí
 
+import os
 import requests
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 import pandas as pd
+
+load_dotenv()
 import sqlite3
 from astroquery.vizier import Vizier
 import astropy.units as u
@@ -144,9 +148,10 @@ def get_light_curve(url, username, password):
     
     return None
 
-# Store your credentials securely (don't hardcode them!)
-username = "TLaidler"
-password = "gta12345"
+# Credenciais via variáveis de ambiente (.env)
+# Copie .env.example para .env e preencha SODIS_USERNAME e SODIS_PASSWORD
+username = os.getenv('SODIS_USERNAME', '')
+password = os.getenv('SODIS_PASSWORD', '')
 
 # URL of the light curve you want to download
 url = "https://sodis.iota-es.de/view/?u=8361"
