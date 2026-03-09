@@ -18,6 +18,7 @@ Autor: Pipeline gerado para mestrado em Astrofísica
 """
 
 import os
+import random
 import warnings
 import numpy as np
 import pandas as pd
@@ -27,6 +28,9 @@ import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     accuracy_score, 
     precision_score, 
@@ -48,6 +52,11 @@ import build_dataset as bd
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 
+# Seeds para reprodutibilidade (fixados no início)
+RANDOM_STATE = 42
+np.random.seed(RANDOM_STATE)
+random.seed(RANDOM_STATE)
+
 
 # =============================================================================
 # CONFIGURAÇÕES E HIPERPARÂMETROS
@@ -55,9 +64,6 @@ warnings.filterwarnings('ignore', category=UserWarning)
 
 # Diretório para salvar modelos e resultados
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), 'outputs')
-
-# Seed para reprodutibilidade
-RANDOM_STATE = 42
 
 # Proporção do conjunto de teste (quando usar split automático)
 TEST_SIZE = 0.2
@@ -105,12 +111,19 @@ CAT_PARAMS = {
     'auto_class_weights': 'Balanced'
 }
 
+LR_PARAMS = {
+    'max_iter': 1000,
+    'random_state': RANDOM_STATE,
+    'class_weight': 'balanced',
+    'n_jobs': -1
+}
+
 
 # =============================================================================
 # FUNÇÕES DE CARREGAMENTO DE DADOS
 # =============================================================================
 
-def load_dataset(from_csv=None, skip_cropping=False):
+def load_dataset(from_csv=None, skip_cropping=False, use_filter='savgol'):
     """
     Carrega o dataset para treinamento.
     
@@ -122,6 +135,8 @@ def load_dataset(from_csv=None, skip_cropping=False):
         from_csv (str, optional): Caminho para CSV existente. 
                                    Se None, usa build_dataset.
         skip_cropping (bool): Se True, pula recorte interativo ao usar build_dataset.
+        use_filter (str, optional): 'savgol', 'mv_avg' ou None. Usado apenas ao construir
+                                    dataset do zero. Ignorado se from_csv for fornecido.
     
     Returns:
         pd.DataFrame: Dataset carregado
@@ -132,7 +147,11 @@ def load_dataset(from_csv=None, skip_cropping=False):
     else:
         # Carrega via build_dataset (pode demorar se precisar construir do zero)
         print("  Construindo dataset via build_dataset.py...")
-        df = bd.build_dataset(sample_size_for_cropping=50, skip_cropping=skip_cropping)
+        df = bd.build_dataset(
+            sample_size_for_cropping=60,
+            skip_cropping=skip_cropping,
+            use_filter=use_filter
+        )
     
     return df
 
@@ -142,7 +161,7 @@ def prepare_features_target(df):
     Separa features (X) e target (y) do DataFrame.
     
     IMPORTANTE: Esta função garante que o target NÃO é usado como feature,
-    evitando data leakage.
+    evitando data leakage. NaNs são preservados; usar apply_imputation após o split.
     
     Args:
         df (pd.DataFrame): Dataset completo
@@ -156,12 +175,9 @@ def prepare_features_target(df):
     # Identifica colunas de features (tudo que não é metadado)
     feature_cols = [col for col in df.columns if col not in METADATA_COLS]
     
-    # Extrai features e target
+    # Extrai features e target (NaNs preservados para imputação pós-split)
     X = df[feature_cols].copy()
     y = df[TARGET_COL].copy()
-    
-    # Trata valores faltantes (NaN -> 0)
-    X = X.fillna(0)
     
     print(f"\n  Features ({len(feature_cols)}):")
     for i, col in enumerate(feature_cols, 1):
@@ -173,13 +189,41 @@ def prepare_features_target(df):
     return X, y, feature_cols
 
 
+def apply_imputation(X_train, X_test, strategy='median'):
+    """
+    Imputa valores faltantes (NaN) usando mediana do conjunto de treino.
+    
+    Fit é feito apenas em X_train para evitar data leakage.
+    
+    Args:
+        X_train (pd.DataFrame): Features de treino
+        X_test (pd.DataFrame): Features de teste
+        strategy (str): Estratégia do SimpleImputer ('median', 'mean', etc.)
+    
+    Returns:
+        tuple: (X_train_imputed, X_test_imputed, imputer)
+    """
+    imputer = SimpleImputer(strategy=strategy)
+    X_train_imp = pd.DataFrame(
+        imputer.fit_transform(X_train),
+        columns=X_train.columns,
+        index=X_train.index
+    )
+    X_test_imp = pd.DataFrame(
+        imputer.transform(X_test),
+        columns=X_test.columns,
+        index=X_test.index
+    )
+    return X_train_imp, X_test_imp, imputer
+
+
 # =============================================================================
 # FUNÇÕES DE SPLIT TREINO/TESTE
 # =============================================================================
 
 def split_data(X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE):
     """
-    Divide dados em treino e teste usando split automático estratificado.
+    Divide dados em treino e teste usando split automático estratificado (por linha).
     
     Args:
         X (pd.DataFrame): Features
@@ -198,6 +242,102 @@ def split_data(X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE):
     )
     
     return X_train, X_test, y_train, y_test
+
+
+def split_by_curve(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
+    """
+    Divide dados em treino e teste por curva/evento (uma curva inteira vai para
+    treino ou teste, nunca ambos). Evita data leakage entre curvas.
+    
+    Args:
+        df (pd.DataFrame): Dataset completo com colunas curve_name, occ e features
+        test_size (float): Proporção de curvas para teste (0 a 1)
+        random_state (int): Seed para reprodutibilidade
+    
+    Returns:
+        tuple: (X_train, X_test, y_train, y_test, df_train, df_test)
+    """
+    feature_cols = [c for c in df.columns if c not in METADATA_COLS]
+    curve_info = df[[ID_COL, TARGET_COL]].drop_duplicates()
+    curves = curve_info[ID_COL].values
+    y_curves = curve_info[TARGET_COL].values
+
+    try:
+        curves_train, curves_test, _, _ = train_test_split(
+            curves, y_curves,
+            test_size=test_size,
+            random_state=random_state,
+            stratify=y_curves
+        )
+    except ValueError:
+        # Pode falhar se apenas 1 amostra por classe; fallback sem stratify
+        curves_train, curves_test = train_test_split(
+            curves, test_size=test_size, random_state=random_state
+        )
+
+    mask_test = df[ID_COL].isin(curves_test)
+    df_test = df[mask_test].copy()
+    df_train = df[~mask_test].copy()
+
+    X_train = df_train[feature_cols]
+    X_test = df_test[feature_cols]
+    y_train = df_train[TARGET_COL]
+    y_test = df_test[TARGET_COL]
+
+    return X_train, X_test, y_train, y_test, df_train, df_test
+
+
+def split_real_holdout(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
+    """
+    Divide dados de forma que o conjunto de teste contenha apenas curvas reais
+    (db_positive, db_negative). Treino = synthetic + artificial + curvas reais
+    não usadas em teste. Útil para validar generalização em dados reais.
+    
+    Requer coluna 'source' no DataFrame.
+    
+    Args:
+        df (pd.DataFrame): Dataset completo
+        test_size (float): Proporção de curvas reais para teste
+        random_state (int): Seed para reprodutibilidade
+    
+    Returns:
+        tuple: (X_train, X_test, y_train, y_test, df_train, df_test)
+    """
+    if 'source' not in df.columns:
+        raise ValueError("split_real_holdout requer coluna 'source' no dataset.")
+
+    real_sources = ['db_positive', 'db_negative']
+    feature_cols = [c for c in df.columns if c not in METADATA_COLS]
+
+    df_real = df[df['source'].isin(real_sources)]
+    df_non_real = df[~df['source'].isin(real_sources)]
+
+    curve_info = df_real[[ID_COL, TARGET_COL]].drop_duplicates()
+    curves = curve_info[ID_COL].values
+    y_curves = curve_info[TARGET_COL].values
+
+    try:
+        curves_train, curves_test, _, _ = train_test_split(
+            curves, y_curves,
+            test_size=test_size,
+            random_state=random_state,
+            stratify=y_curves
+        )
+    except ValueError:
+        curves_train, curves_test = train_test_split(
+            curves, test_size=test_size, random_state=random_state
+        )
+
+    df_test = df_real[df_real[ID_COL].isin(curves_test)].copy()
+    df_train_real = df_real[df_real[ID_COL].isin(curves_train)].copy()
+    df_train = pd.concat([df_non_real, df_train_real], ignore_index=True)
+
+    X_train = df_train[feature_cols]
+    X_test = df_test[feature_cols]
+    y_train = df_train[TARGET_COL]
+    y_test = df_test[TARGET_COL]
+
+    return X_train, X_test, y_train, y_test, df_train, df_test
 
 
 def split_with_manual_test(df, test_curve_names):
@@ -243,11 +383,11 @@ def split_with_manual_test(df, test_curve_names):
     df_test = df[mask_test].copy()
     df_train = df[~mask_test].copy()
     
-    # Prepara features e target
+    # Prepara features e target (NaNs preservados para imputação)
     feature_cols = [col for col in df.columns if col not in METADATA_COLS]
     
-    X_train = df_train[feature_cols].fillna(0)
-    X_test = df_test[feature_cols].fillna(0)
+    X_train = df_train[feature_cols]
+    X_test = df_test[feature_cols]
     y_train = df_train[TARGET_COL]
     y_test = df_test[TARGET_COL]
     
@@ -319,6 +459,27 @@ def train_catboost(X_train, y_train, params=None):
     
     model = CatBoostClassifier(**params)
     model.fit(X_train, y_train)
+    
+    return model
+
+
+def train_logistic_regression(X_train_scaled, y_train, params=None):
+    """
+    Treina modelo de Regressão Logística em features já escaladas.
+    
+    Args:
+        X_train_scaled: Features de treino escaladas (StandardScaler)
+        y_train: Target de treino
+        params (dict, optional): Hiperparâmetros. Se None, usa LR_PARAMS.
+    
+    Returns:
+        LogisticRegression: Modelo treinado
+    """
+    if params is None:
+        params = LR_PARAMS.copy()
+    
+    model = LogisticRegression(**params)
+    model.fit(X_train_scaled, y_train)
     
     return model
 
@@ -396,7 +557,7 @@ def plot_roc_curves(all_metrics, y_test, save_path=None):
     """
     plt.figure(figsize=(8, 6))
     
-    colors = ['#2ecc71', '#3498db', '#e74c3c']
+    colors = ['#2ecc71', '#3498db', '#e74c3c', '#9b59b6', '#1abc9c']
     
     for metrics, color in zip(all_metrics, colors):
         fpr, tpr, _ = roc_curve(y_test, metrics['y_proba'])
@@ -468,18 +629,24 @@ def plot_feature_importance(model, feature_names, model_name, top_n=15, save_pat
     """
     Plota importância das features para um modelo.
     
+    Suporta modelos com feature_importances_ (RF, XGBoost, CatBoost) ou
+    coef_ (LogisticRegression).
+    
     Args:
-        model: Modelo treinado (deve ter feature_importances_)
+        model: Modelo treinado
         feature_names (list): Lista com nomes das features
         model_name (str): Nome do modelo
         top_n (int): Número de features a exibir
         save_path (str, optional): Caminho para salvar figura
     """
-    if not hasattr(model, 'feature_importances_'):
+    if hasattr(model, 'feature_importances_'):
+        importance = model.feature_importances_
+    elif hasattr(model, 'coef_'):
+        importance = np.abs(model.coef_).flatten()
+    else:
         print(f"  [AVISO] Modelo {model_name} não suporta feature importance")
         return
-    
-    importance = model.feature_importances_
+
     indices = np.argsort(importance)[::-1][:top_n]
     
     plt.figure(figsize=(10, 6))
@@ -564,6 +731,51 @@ def save_results_summary(all_metrics, output_dir=OUTPUT_DIR):
     return filepath
 
 
+def save_classification_reports(all_metrics, y_test, output_dir=OUTPUT_DIR):
+    """Salva classification report de cada modelo em arquivos de texto."""
+    os.makedirs(output_dir, exist_ok=True)
+    for metrics in all_metrics:
+        name = metrics['model'].lower().replace(' ', '_')
+        report = classification_report(
+            y_test,
+            metrics['y_pred'],
+            target_names=['Negativa', 'Positiva'],
+            digits=4
+        )
+        path = os.path.join(output_dir, f'classification_report_{name}.txt')
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(f"Modelo: {metrics['model']}\n\n{report}")
+        print(f"  -> Report salvo: {path}")
+
+
+def save_predictions(all_metrics, df_test, y_test, output_dir=OUTPUT_DIR):
+    """Salva predições (y_true, y_pred, y_proba) por modelo em CSV."""
+    os.makedirs(output_dir, exist_ok=True)
+    for metrics in all_metrics:
+        name = metrics['model'].lower().replace(' ', '_')
+        pred_df = pd.DataFrame({
+            'curve_name': df_test[ID_COL].values if ID_COL in df_test.columns else range(len(y_test)),
+            'y_true': y_test.values,
+            'y_pred': metrics['y_pred'],
+            'y_proba': metrics['y_proba']
+        })
+        path = os.path.join(output_dir, f'predictions_{name}.csv')
+        pred_df.to_csv(path, index=False)
+        print(f"  -> Predições salvas: {path}")
+
+
+def save_split_info(df_train, df_test, output_dir=OUTPUT_DIR):
+    """Salva lista de curvas em treino e teste para reprodutibilidade."""
+    os.makedirs(output_dir, exist_ok=True)
+    train_curves = df_train[ID_COL].drop_duplicates().tolist()
+    test_curves = df_test[ID_COL].drop_duplicates().tolist()
+    with open(os.path.join(output_dir, 'split_train_curves.txt'), 'w', encoding='utf-8') as f:
+        f.write('\n'.join(train_curves))
+    with open(os.path.join(output_dir, 'split_test_curves.txt'), 'w', encoding='utf-8') as f:
+        f.write('\n'.join(test_curves))
+    print(f"  -> Split salvo: split_train_curves.txt, split_test_curves.txt")
+
+
 # =============================================================================
 # PIPELINE PRINCIPAL
 # =============================================================================
@@ -573,6 +785,8 @@ def run_pipeline(
     test_curve_names=None,
     test_size=TEST_SIZE,
     skip_cropping=False,
+    use_filter='savgol',
+    test_on_real_only=False,
     show_plots=True,
     save_plots=True
 ):
@@ -583,9 +797,11 @@ def run_pipeline(
         csv_path (str, optional): Caminho para CSV do dataset. 
                                    Se None, usa build_dataset.
         test_curve_names (list, optional): Lista de curvas para forçar no teste.
-                                            Se None, usa split automático.
-        test_size (float): Proporção do teste (se usar split automático)
+                                            Se None, usa split por curva ou real holdout.
+        test_size (float): Proporção do teste
         skip_cropping (bool): Pular recorte interativo no build_dataset
+        use_filter (str): 'savgol', 'mv_avg' ou None. Usado ao construir dataset.
+        test_on_real_only (bool): Se True, teste apenas em curvas reais (db_positive/db_negative)
         show_plots (bool): Exibir gráficos
         save_plots (bool): Salvar gráficos em disco
     
@@ -599,33 +815,48 @@ def run_pipeline(
     # -------------------------------------------------------------------------
     # ETAPA 1: Carregar Dataset
     # -------------------------------------------------------------------------
-    print("\n[1/5] Carregando dataset...")
+    print("\n[1/6] Carregando dataset...")
     
-    df = load_dataset(from_csv=csv_path, skip_cropping=skip_cropping)
+    df = load_dataset(
+        from_csv=csv_path,
+        skip_cropping=skip_cropping,
+        use_filter=use_filter
+    )
     print(f"\n  -> {len(df)} amostras carregadas")
     
     # -------------------------------------------------------------------------
     # ETAPA 2: Preparar Features e Target
     # -------------------------------------------------------------------------
-    print("\n[2/5] Preparando features e target...")
+    print("\n[2/6] Preparando features e target...")
     
     X, y, feature_names = prepare_features_target(df)
     
     # -------------------------------------------------------------------------
     # ETAPA 3: Split Treino/Teste
     # -------------------------------------------------------------------------
-    print("\n[3/5] Separando treino/teste...")
+    print("\n[3/6] Separando treino/teste...")
     
     if test_curve_names:
-        # Split manual: força curvas específicas no teste
         print("  Modo: SELEÇÃO MANUAL de curvas de teste")
-        X_train, X_test, y_train, y_test, _, _ = split_with_manual_test(
+        X_train, X_test, y_train, y_test, df_train, df_test = split_with_manual_test(
             df, test_curve_names
         )
+    elif test_on_real_only:
+        print(f"  Modo: REAL HOLDOUT (teste em curvas reais, test_size={test_size})")
+        X_train, X_test, y_train, y_test, df_train, df_test = split_real_holdout(
+            df, test_size=test_size
+        )
     else:
-        # Split automático estratificado
-        print(f"  Modo: SPLIT AUTOMÁTICO (test_size={test_size})")
-        X_train, X_test, y_train, y_test = split_data(X, y, test_size=test_size)
+        print(f"  Modo: SPLIT POR CURVA (test_size={test_size})")
+        X_train, X_test, y_train, y_test, df_train, df_test = split_by_curve(
+            df, test_size=test_size
+        )
+    
+    # -------------------------------------------------------------------------
+    # ETAPA 3b: Imputação de NaN
+    # -------------------------------------------------------------------------
+    print("\n  Imputando valores faltantes (mediana do treino)...")
+    X_train, X_test, imputer = apply_imputation(X_train, X_test)
     
     print(f"\n  Treino: {len(X_train)} amostras")
     print(f"    - Positivas: {sum(y_train == 1)}")
@@ -637,7 +868,7 @@ def run_pipeline(
     # -------------------------------------------------------------------------
     # ETAPA 4: Treinar e Avaliar Modelos
     # -------------------------------------------------------------------------
-    print("\n[4/5] Treinando e avaliando modelos...")
+    print("\n[4/6] Treinando e avaliando modelos...")
     
     all_metrics = []
     models = {}
@@ -666,32 +897,67 @@ def run_pipeline(
     models['catboost'] = cat_model
     print_metrics(cat_metrics)
     
+    # --- Regressão Logística (requer features escaladas) ---
+    print("\n  Treinando Regressão Logística...")
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    lr_model = train_logistic_regression(X_train_scaled, y_train)
+    lr_metrics = evaluate_model(lr_model, X_test_scaled, y_test, "Logistic Regression")
+    all_metrics.append(lr_metrics)
+    models['logistic_regression'] = lr_model
+    models['scaler'] = scaler
+    print_metrics(lr_metrics)
+    
     # -------------------------------------------------------------------------
-    # ETAPA 5: Visualizações e Persistência
+    # ETAPA 5: Persistência
     # -------------------------------------------------------------------------
-    print("\n[5/5] Salvando modelos e gerando visualizações...")
+    print("\n[5/6] Salvando modelos...")
     
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
-    # Salva modelos
     for name, model in models.items():
-        path = save_model(model, name)
-        print(f"  -> Modelo salvo: {path}")
+        if name == 'scaler':
+            path = os.path.join(OUTPUT_DIR, 'scaler_model.pkl')
+            joblib.dump(model, path)
+        else:
+            path = save_model(model, name)
+        print(f"  -> Salvo: {path}")
     
-    # Salva resumo de métricas
+    # Salva imputer para uso em inferência
+    joblib.dump(imputer, os.path.join(OUTPUT_DIR, 'imputer_model.pkl'))
+    
     summary_path = save_results_summary(all_metrics)
-    print(f"  -> Resultados salvos: {summary_path}")
+    print(f"  -> Resultados: {summary_path}")
     
-    # Gráficos
+    # Salva relatórios, predições e split
+    save_classification_reports(all_metrics, y_test)
+    save_predictions(all_metrics, df_test, y_test)
+    save_split_info(df_train, df_test)
+    
+    # -------------------------------------------------------------------------
+    # ETAPA 6: Visualizações (sempre salva quando save_plots=True)
+    # -------------------------------------------------------------------------
+    print("\n[6/6] Gerando e salvando visualizações...")
+    
+    roc_path = os.path.join(OUTPUT_DIR, 'roc_curves.png') if save_plots else None
+    cm_path = os.path.join(OUTPUT_DIR, 'confusion_matrices.png') if save_plots else None
+    
     if show_plots or save_plots:
-        roc_path = os.path.join(OUTPUT_DIR, 'roc_curves.png') if save_plots else None
-        cm_path = os.path.join(OUTPUT_DIR, 'confusion_matrices.png') if save_plots else None
-        fi_path = os.path.join(OUTPUT_DIR, 'feature_importance_rf.png') if save_plots else None
-        
-        if show_plots:
-            plot_roc_curves(all_metrics, y_test, save_path=roc_path)
-            plot_confusion_matrices(all_metrics, save_path=cm_path)
-            plot_feature_importance(rf_model, feature_names, "Random Forest", save_path=fi_path)
+        plot_roc_curves(all_metrics, y_test, save_path=roc_path)
+        plot_confusion_matrices(all_metrics, save_path=cm_path)
+        # Feature importance para todos os modelos que suportam
+        for model, name in [
+            (rf_model, "Random Forest"),
+            (xgb_model, "XGBoost"),
+            (cat_model, "CatBoost"),
+            (lr_model, "Logistic Regression"),
+        ]:
+            fi_path = os.path.join(
+                OUTPUT_DIR,
+                f"feature_importance_{name.lower().replace(' ', '_')}.png"
+            ) if save_plots else None
+            plot_feature_importance(model, feature_names, name, save_path=fi_path)
     
     # -------------------------------------------------------------------------
     # Resumo Final
@@ -699,10 +965,9 @@ def run_pipeline(
     print("\n" + "=" * 60)
     print("  PIPELINE CONCLUÍDO COM SUCESSO!")
     print("=" * 60)
-    print(f"\n  Modelos treinados: {len(models)}")
+    print(f"\n  Modelos treinados: {len([k for k in models if k != 'scaler'])}")
     print(f"  Arquivos salvos em: {OUTPUT_DIR}/")
     
-    # Melhor modelo
     best = max(all_metrics, key=lambda x: x['f1_score'])
     print(f"\n  Melhor modelo (F1-Score): {best['model']} ({best['f1_score']:.4f})")
     
@@ -710,6 +975,7 @@ def run_pipeline(
         'models': models,
         'metrics': all_metrics,
         'feature_names': feature_names,
+        'imputer': imputer,
         'X_train': X_train,
         'X_test': X_test,
         'y_train': y_train,
@@ -726,12 +992,13 @@ if __name__ == "__main__":
     # CONFIGURAÇÃO DE EXECUÇÃO
     # -------------------------------------------------------------------------
     
-    # Opção 1: Carregar de CSV existente (mais rápido)
     CSV_PATH = os.path.join(OUTPUT_DIR, 'dataset_final.csv')
+    TEST_CURVES = None  # Para forçar curvas no teste: ["curve_1", "curve_2", ...]
     
-    # Opção 2: Forçar curvas específicas no teste (descomente para usar)
-    # TEST_CURVES = ["Chiron_2020-01-01_Observer1", "Eris_2019-05-15_Observer2"]
-    TEST_CURVES = None  # None = usar split automático
+    # test_on_real_only=False (padrão): split por curva em todo o dataset
+    # test_on_real_only=True: teste APENAS em curvas reais (db_positive/db_negative)
+    #   Use apenas quando quiser validar generalização em dados reais.
+    TEST_ON_REAL_ONLY = False
     
     # -------------------------------------------------------------------------
     # EXECUÇÃO DO PIPELINE
@@ -741,7 +1008,9 @@ if __name__ == "__main__":
         csv_path=CSV_PATH if os.path.exists(CSV_PATH) else None,
         test_curve_names=TEST_CURVES,
         test_size=0.2,
-        skip_cropping=True,
+        skip_cropping=False,
+        use_filter='savgol',
+        test_on_real_only=TEST_ON_REAL_ONLY,
         show_plots=True,
         save_plots=True
     )

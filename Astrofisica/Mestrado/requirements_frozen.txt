@@ -1,3 +1,5 @@
+# Para gerar este arquivo com versões exatas: pip freeze > requirements_frozen.txt
+# Instalação reprodutível: pip install -r requirements_frozen.txt
 python-dotenv==1.0.1
 SQLAlchemy==2.0.31
 requests==2.32.3

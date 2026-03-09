@@ -12,6 +12,13 @@ Ocultações estelares são eventos astronômicos onde um objeto do Sistema Sola
 - Refinar as órbitas dos objetos observados
 - Descobrir sistemas binários
 
+## Configuração
+
+### Reprodutibilidade
+- **Instalação:** `pip install -r requirements.txt`
+- **Ambiente exato:** `pip install -r requirements_frozen.txt` (ou `pip freeze > requirements_frozen.txt` para regenerar)
+- **Seeds:** Os scripts fixam `RANDOM_STATE=42` para numpy, random e modelos sklearn
+
 ## Estrutura do Repositório
 
 ### 📁 data_warehouse/
@@ -26,7 +33,8 @@ Os dados são organizados em um banco SQLite local, mantendo informações sobre
 Scripts para extração de características e treinamento dos modelos de machine learning. Cada curva de luz é tratada independentemente, e um conjunto de features descritivas é computado. Implementações incluem:
 - Random Forest
 - XGBoost
-- Outros classificadores em desenvolvimento
+- CatBoost
+- Regressão Logística
 
 ### 📁 model_in_practice/
 Código para aplicação dos modelos treinados em dados observacionais reais ou não vistos durante o treinamento. Inclui ferramentas para:
