@@ -77,6 +77,26 @@ TARGET_COL = 'occ'
 # Coluna identificadora
 ID_COL = 'curve_name'
 
+# Features excluídas por redundância (análise de correlação e motivação física)
+# As features continuam sendo calculadas em build_dataset.py, mas são ignoradas no treinamento.
+EXCLUDED_FEATURES = [
+    'Feature_Amp',                    # Redundante com IOTA_depth (para fluxo normalizado, max≈median)
+    'Feature_Flux_std',               # Redundante com IOTA_baseline_std (std geral vs std fora do dip)
+    'Feature_Savgol_Max',             # Variância mínima para fluxo normalizado (max suavizado ≈ 1.0)
+    'IOTA_flux_min',                  # Redundante com Feature_Savgol_Min (min raw vs min suavizado)
+    'IOTA_flux_min_over_baseline',    # Algebricamente derivável de IOTA_depth e baseline
+    'IOTA_n_frames_below_baseline',   # Redundante com IOTA_duration_s (n_frames × Δt ≈ duration)
+    'Deriv_Min',                      # Exp. 2 mostrou que derivadas são dispensáveis sem perda de F1
+    'Deriv_Max',
+    'Deriv_Mean',
+    'Deriv_Std',
+    'Deriv_Skew',
+    'Deriv_Kurtosis',
+    'SecondDeriv_Min',
+    'SecondDeriv_Max',
+    'SecondDeriv_Std',
+]
+
 # -----------------------------------------------------------------------------
 # HIPERPARÂMETROS DOS MODELOS (baseline - ajustar conforme necessário)
 # -----------------------------------------------------------------------------
@@ -173,8 +193,9 @@ def prepare_features_target(df):
             - y: Series com target
             - feature_names: Lista com nomes das features
     """
-    # Identifica colunas de features (tudo que não é metadado)
-    feature_cols = [col for col in df.columns if col not in METADATA_COLS]
+    # Identifica colunas de features (exclui metadados e features redundantes)
+    feature_cols = [col for col in df.columns
+                    if col not in METADATA_COLS and col not in EXCLUDED_FEATURES]
     
     # Extrai features e target (NaNs preservados para imputação pós-split)
     X = df[feature_cols].copy()
@@ -594,12 +615,10 @@ def plot_confusion_matrices(all_metrics, save_path=None):
         save_path (str, optional): Caminho para salvar figura
     """
     n_models = len(all_metrics)
-    fig, axes = plt.subplots(1, n_models, figsize=(5 * n_models, 4))
-    
-    if n_models == 1:
-        axes = [axes]
-    
-    for ax, metrics in zip(axes, all_metrics):
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+    axes = axes.flatten()
+
+    for ax, metrics in zip(axes[:n_models], all_metrics):
         cm = metrics['confusion_matrix']
         
         sns.heatmap(
@@ -616,7 +635,11 @@ def plot_confusion_matrices(all_metrics, save_path=None):
         ax.set_ylabel('Real', fontsize=11)
         ax.set_title(f"{metrics['model']}\n(Acc: {metrics['accuracy']:.3f})", fontsize=12)
     
-    plt.suptitle('Matrizes de Confusão', fontsize=14, y=1.02)
+    # Oculta subplots não utilizados (se houver menos de 4 modelos)
+    for i in range(n_models, 4):
+        axes[i].set_visible(False)
+
+    plt.suptitle('Matrizes de Confusão', fontsize=14)
     plt.tight_layout()
     
     if save_path:
@@ -925,8 +948,9 @@ def run_pipeline(
             path = save_model(model, name)
         print(f"  -> Salvo: {path}")
     
-    # Salva imputer para uso em inferência
+    # Salva imputer e lista de features para uso em inferência
     joblib.dump(imputer, os.path.join(OUTPUT_DIR, 'imputer_model.pkl'))
+    joblib.dump(feature_names, os.path.join(OUTPUT_DIR, 'feature_names.pkl'))
     
     summary_path = save_results_summary(all_metrics)
     print(f"  -> Resultados: {summary_path}")
