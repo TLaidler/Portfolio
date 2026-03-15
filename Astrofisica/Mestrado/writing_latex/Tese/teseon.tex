@@ -1,0 +1,248 @@
+\documentclass[msc]{on} % para dissertação de mestrado
+%\documentclass[dsc]{on} % para Tese de doutorado
+\usepackage[T1]{fontenc}
+%\usepackage[latin9]{inputenc}
+\usepackage{color}
+\usepackage{verbatim}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathabx}
+\usepackage[utf8]{inputenc}
+
+% para mostrar os links coloridos
+\usepackage{hyperref}
+\hypersetup{%unicode=true,bookmarks=false,backref=false,
+colorlinks,linkcolor=blue,citecolor=red,urlcolor=magenta,menucolor=cyan}   
+
+%\usepackage{indentfirst}
+%\usepackage{parskip}
+
+% modifca as margens padrao
+%\usepackage{geometry}  
+%\geometry{top=2.5cm,bottom=2.5cm,inner=2.5cm,outer=1.5cm}  
+
+% figuras multiples com (a), (b), (c), etc
+%\usepackage{subfigure} 
+
+% inclui as subsubsubsecoes no sumario
+%\setcounter{secnumdepth}{3}
+%\setcounter{tocdepth}{3}   
+
+% listas de simbolos e abreviacoes
+% para criar as listas de abreviaturas e/ou símbolos, chamar ao longo do texto as macros 
+% SIGLA\abbrev{SIGLA}{definicão de SIGLA} ou 
+% SIMBOLO\symbl{SIMBOLO}{definicão de SIMBOLO}
+% compilar as listas com os comandos
+%     makeindex -s on.ist -o filename.lab filename.abx
+%     makeindex -s on.ist -o filename.los filename.syx
+%\makelosymbols
+%\makeloabbreviations
+
+%%%%%%%%%%%%
+\begin{document}
+
+% titulo em portugues e ingles
+\title{Pipeline para Detecção Automatizada de Ocultações Estelares em Curvas de Luz com Técnicas de Machine Learning}
+\foreigntitle{Automated Pipeline for Detecting Stellar Occultations in Light Curves Using Machine Learning}
+
+% autor e orientador e coorientador(es)
+% exemplo: Jose Maria da Silva => Nome: Jose Maria da - Sobrenome: Silva
+%          Joao Santos Junior => Nome Joao - Sobrenome: Santos Junior
+% usar abreviatura das instituicoes
+% exemplo: OV/UFRJ
+%          UDELAR, Uruguai
+\author{Thiago}{Laidler}
+\advisor{Dr.}{J\'ulio}{Camargo}{Observat\'orio Nacional}
+%\coadvisor{Prof.}{Nome}{Sobrenome}{Instituicao}
+%\coadvisor{Prof.}{Nome}{Sobrenome}{Instituicao}
+
+% o codigo cutter deve corresponder às primeiras letras do sobrenome do autor
+% consultar a tabela em https://www.icmc.usp.br/institucional/estrutura-administrativa/biblioteca/servicos/cutter
+% exemplo: sobrenome Santos, letra S, cutter 237
+%          sobrenome Costa, letra C, cutter 837
+\cutter{837}
+
+% o codigo CDU sera fornecido pela biblioteca posteriormente
+\cducode{000.000.000}
+
+% membros da banca - nao incluir orientador nem coorientador(es)
+\examiner{Dr.}{Nome Sobrenome}{Instituicao}
+\examiner{Profa.}{Nome Sobrenome}{Instituicao}
+\examiner{Dra.}{Nome Sobrenome}{Instituicao}
+\examiner{Prof.}{Nome Sobrenome}{Instituicao}
+%\examiner{Prof.}{Nome Sobrenome}{Instituição}
+
+% COPAA ou COGEO
+\department{COPAA}
+
+% data da defesa - o dia podera ser informado depois
+\date{10}{11}{2025}
+
+% inserir ate 6 palavras chave
+\keyword{Ocultação Estelar}
+\keyword{Fotometria}
+\keyword{Aprendizado de Máquina}
+\keyword{Machine Learning}
+\keyword{Big Data}
+\keyword{Ciencia de Dados}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%
+\frontmatter
+\dedication{%
+Dedicat\'oria (opcional).
+}
+
+%%%%
+\acknowledgments
+\input{agradecimentos}
+
+%%%%
+\cleardoublepage
+\thispagestyle{plain}
+%\epigraph{Ep\'igrafe (opcional).}
+\vspace*{\fill}
+
+%%%%
+\begin{abstract}
+Resumo da tese em portugu\^es (obrigat\'orio)
+\end{abstract}
+
+%%%%
+\begin{foreignabstract}
+Abstract of the thesis in english (obrigat\'orio)
+\end{foreignabstract}
+
+%%%%
+\listoffigures
+\listoftables
+%\printlosymbols
+%\printloabbreviations
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%
+\mainmatter
+
+\chapter{Introdu\c c\~ao}
+
+\input{introducao}
+
+\chapter{Ocultações Estelares e Processamento de Dados}
+
+\input{capitulo2}
+
+\chapter{Modelos e algoritmos para Machine Learning}
+
+\input{capitulo3}
+
+\chapter{Metodologia: Pipeline de Detecção}
+
+\input{capitulo4}
+
+\chapter{Resultados}
+
+\input{capitulo5}
+
+\chapter{Conclusões}
+
+Bla bla bla
+
+%%%%%%%%%%%%%%%%%%%
+\backmatter
+
+% lista de referencia BibTeX: é necessario criar o arquivo filename.bib
+% as referencias sao invocadas no texto com os macros \citet{key} ou \citep{key}. etc.
+% criar a lista de referencias com o comando
+%    bibtex filename.aux
+%\bibliographystyle{on}
+%\bibliography{filename}
+
+% lista de referencias manual
+\begin{thebibliography}{100}
+
+% --- Mais citados e fundamentos de ML/estatística ---
+\bibitem[Geron (2019)]{geron2019maos} G\'ERON, Aur\'elin. \textit{M\~aos \`a Obra: Aprendizado de M\'aquina com Scikit-Learn e TensorFlow}. 2. ed. Rio de Janeiro: Alta Books, 2019.
+
+\bibitem[Levada (2026)]{Levada2026} LEVADA, Alexandre L. M. \textit{Manual completo para aprendizado de m\'aquina: algoritmos para classifica\c{c}\~ao supervisionada, agrupamento de dados e redu\c{c}\~ao de dimensionalidade}. Departamento de Computa\c{c}\~ao, Universidade Federal de S\~ao Carlos (UFSCar), 16 jan. 2026.
+
+\bibitem[Cazeneuve et al. (2023)]{Cazeneuve2023} CAZENEUVE, Dorian; MARCHIS, Franck; BLACLARD, Guillaume; DALBA, Paul A.; MARTIN, Victor; ASENCIO, Joe. ``ODNet: A Convolutional Neural Network for Asteroid Occultation Detection''. \emph{The Astronomical Journal}, 165(11), 2023.
+
+\bibitem[Wall \& Jenkins (2003)]{Wall2003} WALL, J. V.; JENKINS, C. R. \textit{Practical Statistics for Astronomers}. Cambridge University Press, 2003.
+
+\bibitem[Morettin \& Bussab (2010)]{Morettin2010} MORETTIN, Pedro A.; BUSSAB, Wilton de O. \textit{Estatística Básica}. 6. ed. Revista e atualizada. São Paulo: Saraiva, 2010. [2]
+
+\bibitem[Deisenroth et al. (2019)]{Deisenroth2019} DEISENROTH, Marc Peter; FAISAL, A. Aldo; ONG, Cheng Soon. \textit{Mathematics For Machine Learning}. Cambridge University Press, 2019. (Draft, October 15, 2019).
+
+\bibitem[Knieling et al. (2024)]{Knieling2024} KNIELING, Bastian; SCHINDLER, Karsten; SICKAFOOSE, Amanda A.; PERSON, Michael J.; LEVINE, Stephen E.; KRABBE, Alfred. ``Stellar Occultations in the Era of Data Mining and Modern Regression Models: Using Gaussian Processes to Analyze Light Curves and Improve Predictions''. \emph{The Planetary Science Journal}, 5(104), 2024. \url{https://doi.org/10.3847/PSJ/ad3819} [1]
+
+\bibitem[Fraser et al. (2024)]{Fraser2024} FRASER, Wesley C.; PORTER, Simon B.; PELTIER, Lowell; KAVELAARS, J. J.; VERBISCER, Anne J.; et al. ``Candidate Distant Trans-Neptunian Objects Detected by the New Horizons Subaru TNO Survey''. \emph{arXiv e-prints}, arXiv:2407.21142v1, 2024.
+
+% --- Ocultações, curvas de luz e redução de dados ---
+\bibitem[Gomes-Júnior et al. (2022)]{SORA2022} GOMES-JÚNIOR, A. R.; MORGADO, B. E.; BENEDETTI-ROSSI, G.; BOUFLEUR, R. C.; ROMMEL, F. L.; BANDA-HUARCA, M. V.; KILIC, Y.; BRAGA-RIBAS, F.; SICARDY, B. ``SORA: Stellar occultation reduction and analysis''. \emph{Monthly Notices of the Royal Astronomical Society}, 511(1), 1167--1181, 2022. \url{https://doi.org/10.1093/mnras/stac032}.
+
+\bibitem[Roques et al. (1987)]{Roques1987} ROQUES, F.; MONCUQUET, M.; SICARDY, B. ``Stellar occultations by small bodies - Diffraction effects''. \emph{The Astronomical Journal}, 93, 1549--1558, 1987. \url{https://doi.org/10.1086/114438}.
+
+\bibitem[Sicardy et al. (2011)]{Sicardy2011} SICARDY, B.; ORTIZ, J. L.; ASSAFIN, M.; et al. ``A Pluto-like radius and a high albedo for the dwarf planet Eris from an occultation''. \emph{Nature}, 478(7370), 493--496, 2011. \url{https://doi.org/10.1038/nature10550}.
+
+\bibitem[Sicardy et al. (2016)]{Sicardy2016} SICARDY, B.; TALBOT, J.; MEZA, E.; CAMARGO, J. I. B.; et al. ``Pluto's atmosphere from the 2015 June 29 ground-based stellar occultation at the time of the New Horizons flyby''. \emph{The Astrophysical Journal Letters}, 819(2), L38, 2016. \url{https://doi.org/10.3847/2041-8205/819/2/L38}.
+
+\bibitem[Braga-Ribas et al. (2014)]{BragaRibas2014} BRAGA-RIBAS, F.; SICARDY, B.; ORTIZ, J. L.; SNODGRASS, C.; ROQUES, F.; et al. ``A ring system detected around the Centaur (10199) Chariklo''. \emph{Nature}, 508(7494), 72--75, 2014. \url{https://doi.org/10.1038/nature13155}.
+
+\bibitem[Assafin et al. (2011)]{AssafinPRAIA} ASSAFIN, M.; MARTINS, R.; CAMARGO, J.; ANDREI, A.; NETO, D.; BRAGA-RIBAS, F. ``PRAIA - Platform for Reduction of Astronomical Images Automatically''. 85--88, 2011.
+
+\bibitem[Assafin et al. (2023)]{Umbriel2020} ASSAFIN, M.; SANTOS-FILHO, S.; MORGADO, B. E.; GOMES-JÚNIOR, A. R.; SICARDY, B.; MARGOTI, G.; BENEDETTI-ROSSI, G.; BRAGA-RIBAS, F.; LAIDLER, T.; CAMARGO, J. I. B.; VIEIRA-MARTINS, R.; et al. ``Kilometer-precise (UII) Umbriel physical properties from the multichord stellar occultation on 2020 September 21''. \emph{Monthly Notices of the Royal Astronomical Society}, 526(4), 6193–6204, 2023. \url{https://doi.org/10.1093/mnras/stad3093}.
+
+\bibitem[Ortiz et al. (2023)]{Chiron2023} ORTIZ, J.; PEREIRA, Chrystian; SICARDY, Bruno; BRAGA-RIBAS, Felipe; TAKEY, Ali; FOUAD, A.; SHAKER, A.; KASPI, S. ``Changing material around (2060) Chiron revealed by an occultation on December 15, 2022''. \emph{Astronomy \& Astrophysics}, 676, 2023. \url{https://doi.org/10.1051/0004-6361/202347025}.
+
+\bibitem[Gomes-Ferrante \& Braga-Ribas (2023)]{Simulator} GOMES-FERRANTE, Wellington; BRAGA-RIBAS, Felipe. ``Stellar Occultation Simulator: application to Planet 9''. \emph{Eur. Phys. J. Spec. Top.}, 232(18-19), 3113--3118, 2023. \url{https://www.springernature.com/gp/researchers/text-and-data-mining}.
+
+% --- Contexto, ML em ciência e métricas ---
+\bibitem[Gomes (2009)]{Tsiganis2009} GOMES, Rodney da Silva. \textit{On the origin of the Kuiper belt}, 2009.
+
+\bibitem[Zhu et al. (2022)]{Zhu2022} ZHU, Qinglin; SUN, Mingchen; DONG, Xiang; ZHU, Pengfei. ``Design and Simulation of Stellar Occultation Infrared Band Constellation''. \emph{Remote Sens.}, 14(3327), 2022. \url{https://doi.org/10.3390/rs14143327} [3]
+
+\bibitem[López (2020)]{lopez2020ml} LÓPEZ DE PRADO, Marcos M. \textit{Machine Learning for Asset Managers}. Cambridge: Cambridge University Press, 2020. (Elements in Quantitative Finance).
+
+\bibitem[Carleo et al. (2019)]{CarleoMLPhysSci} CARLEO, Giuseppe; CIRAC, Ignacio; CRANMER, Kyle; DAUDET, Laurent; SCHULD, Maria; TISHBY, Naftali; VOGT-MARANTO, Leslie; ZDEBOROVÁ, Lenka. \textit{Machine learning and the physical sciences}, 2019. (Review paper excerpts)
+
+\bibitem[Sudjianto \& Liu (2025)]{AUC-curve} SUDJIANTO, Agus; LIU, Alice J. ``Decomposing Global AUC into Cluster-Level Contributions for Localized Model Diagnostics''. \emph{arXiv preprint}, arXiv:2508.07495, 2025. \url{https://arxiv.org/abs/2508.07495}.
+
+\bibitem[Gryak et al. (2018)]{gryak2018conjugacy} GRYAK, J.; HARALICK, R. M.; KAHROBAEI, D. \textit{Solving the Conjugacy Decision Problem via Machine Learning}. Experimental Mathematics, v. 29, n. 1, p. 66–78, 2018. Disponível em: \url{https://doi.org/10.1080/10586458.2018.1434704}.
+
+\bibitem[Liu (2004)]{liu2004comparative} LIU, Ying. A Comparative Study on Feature Selection Methods for Drug Discovery. \textit{Journal of Chemical Information and Computer Sciences}, v. 44, n. 5, p. 1823–1828, 2004. DOI: 10.1021/ci049875d.
+
+\bibitem[Shewchuk (2024)]{Shewchuk2024} SHEWCHUK, Jonathan. \textit{Concise Machine Learning}. UC Berkeley, Class CS 189/289A Lecture Notes, 2024.
+
+%
+% exemplo artigo com ate 5 autores
+%\bibitem[]{key-2}AGOL, E.; STEFFEN, J.; SARI, R.; CLARKSON, W. (2005)
+%``On detecting terrestrial planets with timing of giant planet transits''.
+%\emph{Mon. Not. Roy. Astron. Soc.} 359, 567-579, \url{https://www.doi.org/10.1111/j.1365-2966.2005.08922.x}
+
+% exemplo artigo com mais de 5 autorees
+%\bibitem[]{key-4}BALLARD, S.; FABRYCKY, D.; FRESSIN, F.; CHARBONNEAU,
+%D.; DESERT, J.-M.; et al. (2011) ``The Kepler-19 System: A Transiting
+%2.2 R\ensuremath{\oplus} Planet and a Second Planet Detected via Transit
+%Timing Variations''. \emph{Astrophys. J.} 743, id.200, \url{https://www.doi.org/10.1088/0004-637X/743/2/200} 
+
+% exemplo artigo em proceedings
+%\bibitem[]{key-1}EVERHART, E. (1985) ``An efficient integrator that
+%uses Gauss-Radau spacings''. Em: \emph{IAU Colloquium 83, Dynamics
+%of Comets: Their Origin and Evolution}, A. Carusi, G. B. Valsecchi
+%(eds.). Astrophys. Space Sci. Lib. 115. Reidel, Dordrecht, p. %185,
+%\url{https://www.doi.org/10.1007/978-94-009-5400-7_17}
+
+% exemplo livro
+%\bibitem[]{key-1}AARSETH, S. J. (2003) ``Gravitational N-body Simulations:
+%Tools and Algorithms''. Cambridge University Press, Cambridge, MA,
+%ISBN 978-0-521-12153-8
+%
+\end{thebibliography}
+
+%%%%%%%%%%%%%%%%%%%
+\appendix
+\input{apendice_hiperparametros}
+\input{apendice_ambiente}
+
+\end{document}

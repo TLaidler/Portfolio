@@ -1,0 +1,252 @@
+% =============================================================================
+% Capítulo 3 — Modelos de Machine Learning para Classificação e Agrupamento
+% =============================================================================
+
+Este capítulo apresenta os fundamentos teóricos e o funcionamento dos principais algoritmos de ML utilizados nesta dissertação, em linguagem acessível a leitores com formação em física ou astronomia e boa base matemática, mas eventualmente pouco familiarizados com ciência da computação. Serão tratados: modelos de \textbf{classificação supervisionada} (Regressão Logística, Random Forest, XGBoost e CatBoost) --- isto é, algoritmos que aprendem a partir de exemplos cuja resposta correta (\textbf{rótulo}) é conhecida e que, após um processo de \textbf{treinamento} (ajuste de parâmetros por minimização de uma função de custo, análogo ao ajuste de um modelo a dados), passam a prever a classe de novos exemplos --- e um algoritmo de \textbf{agrupamento} não supervisionado (K-means), usado apenas para extrair uma característica numérica das curvas (Capítulo 4). A exposição está organizada em quatro blocos: (1)~conceitos fundamentais de ML e motivação para classificação na detecção de ocultações; (2)~formulação matemática do problema de classificação, regressão linear como exemplo didático e apresentação de cada modelo; (3)~algoritmos de otimização usados no treinamento; e (4)~extração de características, validação e problemas práticos (\textbf{sobreajuste} e \textbf{subajuste}). O objetivo é fornecer a base conceitual necessária para interpretar a metodologia e os resultados apresentados nos capítulos seguintes.
+
+\section{Objetivos do capítulo}
+
+Os objetivos deste capítulo são: (1) situar o ML no contexto científico e explicar por que a detecção de ocultações estelares é tratada como um problema de classificação supervisionada; (2) formalizar o problema de classificação (espaço de atributos, rótulos, regiões de decisão), usar a regressão linear como exemplo didático de minimização de custo e apresentar os modelos utilizados na \textit{pipeline} (Regressão Logística, árvores de decisão, Random Forest, XGBoost, CatBoost) e o K-means para engenharia de características; (3) descrever os algoritmos de otimização no treinamento (solução fechada, gradiente descendente, métodos de segunda ordem) e sua relação com cada modelo; e (4) discutir engenharia de características, validação de modelos e os riscos de overfitting e underfitting. Ao final, o leitor terá uma visão clara dos modelos que serão treinados e avaliados no Capítulo 4 e dos métodos usados para ajustá-los.
+
+% -----------------------------------------------------------------------------
+\section{Conceitos fundamentais de Machine Learning}
+\label{sec:fundamentos_ml}
+
+\subsection{Definição e papel do aprendizado de máquina}
+
+O \textit{Machine Learning} (ML), ou aprendizado de máquina, é uma área na qual os sistemas ``aprendem'' a partir de dados, sem serem explicitamente programados para cada tarefa \citep{geron2019maos}. Em termos operacionais: em vez de regras fixas codificadas à mão, um algoritmo de ML é alimentado com dados e \textbf{ajusta seus próprios parâmetros} (por exemplo, coeficientes de uma combinação linear ou estruturas de decisão) para capturar padrões ou relações nos dados. Esse processo de ajuste é o que se chama de \textbf{treinamento}; ao final, o modelo está ``treinado'' e pode ser aplicado a novos dados. O objetivo é permitir que o sistema melhore seu desempenho à medida que mais dados ou mais iterações estão disponíveis, especialmente em problemas sem solução analítica fechada ou com grandes volumes de dados.
+
+No contexto científico, o ML costuma ser visto como uma ``caixa-preta'' que produz previsões sem explicação. Essa visão reflete usos industriais em que a precisão preditiva prevalece sobre a interpretabilidade. Em ciência, porém, o ML pode ir além da previsão: atua como ferramenta de descoberta, revelando padrões que depois podem ser incorporados a uma teoria formal de causa e efeito. O papel do ML não é substituir a teoria, mas auxiliar na sua formulação, identificando os padrões que a teoria buscará explicar \citep{lopez2020ml}.
+
+Segundo \cite{lopez2020ml}, o uso do ML na ciência pode ser agrupado em algumas funções típicas:
+
+\textbf{Sugerir a existência de algo novo:} o ML pode encontrar padrões inesperados, indicando a existência de relações ainda não descobertas. Em matemática, algoritmos já auxiliaram a conjecturar teoremas que depois foram demonstrados formalmente \citep{gryak2018conjugacy}.
+
+\textbf{Descobrir o grau de importância das variáveis:} técnicas como \textit{Mean Decrease Accuracy} (MDA) permitem avaliar o impacto de cada variável (\textbf{feature}, ou característica numérica de entrada) na predição. A ideia é treinar o modelo, medir o desempenho (por exemplo, via acurácia e \textbf{validação cruzada} --- divisão dos dados em partes, treinando em algumas e avaliando em outras, de forma rotacionada), embaralhar uma variável por vez e verificar se a precisão cai; se cair, a variável é importante \citep{liu2004comparative}. Assim, o ML identifica quais variáveis devem compor explicações teóricas, mesmo sem revelar o mecanismo causal.
+
+\textbf{Explorar relações de causa e efeito:} ajusta-se um modelo em dados históricos (sem o efeito de interesse); depois, coletam-se dados sob o efeito; o modelo prevê as novas observações. O erro de predição pode ser atribuído ao efeito, sugerindo hipóteses causais.
+
+\textbf{Redução e simplificação:} em dados multidimensionais, técnicas de redução de dimensionalidade (ou aprendizado de variedades) agrupam observações semelhantes e revelam estrutura em dimensão menor, ganhando clareza interpretativa.
+
+\textbf{Encontrar padrões desconhecidos:} o ML pode atuar na detecção de eventos raros ou anomalias em grandes volumes de dados --- por exemplo, na triagem automática de candidatos a supernovas ou a ocultações estelares em levantamentos astronômicos --- indicando onde vale a pena investigar, mesmo sem explicar o mecanismo.
+
+Neste trabalho, o ML atua sobretudo na função de \textbf{encontrar padrões desconhecidos} (triagem de curvas de luz quanto à presença ou ausência de ocultação) e de \textbf{descobrir o grau de importância das variáveis} (importância das \textit{features} nos ensembles de árvores), em apoio à decisão do pesquisador sobre quais curvas merecem análise detalhada.
+
+\subsection{Aprendizado supervisionado versus não supervisionado}
+
+A taxonomia usual divide o ML em dois cenários conforme a natureza dos dados:
+
+\begin{itemize}
+	\item \textbf{Supervisionado:} cada exemplo possui um rótulo (classe ou valor numérico). Tarefas típicas: classificação (rótulo discreto) e regressão (rótulo contínuo). Exemplos: filtro de spam, previsão de preços.
+	\item \textbf{Não supervisionado:} os dados não possuem rótulos. Tarefas típicas: agrupamento (clustering), detecção de anomalias, redução de dimensionalidade. Exemplos: segmentação de clientes, identificação de \textit{outliers}.
+\end{itemize}
+
+Neste trabalho, o foco é o \textbf{paradigma supervisionado}, em particular a \textbf{classificação binária}. No aprendizado supervisionado, o objetivo é encontrar uma função \(f\) que mapeie cada entrada \(\vec{x}\) (por exemplo, o vetor de características de uma curva de luz) a um rótulo \(y\) (por exemplo, ``ocultação presente'' ou ``ausente''). Os rótulos usados no treinamento vêm da classificação já conhecida dos dados (a chamada \textbf{verdade de campo}, ou \textit{ground truth} --- por exemplo, a análise prévia de um especialista ou o catálogo). O objetivo é que \(f\) \textbf{generalize} bem, ou seja, que erre pouco em dados novos que não foram usados no ajuste. A detecção de ocultações estelares é formulada exatamente assim: a curva de luz contém um evento de ocultação (classe positiva, \(y=1\)) ou não (classe negativa, \(y=0\)). Os classificadores (Regressão Logística, Random Forest, XGBoost, CatBoost) recebem vetores de características extraídos das curvas e produzem uma classe ou uma probabilidade de classe, permitindo triagem e priorização automáticas no fluxo da \textit{pipeline} (Capítulo 4).
+
+% -----------------------------------------------------------------------------
+\section{O problema da classificação supervisionada}
+\label{sec:problema_classificacao}
+
+\subsection{Formulação matemática}
+
+Em notação matemática, uma amostra rotulada é representada pela tupla \(Z = (X, Y)\). Aqui \(X = \{\vec{x}_1, \vec{x}_2, \ldots, \vec{x}_n\}\) é o conjunto de \textbf{vetores de características}: cada \(\vec{x}_i \in \mathbb{R}^d\) é um vetor com \(d\) números que resumem uma curva de luz (amplitude, mínimo do fluxo suavizado, distância entre centróides, etc.). O número \(d\) é a ``dimensionalidade'' do problema (no nosso caso, 14 ou 28 features). O conjunto \(Y = \{y_1, y_2, \ldots, y_n\}\) contém os \textbf{rótulos}: a classificação verdadeira de cada exemplo, com \(y_i \in \{0,1\}\) no caso binário (0 = sem ocultação, 1 = com ocultação).
+
+Um \textbf{classificador} é uma função \(f \colon \mathbb{R}^d \longrightarrow \{0,1\}\) (ou, em geral, \(\{1,\ldots,c\}\) para \(c\) classes) que, dado um vetor \(\vec{x}\), prediz um rótulo \(y\). Em muitos modelos, \(f\) produz primeiro uma \textbf{probabilidade} de a classe ser positiva; a decisão final é então ``positivo'' se essa probabilidade for maior ou igual a 0,5, e ``negativo'' caso contrário. A função \(f\) divide o espaço \(\mathbb{R}^d\) em \textbf{regiões de decisão}: \(R_k = \{\vec{x} \in \mathbb{R}^d \mid f(\vec{x}) = k\}\). Cada região corresponde a uma classe. O objetivo do treinamento é estimar \(f\) a partir dos dados \((X,Y)\) de modo que \(f\) generalize bem para novos exemplos não vistos.
+
+\subsection{Regressão linear como exemplo didático}
+\label{sec:reglin_didatica}
+
+Antes de apresentar os modelos de classificação utilizados na \textit{pipeline}, convém fixar a ideia de treinamento como minimização de uma função de custo. A \textbf{regressão linear} é um dos modelos estatísticos mais simples e fundamentais para o reconhecimento de padrões e por isso serve de exemplo didático. Ela se baseia no princípio dos mínimos quadrados e permite estudar relações entre variáveis: uma variável explicativa \(x\) e uma variável resposta \(y\). Importa esclarecer que o interesse não está em relações \textbf{determinísticas} (como \(C = 2\pi R\) ou a lei de Ohm), e sim em relações \textbf{não determinísticas}, em que o modelo descreve o comportamento médio de \(y\) dado \(x\), e um termo de erro captura a variação não explicada.
+
+Um modelo de regressão linear simples pode ser escrito como
+\[
+y_i = \beta_0 + \beta_1 x_i + \epsilon_i,
+\]
+onde \(\beta_0\) é o intercepto (valor esperado de \(y\) na ausência de \(x\)), \(\beta_1\) é a inclinação (aumento médio de \(y\) por unidade de \(x\)) e \(\epsilon_i\) é o termo de erro. A Figura~\ref{fig:linear} ilustra um exemplo.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[scale=0.85]{pngs/exemplo_regressaoLinear.png}
+\caption{Exemplo ilustrativo de regressão linear simples (dados genéricos, não referentes a curvas de luz de ocultação) \citep{Levada2026}.}
+\label{fig:linear}
+\end{center}
+\end{figure}
+
+Os parâmetros \(\beta_0\) e \(\beta_1\) são estimados pelo método dos mínimos quadrados, que minimiza a soma dos quadrados dos resíduos:
+\[
+(\hat{\beta}_0, \hat{\beta}_1) = \arg\min_{\beta_0,\beta_1} \sum_{i=1}^{n} \big( y_i - (\beta_0 + \beta_1 x_i) \big)^2.
+\]
+
+Em notação vetorial (conveniente para múltiplos atributos, como nas \textit{features} das curvas de luz), o modelo prediz \(\hat{y}^{(i)} = \vec{\theta}^\top \vec{x}^{(i)}\) (ou \(\hat{\vec{y}} = X\vec{\theta}\) em forma matricial). A função de custo é a soma dos quadrados dos resíduos,
+\[
+J(\vec{\theta}) = \sum_{i=1}^{m} \big( y^{(i)} - \vec{\theta}^\top \vec{x}^{(i)} \big)^2,
+\]
+e o minimizador admite solução fechada, a \textbf{equação normal}: \(\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}\) \citep{geron2019maos}. O custo de calcular e inverter \(X^\top X\) é \(O(np^2 + p^3)\), o que limita a escalabilidade. Para classificação, não usamos regressão linear diretamente; a \textbf{Regressão Logística} mantém a mesma ideia de combinação linear, mas mapeia a saída ao intervalo \((0,1)\) por uma função sigmoide e utiliza o custo de entropia cruzada, para o qual \textbf{não existe solução fechada} --- o treinamento é feito por algoritmos iterativos (gradiente descendente), detalhados na Seção~\ref{sec:otimizacao}. Os modelos a seguir são apresentados em termos de forma funcional e custo; a Seção~\ref{sec:otimizacao} unifica os métodos de otimização usados no treinamento.
+
+% -----------------------------------------------------------------------------
+\section{Modelos de classificação utilizados na pipeline}
+\label{sec:modelos_classificacao}
+
+\subsection{Regressão Logística}
+
+A Regressão Logística é um classificador probabilístico que utiliza a estrutura dos modelos lineares para prever categorias discretas \citep{geron2019maos}. Ela funciona como ponte entre modelos lineares (saída contínua) e classificação probabilística: a combinação linear \(\vec{\theta}^\top \vec{x}\) é mapeada pela função sigmoide ao intervalo \((0,1)\), interpretado como a probabilidade da classe positiva \citep{Levada2026}. Em notação vetorial, seja \(\vec{\theta}\) o vetor de parâmetros (incluindo o termo de polarização) e \(\vec{x}\) o vetor de atributos; a probabilidade predita é
+\[
+\hat{p} = h_{\vec{\theta}}(\vec{x}) = \sigma(\vec{\theta}^\top \vec{x}) = \frac{1}{1 + e^{-\vec{\theta}^\top \vec{x}}}.
+\]
+A decisão é: classe 1 se \(\hat{p} \geq 0{,}5\), caso contrário classe 0.
+
+Para o treinamento, utiliza-se a função de custo de \textbf{entropia cruzada} (ou \textit{log loss}): uma medida que penaliza predições distantes do rótulo real --- por exemplo, se o rótulo é 1 (ocultação presente) e o modelo prediz probabilidade baixa, o custo é alto \citep{geron2019maos}. Para um conjunto de \(m\) exemplos, com rótulos \(y^{(i)} \in \{0,1\}\) e probabilidades preditas \(\hat{p}^{(i)}\), a função é
+\begin{equation}
+J(\vec{\theta}) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(\hat{p}^{(i)}) + (1 - y^{(i)}) \log(1 - \hat{p}^{(i)}) \right].
+\end{equation}
+A minimização de \(J(\vec{\theta})\) é equivalente à maximização da log-verossimilhança (MLE), de modo que os parâmetros estimados são estatisticamente ótimos sob o modelo probabilístico assumido \citep{geron2019maos, Levada2026}. O ajuste é realizado por gradiente descendente (Seção~\ref{sec:otimizacao}). O gradiente de \(J\) em relação a \(\vec{\theta}\) pode ser escrito na forma vetorial
+\[
+\nabla_{\vec{\theta}} J(\vec{\theta}) = \frac{1}{m} X^\top \big( \sigma(X\vec{\theta}) - \vec{y} \big),
+\]
+onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) --- análogo ao passo de um método numérico de minimização.
+
+Para evitar sobreajuste, aplica-se \textbf{regularização} \citep{geron2019maos, Levada2026}. A regularização \(\ell_2\) (\textbf{Ridge}) adiciona ao custo o termo \(\frac{\alpha}{2} \sum_j \theta_j^2\), resultando em encolhimento (\textit{shrinkage}) dos coeficientes: os pesos são reduzidos em direção a zero, mas raramente se anulam, de modo que todos os atributos permanecem no modelo. Ridge tende a funcionar bem mesmo com \textit{features} fortemente correlacionadas e possui solução em forma fechada (sempre inversível). A regularização \(\ell_1\) (\textbf{Lasso}) adiciona \(\alpha \sum_j |\theta_j|\), o que tende a zerar coeficientes de atributos irrelevantes, promovendo \textbf{esparsidade} e atuando como seleção automática de variáveis; em contrapartida, o Lasso pode comportar-se de forma errática quando há muitas variáveis correlacionadas (tendendo a escolher apenas uma delas) ou quando o número de variáveis supera o de instâncias. Nesses casos recomenda-se o \textbf{Elastic Net}, que combina as penalidades Ridge e Lasso com uma taxa de mistura. Do ponto de vista bayesiano (estimativa MAP), Ridge equivale a assumir uma distribuição prévia Gaussiana para os parâmetros, e o Lasso a uma distribuição de Laplace (com pico em zero). A função de custo do Lasso não é diferenciável em \(\theta_j = 0\), exigindo o uso de subgradientes na otimização; não há solução analítica fechada simples como no Ridge. O hiperparâmetro \(\alpha\) (ou \(C\), inversamente relacionado) controla a força da penalização e pode ser escolhido via validação cruzada. É essencial \textbf{escalonar} as \textit{features} (e.g.\ StandardScaler) antes de aplicar Ridge ou Lasso, pois ambas as penalidades são sensíveis à escala dos dados. Nesta dissertação, utiliza-se Ridge ou Lasso na Regressão Logística, conforme documentado no Apêndice~\ref{ap:hiperparametros}.
+
+A Regressão Logística serve de base conceitual para entender classificadores probabilísticos e foi também treinada e avaliada na \textit{pipeline} desta dissertação, junto com os ensembles de árvores (Random Forest, XGBoost, CatBoost), que tipicamente oferecem melhor desempenho em dados tabulares e fornecem importância de variáveis. A função sigmoide \(\sigma(z) = 1/(1+e^{-z})\) está ilustrada na Figura~\ref{fig:sigmoide}.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[scale=0.85]{pngs/sigmoide.png}
+\caption{Função sigmoide \(\sigma(z) = 1/(1+e^{-z})\).}
+\label{fig:sigmoide}
+\end{center}
+\end{figure}
+
+\subsection{Árvores de decisão e critérios de impureza}
+
+Os modelos Random Forest, XGBoost e CatBoost são baseados em \textbf{árvores de decisão}. Uma árvore de decisão é um classificador que funciona como um fluxograma: em cada ``nó'' pergunta-se o valor de uma das características (por exemplo, ``o mínimo do fluxo suavizado é menor que 0,85?''); conforme a resposta, segue-se por um dos dois ramos até um novo nó ou até uma ``folha'', que devolve a classe predita. O espaço de entradas (vetores de características) fica assim particionado em regiões (hiper-retângulos), cada uma associada a uma classe \citep{Levada2026}. Uma das maiores vantagens é a \textbf{interpretabilidade}: as regras podem ser lidas e aplicadas manualmente, em contraste com modelos opacos como redes neurais. O scikit-learn utiliza o algoritmo \textbf{CART} (\textit{Classification and Regression Trees}), que produz árvores binárias e escolhe, em cada nó, a divisão que maximiza a pureza dos nós filhos \citep{geron2019maos}. Os dois critérios de impureza mais usados para classificação são o \textbf{coeficiente de Gini} e a \textbf{entropia}. Para um nó \(i\) com proporções \(p_{i,k}\) de exemplos na classe \(k\) (com \(k=1,\ldots,c\) classes):
+\begin{equation}
+G_i = 1 - \sum_{k=1}^{c} p_{i,k}^2, \qquad
+H_i = -\sum_{k=1}^{c} p_{i,k} \log_2(p_{i,k}) \quad (\text{convenção } 0\log 0 = 0).
+\end{equation}
+O Gini tende a isolar a classe mais frequente; a entropia tende a produzir árvores mais equilibradas. A divisão é feita de modo a maximizar a redução da impureza (ganho de informação). Árvores de decisão são instáveis e sensíveis a pequenas variações nos dados; sem restrições, tendem ao sobreajuste. Para regularizar, utilizam-se critérios de parada como profundidade máxima (\textit{max\_depth}) e número mínimo de amostras por nó ou por folha (\textit{min\_samples\_leaf}) \citep{geron2019maos}. A \textbf{poda} (\textit{pruning}) pode ser aplicada após o crescimento completo, removendo ramos que não contribuem significativamente para a capacidade preditiva \citep{Levada2026}.
+
+\subsection{Random Forest (Floresta Aleatória)}
+
+Random Forest é um método de \textbf{ensemble}: em vez de uma única árvore, treina-se um grande número de árvores de decisão (por exemplo, centenas), cada uma em uma \textbf{amostra aleatória} dos dados (amostragem com reposição, ou \textit{bootstrap}) e usando, em cada divisão de nó, apenas um subconjunto aleatório das características \citep{geron2019maos, Levada2026}. A predição final é obtida por \textbf{votação majoritária}: cada árvore ``vota'' em uma classe e escolhe-se a classe que recebeu mais votos. A força da floresta está na \textbf{descorrelação} entre as árvores: o bagging e a escolha aleatória de atributos em cada nó garantem que as árvores errem em casos diferentes; ao agregar centenas de árvores, o modelo mantém o baixo viés das árvores individuais mas reduz drasticamente a \textbf{variância}. Uma vantagem colateral é a estimativa \textbf{out-of-bag} (OOB): como cada árvore é treinada em aproximadamente 63\% dos dados (amostragem com reposição), cerca de 37\% das instâncias ficam ``fora da bolsa'' para cada árvore e podem ser usadas como conjunto de validação interno, permitindo estimar o erro de generalização sem um conjunto de teste separado \citep{geron2019maos}. Uma variante que aumenta ainda a aleatoriedade são as \textbf{Extra-Trees} (árvores extremamente aleatórias), que utilizam limiares aleatórios para cada atributo nas divisões, podendo reduzir mais a variância e acelerar o treinamento \citep{geron2019maos}.
+
+A aleatoriedade em dois níveis --- nos dados e nos atributos --- reduz a correlação entre as árvores e diminui a \textbf{variância} do ensemble: ao agregar predições de árvores pouco correlacionadas, o erro global tende a ser menor que o de uma única árvore \citep{geron2019maos}. O \textbf{Teorema do Júri de Condorcet} ilustra a ideia: se cada ``votante'' (árvore) tem probabilidade maior que 50\% de acertar, a decisão por maioria tende a melhorar com o número de votantes. Por exemplo, várias árvores com acurácia individual em torno de 65\% podem produzir um ensemble com acurácia bem maior (da ordem de 90\% ou mais), desde que os erros não sejam idênticos. O ganho depende da \textbf{diversidade} entre os modelos: se todos errarem nos mesmos casos, a votação não corrige.
+
+Além da predição, Random Forest fornece uma estimativa natural da \textbf{importância das variáveis} (por exemplo, pela queda média na impureza ou na acurácia quando a variável é permutada), o que é útil para análise exploratória e seleção de features (Capítulo 4). Nesta dissertação, a importância das variáveis nos modelos baseados em árvores (Random Forest, XGBoost, CatBoost) é obtida pela \textbf{queda média na impureza} (Gini) em cada divisão em que a variável participa; para a Regressão Logística, utilizam-se os coeficientes estimados (em valor absoluto ou normalizado). O critério adotado na \textit{pipeline} é detalhado no Capítulo 4, e os resultados (ranking e magnitude das importâncias) são apresentados no Capítulo 5.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[scale=0.95]{pngs/RF_img.png}
+\caption{Esquema simplificado do funcionamento de uma Floresta Aleatória.}
+\label{fig:random_forest}
+\end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[scale=0.85]{pngs/manual_2.png}
+\caption{Exemplo ilustrativo: 25 árvores com acurácia individual em torno de 65\% podem resultar em uma floresta com acurácia de aproximadamente 94\%.}
+\label{fig:ensemble_acuracia}
+\end{center}
+\end{figure}
+
+\subsection{XGBoost (eXtreme Gradient Boosting)}
+
+O \textbf{boosting} é uma família de métodos em que os modelos são treinados \textbf{um após o outro}: cada novo modelo (por exemplo, uma árvore) é ajustado para corrigir os erros do modelo anterior, de modo que a combinação de todos forme um preditor forte a partir de vários preditores ``fracos'' \citep{geron2019maos, Levada2026}. O \textbf{gradient boosting} utiliza um modelo aditivo: na iteração \(m\),
+\begin{equation}
+F_m(\vec{x}) = F_{m-1}(\vec{x}) + \eta \, h_m(\vec{x}),
+\end{equation}
+onde \(h_m\) é um novo aprendiz fraco (por exemplo, uma árvore rasa) ajustado ao \textbf{gradiente negativo} da função de perda em relação à predição atual \(F_{m-1}\) --- ou seja, aos ``resíduos'' no espaço da perda \citep{geron2019maos}. A taxa de aprendizado \(\eta\) controla a contribuição de cada árvore (encolhimento, \textit{shrinkage}), reduzindo o risco de overfitting. O XGBoost (\textit{eXtreme Gradient Boosting}) aprimora esse esquema ao adicionar termos de regularização explícitos na função de custo (penalizando o número de folhas e os pesos das folhas) e ao utilizar uma expansão de Taylor de segunda ordem da perda para otimizar a atualização de cada árvore, o que resulta em implementação eficiente e alto desempenho \citep{geron2019maos}.
+
+O XGBoost tornou-se muito popular em competições e aplicações práticas por sua precisão e velocidade. Em contraste com o Random Forest (que treina árvores em paralelo), o boosting é inerentemente sequencial, o que pode limitar o paralelismo em certas fases, mas o ganho de desempenho preditivo costuma compensar. Na \textit{pipeline} desta dissertação, o XGBoost é um dos quatro classificadores treinados e avaliados (Regressão Logística, Random Forest, XGBoost, CatBoost) (Capítulo 4).
+
+\subsection{CatBoost}
+
+CatBoost é outro algoritmo de \textit{gradient boosting} baseado em árvores, com implementações eficientes para variáveis categóricas e opções para lidar com desbalanceamento de classes (por exemplo, \textit{auto\_class\_weights='Balanced'}). Assim como o XGBoost, treina árvores sequencialmente, minimizando uma função de perda por gradiente. Neste trabalho, CatBoost é utilizado junto com Regressão Logística, Random Forest e XGBoost para comparação de desempenho e robustez na classificação de curvas de luz (Capítulo 4).
+
+% -----------------------------------------------------------------------------
+\section{Agrupamento não supervisionado: K-means}
+\label{sec:kmeans}
+
+O \textbf{K-means} é um algoritmo de \textbf{agrupamento} (clustering) não supervisionado: não usa rótulos; apenas particiona os dados em \(k\) grupos de modo a minimizar a soma dos quadrados das distâncias de cada ponto ao centróide do seu grupo \citep{geron2019maos, Levada2026}. A função objetivo, conhecida como \textit{Within-Cluster Sum of Squares} (WCSS) ou inércia, é
+\begin{equation}
+J = \sum_{i=1}^{k} \sum_{\vec{x} \in S_i} \|\vec{x} - \vec{\mu}_i\|^2,
+\end{equation}
+onde \(S_i\) é o conjunto de pontos atribuídos ao cluster \(i\) e \(\vec{\mu}_i\) é o centróide desse cluster. O algoritmo alterna dois passos: (1) \textbf{atribuição} --- cada ponto é atribuído ao centróide mais próximo; (2) \textbf{atualização} --- cada centróide é recalculado como a média aritmética dos pontos a ele atribuídos. O custo \(J\) não aumenta a cada iteração, de modo que o processo converge para um mínimo local \citep{geron2019maos, Levada2026}. Em aplicações em que \(k\) não é fixo, a inércia (WCSS) é frequentemente usada no \textbf{método do cotovelo} (gráfico de WCSS em função de \(k\)) para sugerir o número de clusters; índices como o de \textbf{Calinski-Harabasz} medem a razão entre dispersão inter e intra-cluster, indicando quão bem separados estão os grupos. Limitações conhecidas incluem a sensibilidade à inicialização dos centróides (atenuada por heurísticas como K-means++), a necessidade de definir \(k\) previamente e a premissa implícita de clusters esferoidais e de densidades similares.
+
+Nesta dissertação, o K-means \textbf{não} é usado como classificador de curvas, e sim como ferramenta para \textbf{extrair uma característica numérica}: aplica-se K-means com \(K=2\) aos valores do fluxo (ou do fluxo suavizado) de cada curva. Como não há rótulos, o algoritmo apenas descobre dois ``níveis'' típicos nos dados \citep{Levada2026}. Os dois centróides representam, grosso modo, o nível ``fora da ocultação'' e o nível ``dentro da ocultação''. A \textbf{distância entre os centróides} é então usada como mais uma entrada (feature) para o classificador: curvas com ocultação bem definida tendem a ter distância maior; curvas apenas ruidosas tendem a ter distância menor. O detalhe está no Capítulo 4. No uso aqui, \(k=2\) e a variável é unidimensional (fluxo), o que simplifica a interpretação.
+
+% -----------------------------------------------------------------------------
+\section{Algoritmos de otimização no treinamento}
+\label{sec:otimizacao}
+
+Em um projeto de ML supervisionado, a etapa de \textbf{treinamento} corresponde a ajustar os parâmetros do modelo de modo a minimizar uma função de custo (ou perda) nos dados --- em espírito análogo ao ajuste de mínimos quadrados em problemas de física. Nas seções anteriores foram apresentados os modelos e suas funções de custo; aqui unificamos os \textbf{algoritmos} usados para obter o minimizador. A minimização pode ser feita por \textbf{solução analítica fechada}, quando existe fórmula explícita (como na regressão linear, Seção~\ref{sec:reglin_didatica}), ou por \textbf{algoritmos iterativos}, quando não há forma fechada. Os três esquemas mais recorrentes são resumidos a seguir; a Tabela~\ref{tab:otimizacao} indica em que contexto cada um aparece.
+
+\textbf{1. Mínimos quadrados (solução fechada).} Conforme visto na regressão linear (Seção~\ref{sec:reglin_didatica}), modelos lineares com custo quadrático possuem minimizador analítico dado pela equação normal \(\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}\). Na Regressão Logística e em modelos não lineares, recorre-se a métodos iterativos.
+
+\textbf{2. Gradiente descendente (método de primeira ordem).} O \textbf{gradiente} da função de custo indica a direção de maior crescimento do custo; para minimizar, atualiza-se os parâmetros na \textbf{direção oposta}, com passo controlado pela taxa de aprendizado \(\eta\):
+\[
+\vec{\theta}_{t+1} = \vec{\theta}_t - \eta \, \nabla_{\vec{\theta}} J(\vec{\theta}_t).
+\]
+As variantes principais distinguem-se pela quantidade de dados usada em cada atualização \citep{geron2019maos}: \textbf{Batch GD} utiliza todo o conjunto de treino (preciso, mas lento em grandes volumes); \textbf{Stochastic GD} (SGD) utiliza uma única instância aleatória por passo (rápido e capaz de escapar de mínimos locais, mas com trajetória errática); \textbf{Mini-batch GD} processa pequenos subconjuntos aleatórios, equilibrando estabilidade e eficiência. A convergência depende crucialmente de \(\eta\): se muito alta, o algoritmo pode divergir; se muito baixa, o treinamento torna-se excessivamente lento. Como vimos na Seção~\ref{sec:modelos_classificacao}, a Regressão Logística é ajustada por gradiente descendente; o mesmo esquema é usado em redes neurais e no gradient boosting (cada árvore é ajustada ao gradiente da perda).
+
+\textbf{3. Métodos de segunda ordem (Newton e variantes).} O \textbf{método de Newton} utiliza o gradiente e a \textbf{Hessiana} da função de custo:
+\[
+\vec{\theta}_{t+1} = \vec{\theta}_t - H^{-1}(\vec{\theta}_t) \, \nabla_{\vec{\theta}} J(\vec{\theta}_t).
+\]
+Isso permite passos mais informados e convergência mais rápida perto do mínimo, às custas de calcular e inverter \(H\) a cada iteração (custo \(O(p^3)\) por passo). Variantes \textbf{quasi-Newton} (como BFGS) aproximam a Hessiana sem calculá-la explicitamente. O XGBoost utiliza uma \textbf{expansão de Taylor de segunda ordem} da perda para determinar a atualização ótima de cada árvore no gradient boosting \citep{geron2019maos}.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Algoritmos de otimização e seu papel na etapa de treinamento em projetos de ML.}
+\label{tab:otimizacao}
+\begin{tabular}{@{}p{2.2cm}p{4.1cm}p{5.2cm}@{}}
+\hline
+\textbf{Família} & \textbf{Exemplo} & \textbf{Onde aparece} \\
+\hline
+Solução fechada & Mínimos quadrados (equação normal) & Regressão linear (Seção~\ref{sec:reglin_didatica}) \\
+\hline
+Primeira ordem (iterativo) & Gradiente descendente (Batch, SGD, Mini-batch) & Regressão Logística, redes neurais, gradient boosting \\
+\hline
+Segunda ordem (iterativo) & Newton, quasi-Newton (BFGS), Taylor & XGBoost (Taylor da perda); otimização convexa em geral \\
+\hline
+\end{tabular}
+\end{table}
+
+Com isso, o leitor dispõe de uma referência clara sobre o significado das ``contas'' no treinamento: a Regressão Logística (Seção~\ref{sec:modelos_classificacao}) é ajustada por gradiente descendente; os ensembles de árvores empregam critérios de divisão e, no caso do XGBoost, atualizações baseadas em informação de segunda ordem da perda \citep{geron2019maos}.
+
+% -----------------------------------------------------------------------------
+\section{Engenharia de características e validação de modelos}
+\label{sec:feature_validacao}
+
+\subsection{Engenharia de características}
+
+A criação e a seleção de \textbf{características numéricas} (atributos) a partir dos dados brutos são fundamentais para o sucesso do ML \citep{geron2019maos}. Incluem: (i)~escolher ou construir variáveis que capturem informação útil para a tarefa (por exemplo, estatísticas da curva de luz, derivadas, comparações entre segmentos); (ii)~combinar ou transformar variáveis existentes (médias móveis, suavização, testes estatísticos entre quartis, etc.). No Capítulo 4, descreve-se em detalhe o conjunto de features extraídas de cada curva de luz (amplitude, desvio padrão, max drawdown, distância entre centróides do K-means no fluxo, estatísticas de derivadas, \(p\)-valores entre quartis, entre outras). Essas grandezas formam o vetor \(\vec{x}\) de entrada dos classificadores.
+
+\subsection{Overfitting, underfitting e trade-off viés-variância}
+
+A identificação de \textbf{sobreajuste} (overfitting) e \textbf{subajuste} (underfitting) baseia-se na comparação do desempenho do modelo nos dados usados no treinamento versus nos dados reservados para teste ou validação \citep{geron2019maos}. Em termos intuitivos: \textbf{sobreajuste} ocorre quando o modelo ``decora'' os dados de treino (incluindo o ruído) e deixa de generalizar --- o erro no treino fica muito baixo, mas o erro em dados novos permanece alto. \textbf{Subajuste} ocorre quando o modelo é simples demais e não captura o padrão verdadeiro dos dados --- tanto o erro de treino quanto o de validação ficam altos. O erro de generalização pode ser decomposto em \textbf{viés}, \textbf{variância} e \textbf{ruído irredutível}: modelos muito simples tendem a alto viés (subajuste); modelos muito flexíveis tendem a alta variância (sobreajuste) \citep{Deisenroth2019, Levada2026}. O objetivo prático é encontrar um equilíbrio que minimize o erro total.
+
+\textbf{Diagnóstico.} O sinal mais claro de sobreajuste é um erro muito baixo no treino e um erro alto no teste ou validação; nas \textbf{curvas de aprendizado} (erro em função do tamanho do conjunto de treino), isso aparece como um \textbf{gap} entre a curva de treino e a de validação --- o erro de validação para de cair e pode até subir. No subajuste, as curvas de treino e validação ficam próximas e em um \textbf{platô alto}. A \textbf{validação cruzada} (dividir os dados em \(k\) partes, treinar em \(k-1\) e avaliar na parte restante, rotacionando) permite obter uma estimativa robusta do erro de generalização (média e desvio padrão), facilitando perceber quando o modelo começou a sobreajustar \citep{geron2019maos}.
+
+Em resumo: \textbf{sobreajuste} (overfitting) significa que o modelo se ajustou demais aos dados de treino (incluindo o ruído) e perde capacidade de generalizar; soluções típicas são obter mais dados, simplificar o modelo ou usar regularização (penalizar parâmetros grandes). \textbf{Subajuste} (underfitting) significa que o modelo é simples demais e não captura o padrão dos dados; soluções são aumentar a complexidade do modelo ou enriquecer as características de entrada. Os \textbf{hiperparâmetros} (por exemplo, força da regularização, profundidade máxima das árvores) controlam esse equilíbrio e podem ser escolhidos via validação cruzada.
+
+A \textbf{regularização} restringe a liberdade do modelo (por exemplo, penalidade \(\ell_2\) na Regressão Logística ou limites de profundidade e número de folhas nas árvores), sendo controlada por hiperparâmetros que podem ser ajustados via validação cruzada \citep{geron2019maos}. Outras formas incluem a \textbf{parada antecipada}: interromper o treinamento quando o erro no conjunto de validação deixa de melhorar, evitando que o modelo ``decore'' o ruído do treino. Nesta dissertação, o foco está na penalização de pesos em modelos lineares (Ridge/Lasso) e nos critérios de parada e poda nas árvores. A regularização \(\ell_1\) e \(\ell_2\) é \textbf{sensível à escala} das variáveis de entrada: atributos em escalas maiores tendem a receber pesos menores pela penalização. Em geral, recomenda-se \textbf{padronizar} as variáveis (subtrair a média e dividir pelo desvio padrão) antes de aplicar Ridge ou Lasso. Na \textit{pipeline} desta dissertação, as features não são padronizadas antes do treino (Capítulo 4); a justificativa é discutida naquele capítulo.
+
+\subsection{Curvas de aprendizado}
+
+As \textbf{curvas de aprendizado} mostram o desempenho do modelo (por exemplo, acurácia ou erro) em função do tamanho do conjunto de treino (ou do número de épocas). Se o erro de treino é baixo e o erro de validação permanece alto (ou sobe) à medida que se adiciona mais dados, isso sugere overfitting; se ambos são altos e próximos (platô alto), pode haver underfitting ou dados insuficientes. Essas curvas auxiliam na decisão de coletar mais dados ou de alterar a complexidade do modelo.
+
+\subsection{Validação de modelos}
+
+Para estimar o desempenho em dados não vistos e evitar otimismo, é essencial separar os dados usados no treino daqueles usados na avaliação \citep{geron2019maos}:
+
+\begin{itemize}
+	\item \textbf{Conjunto de teste:} uma fração dos dados é reservada e nunca usada no treino; o desempenho nesse conjunto fornece uma estimativa do erro de generalização.
+	\item \textbf{Validação cruzada (k-fold):} os dados são divididos em \(k\) partes (dobras); em cada rodada, \(k-1\) dobras são usadas para treino e uma para validação; a métrica final é a média sobre as \(k\) rodadas. Isso dá uma estimativa mais estável do desempenho e é útil para comparar modelos ou escolher hiperparâmetros (parâmetros do algoritmo que não são ajustados pelo treinamento, como a força da regularização).
+	\item \textbf{Validação cruzada estratificada:} quando as classes são desbalanceadas (por exemplo, poucas curvas com ocultação e muitas sem), a divisão aleatória simples pode produzir dobras em que uma das classes está sub ou sobrerrepresentada. A validação \textbf{estratificada} preserva a proporção de cada classe em cada dobra, tornando a estimativa mais confiável \citep{geron2019maos}. Na detecção de ocultações, o uso de divisão estratificada é recomendado.
+	\item \textbf{Busca em grade:} para escolher hiperparâmetros, avalia-se um conjunto de combinações (a ``grade'') e escolhe-se a que maximiza a métrica de validação.
+\end{itemize}
+
+Na \textit{pipeline} desta dissertação (Capítulo 4), a divisão treino/teste é feita de forma estratificada (mantendo a proporção de positivas e negativas em cada parte) ou por seleção manual de curvas para o teste. As métricas (acurácia, precisão, revocação, F1-score, AUC-ROC) são calculadas no \textbf{conjunto de teste} --- dados que o modelo nunca viu durante o treinamento. Com isso, o capítulo fornece a base conceitual necessária para interpretar a metodologia e os resultados descritos no Capítulo 4.
