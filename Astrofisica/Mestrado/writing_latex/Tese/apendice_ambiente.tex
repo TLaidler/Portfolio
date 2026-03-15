@@ -1,0 +1,26 @@
+% =============================================================================
+% Apêndice B — Ambiente de software e reprodutibilidade
+% =============================================================================
+\chapter{Ambiente de software e versões}
+\label{ap:ambiente}
+
+Para reprodutibilidade dos experimentos, segue a lista das principais ferramentas e bibliotecas utilizadas no projeto. As versões abaixo referem-se ao ambiente em que o \textit{pipeline} de treinamento (\texttt{train\_model.py}) e a construção do dataset foram executados, conforme arquivo \texttt{requirements.txt} (ou \texttt{requirements\_frozen.txt}) do repositório do projeto.
+
+\textbf{Pacotes principais:}
+\begin{itemize}
+	\item Python: 3.x (recomenda-se 3.10 ou superior para compatibilidade com as bibliotecas listadas).
+	\item numpy — 1.26.4
+	\item pandas — 2.2.2
+	\item scikit-learn — 1.4.2
+	\item xgboost — 2.0.3
+	\item catboost — 1.2.5
+	\item matplotlib — 3.8.4
+	\item seaborn — 0.13.2
+	\item joblib — 1.4.2
+	\item astropy — 5.3.1
+	\item scipy — 1.13.1
+\end{itemize}
+
+\textbf{Outras dependências} (aquisição de dados, persistência, testes): SQLAlchemy 2.0.31, requests 2.32.3, python-dotenv 1.0.1, pyyaml 6.0.1, pytest 7.4.3. A aquisição de curvas de luz a partir do VizieR e do Grupo do Rio pode utilizar ainda \texttt{astroquery} e \texttt{aiohttp}; nesse caso, as versões devem ser registradas com \texttt{pip freeze} no ambiente em que os scripts de ingestão forem executados.
+
+Para replicar o ambiente de treinamento, recomenda-se criar um ambiente virtual (venv ou conda) e instalar as dependências com \texttt{pip install -r requirements.txt} (ou \texttt{pip install -r requirements\_frozen.txt} para versões fixas). A data de geração do ambiente utilizado nos experimentos do Capítulo 5 deve ser registrada pelo autor ao finalizar a dissertação.

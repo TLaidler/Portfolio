@@ -1,0 +1,50 @@
+% =============================================================================
+% Apêndice A — Hiperparâmetros dos modelos
+% =============================================================================
+\chapter{Hiperparâmetros dos classificadores}
+\label{ap:hiperparametros}
+
+Este apêndice documenta os hiperparâmetros utilizados no treinamento dos classificadores (Regressão Logística, Random Forest, XGBoost, CatBoost) descritos no Capítulo 4. Os valores foram fixados no script \texttt{train\_model.py} e utilizados em todos os experimentos (Experimentos 1, 2 e 3) sem busca em grade nem validação cruzada para seleção de hiperparâmetros; a semente aleatória (\textit{random\_state}=42) foi mantida para reprodutibilidade.
+
+\textbf{Regressão Logística:}
+\begin{itemize}
+	\item Regularização: Ridge (\(\ell_2\)), valor padrão do scikit-learn (\texttt{penalty='l2'}).
+	\item Força da regularização: \(C = 1{,}0\) (valor padrão).
+	\item Solver: \texttt{lbfgs} (padrão para regularização \(\ell_2\)).
+	\item \textit{max\_iter}: 1000.
+	\item \textit{class\_weight}: \texttt{balanced}.
+	\item \textit{random\_state}: 42.
+\end{itemize}
+
+\textbf{Random Forest:}
+\begin{itemize}
+	\item \textit{n\_estimators}: 100.
+	\item \textit{max\_depth}: 10.
+	\item \textit{min\_samples\_split}: 5.
+	\item \textit{min\_samples\_leaf}: 2.
+	\item \textit{class\_weight}: \texttt{balanced}.
+	\item \textit{random\_state}: 42.
+\end{itemize}
+
+\textbf{XGBoost:}
+\begin{itemize}
+	\item \textit{n\_estimators}: 100.
+	\item \textit{max\_depth}: 6.
+	\item \textit{learning\_rate}: 0,1.
+	\item \textit{subsample}: 0,8.
+	\item \textit{colsample\_bytree}: 0,8.
+	\item Ponderação de classes: utilizada a opção padrão do XGBoost (sem \textit{scale\_pos\_weight} explícito no script; o desbalanceamento é tratado indiretamente pelo algoritmo).
+	\item \textit{random\_state}: 42.
+	\item \textit{use\_label\_encoder}: False; \textit{eval\_metric}: \texttt{logloss}.
+\end{itemize}
+
+\textbf{CatBoost:}
+\begin{itemize}
+	\item \textit{iterations}: 100.
+	\item \textit{depth}: 6.
+	\item \textit{learning\_rate}: 0,1.
+	\item \textit{auto\_class\_weights}: \texttt{Balanced}.
+	\item \textit{random\_state}: 42.
+\end{itemize}
+
+Não foi utilizada busca em grade (Grid Search) nem validação cruzada para escolha desses hiperparâmetros; os valores acima correspondem a uma configuração baseline fixa, permitindo comparação justa entre os três experimentos (variação apenas do conjunto de \textit{features}). Para trabalhos futuros, pode-se explorar validação cruzada estratificada com otimização de F1-score ou AUC-ROC para refinar os hiperparâmetros.

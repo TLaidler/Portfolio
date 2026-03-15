@@ -143,7 +143,9 @@ def load_dataset(from_csv=None, skip_cropping=False, use_filter='savgol'):
     """
     if from_csv and os.path.exists(from_csv):
         print(f"  Carregando dataset de: {from_csv}")
-        df = pd.read_csv(from_csv, sep=';').dropna() #pd.read_csv(from_csv)
+        df = pd.read_csv(from_csv).dropna() #pd.read_csv(from_csv, sep=';').dropna() 
+        #removendo features - teste
+        df = df.drop(columns=['Feature_Amp', 'kmeans_centroid_dist','Feature_Flux_std', 'Feature_Savgol_Max','Feature_Savgol_Min', 'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std', 'Deriv_Skew', 'Deriv_Kurtosis', 'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std', 'IOTA_flux_min', 'IOTA_flux_min_over_baseline'])
     else:
         # Carrega via build_dataset (pode demorar se precisar construir do zero)
         print("  Construindo dataset via build_dataset.py...")
