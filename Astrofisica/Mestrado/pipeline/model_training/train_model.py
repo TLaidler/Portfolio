@@ -80,12 +80,12 @@ ID_COL = 'curve_name'
 # Features excluídas por redundância (análise de correlação e motivação física)
 # As features continuam sendo calculadas em build_dataset.py, mas são ignoradas no treinamento.
 EXCLUDED_FEATURES = [
-    'Feature_Amp',                    # Redundante com IOTA_depth (para fluxo normalizado, max≈median)
-    'Feature_Flux_std',               # Redundante com IOTA_baseline_std (std geral vs std fora do dip)
+    'Feature_Amp',                    # Redundante com Occ_depth (para fluxo normalizado, max≈median)
+    'Feature_Flux_std',               # Redundante com Occ_baseline_std (std geral vs std fora do dip)
     'Feature_Savgol_Max',             # Variância mínima para fluxo normalizado (max suavizado ≈ 1.0)
-    'IOTA_flux_min',                  # Redundante com Feature_Savgol_Min (min raw vs min suavizado)
-    'IOTA_flux_min_over_baseline',    # Algebricamente derivável de IOTA_depth e baseline
-    'IOTA_n_frames_below_baseline',   # Redundante com IOTA_duration_s (n_frames × Δt ≈ duration)
+    'Occ_flux_min',                   # Redundante com Feature_Savgol_Min (min raw vs min suavizado)
+    'Occ_flux_min_over_baseline',     # Algebricamente derivável de Occ_depth e baseline
+    'Occ_n_frames_below_baseline',    # Redundante com Occ_duration_s (n_frames × Δt ≈ duration)
     'Deriv_Min',                      # Exp. 2 mostrou que derivadas são dispensáveis sem perda de F1
     'Deriv_Max',
     'Deriv_Mean',
@@ -164,7 +164,7 @@ def load_dataset(from_csv=None, skip_cropping=False, use_filter='savgol'):
     if from_csv and os.path.exists(from_csv):
         print(f"  Carregando dataset de: {from_csv}")
         df = pd.read_csv(from_csv).dropna() #pd.read_csv(from_csv, sep=';').dropna() 
-        #removendo features - teste  #df = df.drop(columns=['Feature_Amp', 'kmeans_centroid_dist','Feature_Flux_std', 'Feature_Savgol_Max','Feature_Savgol_Min', 'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std', 'Deriv_Skew', 'Deriv_Kurtosis', 'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std', 'IOTA_flux_min', 'IOTA_flux_min_over_baseline']) #NÃO RETIRAR ESSES COMENTÁRIO
+        #removendo features - teste  #df = df.drop(columns=['Feature_Amp', 'kmeans_centroid_dist','Feature_Flux_std', 'Feature_Savgol_Max','Feature_Savgol_Min', 'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std', 'Deriv_Skew', 'Deriv_Kurtosis', 'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std', 'Occ_flux_min', 'Occ_flux_min_over_baseline']) #NÃO RETIRAR ESSES COMENTÁRIO
     else:
         # Carrega via build_dataset (pode demorar se precisar construir do zero)
         print("  Construindo dataset via build_dataset.py...")

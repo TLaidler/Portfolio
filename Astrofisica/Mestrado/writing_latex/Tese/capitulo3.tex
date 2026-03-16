@@ -162,7 +162,19 @@ O XGBoost tornou-se muito popular em competições e aplicações práticas por 
 
 \subsection{CatBoost}
 
-CatBoost é outro algoritmo de \textit{gradient boosting} baseado em árvores, com implementações eficientes para variáveis categóricas e opções para lidar com desbalanceamento de classes (por exemplo, \textit{auto\_class\_weights='Balanced'}). Assim como o XGBoost, treina árvores sequencialmente, minimizando uma função de perda por gradiente. Neste trabalho, CatBoost é utilizado junto com Regressão Logística, Random Forest e XGBoost para comparação de desempenho e robustez na classificação de curvas de luz (Capítulo 4).
+CatBoost (\textit{Categorical Boosting}) é um algoritmo de \textit{gradient boosting} baseado em árvores, desenvolvido pela Yandex, que incorpora inovações voltadas à robustez e à eficiência do treinamento.
+
+Assim como o XGBoost, o CatBoost constrói árvores sequencialmente, minimizando uma função de perda por gradiente. Entretanto, difere em dois aspectos arquiteturais relevantes:
+
+\begin{itemize}
+	\item \textbf{\textit{Ordered Boosting}:} para calcular os resíduos de cada exemplo, o CatBoost utiliza apenas os modelos treinados com exemplos anteriores a ele (em uma permutação aleatória do conjunto), combatendo o \textit{target leakage} --- situação em que a predição de um exemplo é influenciada pelo próprio rótulo durante o treinamento. Esse procedimento reduz o viés otimista na estimativa dos resíduos, especialmente em conjuntos pequenos ou moderados.
+
+	\item \textbf{\textit{Oblivious Decision Trees}:} cada nível da árvore aplica a \textbf{mesma condição de divisão} a todos os nós daquele nível. Essa restrição produz árvores simétricas (ou ``oblivious''), que são mais rápidas de avaliar e atuam como regularização estrutural, reduzindo o risco de \textit{overfitting}.
+\end{itemize}
+
+O CatBoost também possui tratamento nativo de variáveis categóricas --- codificando-as internamente sem necessidade de \textit{one-hot encoding} --- e opções para lidar com desbalanceamento de classes, como o parâmetro \textit{auto\_class\_weights='Balanced'}, que ajusta automaticamente os pesos das classes de forma inversamente proporcional à sua frequência.
+
+A métrica de importância de variáveis padrão do CatBoost é o \textbf{\textit{PredictionValuesChange}}: para cada \textit{feature}, mede-se a mudança média nas predições do modelo ao longo de todos os \textit{splits} que a utilizam. Os valores são normalizados para que a soma seja igual a~100. Neste trabalho, CatBoost é utilizado junto com Regressão Logística, Random Forest e XGBoost para comparação de desempenho e robustez na classificação de curvas de luz (Capítulo~4).
 
 % -----------------------------------------------------------------------------
 \section{Agrupamento não supervisionado: K-means}

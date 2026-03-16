@@ -17,7 +17,7 @@ A montagem de um conjunto de dados equilibrado foi a primeira grande dificuldade
 Foram realizados \textbf{três experimentos} com o mesmo \textit{dataset} base, variando o conjunto de \textit{features}:
 
 \begin{itemize}
-	\item \textbf{Experimento 1:} Conjunto completo de 28 \textit{features}, incluindo estatísticas do fluxo, filtros Savitzky-Golay, \textit{max drawdown}, distância K-means, testes entre quartis, derivadas e métricas IOTA. Serve como linha de base de desempenho.
+	\item \textbf{Experimento 1:} Conjunto completo de 28 \textit{features}, incluindo estatísticas do fluxo, filtros Savitzky-Golay, \textit{max drawdown}, distância K-means, testes entre quartis, derivadas e métricas observacionais de ocultação. Serve como linha de base de desempenho.
 	\item \textbf{Experimento 2:} Subconjunto reduzido de 14 \textit{features}, retirando amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay, todas as derivadas, fluxo mínimo e razão fluxo mínimo sobre \textit{baseline}. O objetivo é reduzir o risco de \textit{overfitting}.
 	\item \textbf{Experimento 3:} Mesmo subconjunto do Experimento 2, porém \textbf{sem} \texttt{Feature\_Savgol\_Min} (13 \textit{features}), para testar a contribuição isolada dessa variável.
 \end{itemize}
@@ -68,17 +68,17 @@ K-Means & \texttt{kmeans\_centroid\_dist} & Distância entre os 2 centróides do
 & \texttt{SecondDeriv\_Max} & $\max(f'')$ \\
 & \texttt{SecondDeriv\_Std} & $\sigma(f'')$ \\
 \hline
-\multirow{10}{*}{IOTA}
-& \texttt{IOTA\_depth} & $\text{baseline} - \min(f)$ (profundidade do dip) \\
-& \texttt{IOTA\_SNR\_dip} & $\text{depth}/\sigma_{\text{baseline}}$ (razão sinal-ruído do dip) \\
-& \texttt{IOTA\_duration\_s} & Duração do maior bloco abaixo do baseline (em segundos) \\
-& \texttt{IOTA\_n\_frames\_below\_baseline} & Maior nº de frames consecutivos abaixo do baseline \\
-& \texttt{IOTA\_baseline\_std} & $\sigma(f \mid f \ge \text{baseline})$ (ruído fora do dip) \\
-& \texttt{IOTA\_flux\_min} & $\min(f)$ \\
-& \texttt{IOTA\_flux\_min\_over\_baseline} & $\min(f)/\text{baseline}$ \\
-& \texttt{IOTA\_chi2\_constant} & $\chi^2$ do modelo constante (sem evento) \\
-& \texttt{IOTA\_chi2\_square\_well} & $\chi^2$ do modelo de poço retangular \\
-& \texttt{IOTA\_chi2\_ratio} & $\chi^2_{\text{const}}/\chi^2_{\text{sw}}$ (razão de ajuste) \\
+\multirow{10}{*}{Observacionais}
+& \texttt{Occ\_depth} & $\text{baseline} - \min(f)$ (profundidade do dip) \\
+& \texttt{Occ\_SNR\_dip} & $\text{depth}/\sigma_{\text{baseline}}$ (razão sinal-ruído do dip) \\
+& \texttt{Occ\_duration\_s} & Duração do maior bloco abaixo do baseline (em segundos) \\
+& \texttt{Occ\_n\_frames\_below\_baseline} & Maior nº de frames consecutivos abaixo do baseline \\
+& \texttt{Occ\_baseline\_std} & $\sigma(f \mid f \ge \text{baseline})$ (ruído fora do dip) \\
+& \texttt{Occ\_flux\_min} & $\min(f)$ \\
+& \texttt{Occ\_flux\_min\_over\_baseline} & $\min(f)/\text{baseline}$ \\
+& \texttt{Occ\_chi2\_constant} & $\chi^2$ do modelo constante (sem evento) \\
+& \texttt{Occ\_chi2\_square\_well} & $\chi^2$ do modelo de poço retangular \\
+& \texttt{Occ\_chi2\_ratio} & $\chi^2_{\text{const}}/\chi^2_{\text{sw}}$ (razão de ajuste) \\
 \hline
 \end{tabular}
 \end{table}
@@ -90,26 +90,26 @@ Nas definições acima, $f$ denota o vetor de fluxo normalizado, $\tilde{f}$ o f
 A presença de variáveis redundantes --- altamente correlacionadas ou conceitualmente equivalentes --- pode inflar a dimensionalidade sem acrescentar informação discriminativa, aumentar o risco de \textit{overfitting} e dificultar a interpretação da importância das \textit{features}. Para identificar pares redundantes, foram analisadas tanto as definições matemáticas quanto as correlações empíricas entre as 28 variáveis. Os pares identificados são apresentados a seguir.
 
 \begin{enumerate}
-	\item \textbf{\texttt{Feature\_Amp} vs.\ \texttt{IOTA\_depth}.}
-	A amplitude é definida como $\max(f) - \min(f)$, enquanto a profundidade IOTA é $\text{baseline} - \min(f)$, com $\text{baseline} = \text{mediana}(f)$. Para curvas de fluxo normalizado próximo de 1, o máximo tende a coincidir com a mediana, tornando as duas métricas praticamente idênticas. \textbf{Removida:} \texttt{Feature\_Amp}. \textbf{Mantida:} \texttt{IOTA\_depth}, por possuir motivação física direta na caracterização de ocultações segundo os critérios da IOTA.
+	\item \textbf{\texttt{Feature\_Amp} vs.\ \texttt{Occ\_depth}.}
+	A amplitude é definida como $\max(f) - \min(f)$, enquanto a profundidade observacional é $\text{baseline} - \min(f)$, com $\text{baseline} = \text{mediana}(f)$. Para curvas de fluxo normalizado próximo de 1, o máximo tende a coincidir com a mediana, tornando as duas métricas praticamente idênticas. \textbf{Removida:} \texttt{Feature\_Amp}. \textbf{Mantida:} \texttt{Occ\_depth}, por possuir motivação física direta na caracterização de ocultações.
 
-	\item \textbf{\texttt{Feature\_Flux\_std} vs.\ \texttt{IOTA\_baseline\_std}.}
-	O desvio padrão do fluxo total ($\sigma(f)$) inclui os pontos dentro do dip, inflando a medida de ruído quando há ocultação. O desvio padrão do \textit{baseline} ($\sigma(f \mid f \ge \text{mediana})$) estima o ruído fotométrico fora do evento, sendo mais adequado fisicamente. \textbf{Removida:} \texttt{Feature\_Flux\_std}. \textbf{Mantida:} \texttt{IOTA\_baseline\_std}.
+	\item \textbf{\texttt{Feature\_Flux\_std} vs.\ \texttt{Occ\_baseline\_std}.}
+	O desvio padrão do fluxo total ($\sigma(f)$) inclui os pontos dentro do dip, inflando a medida de ruído quando há ocultação. O desvio padrão do \textit{baseline} ($\sigma(f \mid f \ge \text{mediana})$) estima o ruído fotométrico fora do evento, sendo mais adequado fisicamente. \textbf{Removida:} \texttt{Feature\_Flux\_std}. \textbf{Mantida:} \texttt{Occ\_baseline\_std}.
 
-	\item \textbf{\texttt{IOTA\_flux\_min} vs.\ \texttt{Feature\_Savgol\_Min}.}
-	O mínimo do fluxo bruto e o mínimo do fluxo suavizado por Savitzky-Golay são altamente correlacionados, pois o filtro preserva a posição dos mínimos. A versão suavizada é mais robusta a ruído pontual. \textbf{Removida:} \texttt{IOTA\_flux\_min}. \textbf{Mantida:} \texttt{Feature\_Savgol\_Min}.
+	\item \textbf{\texttt{Occ\_flux\_min} vs.\ \texttt{Feature\_Savgol\_Min}.}
+	O mínimo do fluxo bruto e o mínimo do fluxo suavizado por Savitzky-Golay são altamente correlacionados, pois o filtro preserva a posição dos mínimos. A versão suavizada é mais robusta a ruído pontual. \textbf{Removida:} \texttt{Occ\_flux\_min}. \textbf{Mantida:} \texttt{Feature\_Savgol\_Min}.
 
-	\item \textbf{\texttt{IOTA\_flux\_min\_over\_baseline}.}
-	Esta razão ($\min(f)/\text{baseline}$) é algebricamente derivável de \texttt{IOTA\_depth} e do valor do \textit{baseline}, não acrescentando informação independente. \textbf{Removida.}
+	\item \textbf{\texttt{Occ\_flux\_min\_over\_baseline}.}
+	Esta razão ($\min(f)/\text{baseline}$) é algebricamente derivável de \texttt{Occ\_depth} e do valor do \textit{baseline}, não acrescentando informação independente. \textbf{Removida.}
 
-	\item \textbf{\texttt{IOTA\_n\_frames\_below\_baseline} vs.\ \texttt{IOTA\_duration\_s}.}
-	Para observações com cadência uniforme, a duração em segundos é proporcional ao número de frames ($\Delta t_{\text{dur}} \approx n_{\text{frames}} \times \delta t$). A duração em unidade física (segundos) é mais interpretável e invariante a mudanças de cadência. \textbf{Removido:} \texttt{IOTA\_n\_frames\_below\_baseline}. \textbf{Mantida:} \texttt{IOTA\_duration\_s}.
+	\item \textbf{\texttt{Occ\_n\_frames\_below\_baseline} vs.\ \texttt{Occ\_duration\_s}.}
+	Para observações com cadência uniforme, a duração em segundos é proporcional ao número de frames ($\Delta t_{\text{dur}} \approx n_{\text{frames}} \times \delta t$). A duração em unidade física (segundos) é mais interpretável e invariante a mudanças de cadência. \textbf{Removido:} \texttt{Occ\_n\_frames\_below\_baseline}. \textbf{Mantida:} \texttt{Occ\_duration\_s}.
 
 	\item \textbf{\texttt{Feature\_Savgol\_Max}.}
 	Para fluxo normalizado, o máximo do sinal suavizado é próximo de 1,0 em quase todas as curvas, resultando em variância muito baixa e poder discriminativo desprezível. \textbf{Removida.}
 
 	\item \textbf{Nove \textit{features} de derivadas (\texttt{Deriv\_*} e \texttt{SecondDeriv\_*}).}
-	No Experimento 2, a remoção das nove \textit{features} de derivadas não causou perda de desempenho (F1 mantido em 0,99). Além disso, as métricas IOTA de profundidade, duração e razão $\chi^2$ já capturam as variações abruptas do fluxo que as derivadas buscam codificar, caracterizando redundância conceitual. \textbf{Removidas} todas as nove variáveis de derivadas.
+	No Experimento 2, a remoção das nove \textit{features} de derivadas não causou perda de desempenho (F1 mantido em 0,99). Além disso, as métricas observacionais de profundidade, duração e razão $\chi^2$ já capturam as variações abruptas do fluxo que as derivadas buscam codificar, caracterizando redundância conceitual. \textbf{Removidas} todas as nove variáveis de derivadas.
 \end{enumerate}
 
 Após a remoção, o conjunto final utilizado no treinamento contém \textbf{13 \textit{features}}, listadas na Tabela~\ref{tab:features_final}.
@@ -126,8 +126,8 @@ Savitzky-Golay & \texttt{Feature\_Savgol\_Min}, \texttt{Feature\_Savgol\_std} \\
 Fluxo bruto & \texttt{Max\_Drawdown} \\
 K-Means & \texttt{kmeans\_centroid\_dist} \\
 Testes de quartis & \texttt{MinLogP\_Ttest}, \texttt{MinLogP\_KS} \\
-\multirow{2}{*}{IOTA} & \texttt{IOTA\_depth}, \texttt{IOTA\_SNR\_dip}, \texttt{IOTA\_duration\_s} \\
-& \texttt{IOTA\_baseline\_std}, \texttt{IOTA\_chi2\_constant}, \texttt{IOTA\_chi2\_square\_well}, \texttt{IOTA\_chi2\_ratio} \\
+\multirow{2}{*}{Observacionais} & \texttt{Occ\_depth}, \texttt{Occ\_SNR\_dip}, \texttt{Occ\_duration\_s} \\
+& \texttt{Occ\_baseline\_std}, \texttt{Occ\_chi2\_constant}, \texttt{Occ\_chi2\_square\_well}, \texttt{Occ\_chi2\_ratio} \\
 \hline
 \end{tabular}
 \end{table}
@@ -267,7 +267,7 @@ A Figura~\ref{fig:confusao_1} apresenta as matrizes de confusão. Em todos os mo
 \section{Resultados do Experimento 2}
 \label{sec:resultados_exp2}
 
-No Experimento 2 foi utilizado um subconjunto reduzido de \textbf{14 \textit{features}}, removendo amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay, todas as derivadas e duas métricas IOTA (\texttt{IOTA\_flux\_min} e \texttt{IOTA\_flux\_min\_over\_baseline}). O objetivo é diminuir o risco de \textit{overfitting} e melhorar a razão entre número de variáveis e tamanho do conjunto de treino. A Tabela~\ref{tab:metricas_2} apresenta os resultados.
+No Experimento 2 foi utilizado um subconjunto reduzido de \textbf{14 \textit{features}}, removendo amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay, todas as derivadas e duas métricas observacionais (\texttt{Occ\_flux\_min} e \texttt{Occ\_flux\_min\_over\_baseline}). O objetivo é diminuir o risco de \textit{overfitting} e melhorar a razão entre número de variáveis e tamanho do conjunto de treino. A Tabela~\ref{tab:metricas_2} apresenta os resultados.
 
 \begin{table}[htbp]
 \centering
@@ -394,7 +394,7 @@ Em todos os experimentos e modelos, as variáveis mais relevantes consistentemen
 \begin{itemize}
 	\item \texttt{Feature\_Savgol\_Min} e \texttt{Max\_Drawdown}: capturam diretamente a magnitude da queda de fluxo, que é a assinatura primária de uma ocultação.
 	\item \texttt{kmeans\_centroid\_dist}: a distância entre os centróides do K-Means identifica a presença de dois regimes no fluxo (dentro e fora do dip), sendo altamente discriminativa.
-	\item \texttt{IOTA\_depth} e \texttt{IOTA\_SNR\_dip}: quantificam a profundidade e a razão sinal-ruído do evento segundo critérios observacionais da IOTA.
+	\item \texttt{Occ\_depth} e \texttt{Occ\_SNR\_dip}: quantificam a profundidade e a razão sinal-ruído do evento segundo critérios observacionais.
 	\item \texttt{MinLogP\_Ttest} e \texttt{MinLogP\_KS}: os testes estatísticos entre quartis detectam heterogeneidade no fluxo, que é esperada em curvas com ocultação.
 \end{itemize}
 
@@ -519,7 +519,7 @@ A importância da \textit{feature} \texttt{Feature\_Savgol\_Min} é coerente com
 
 \subsection{Interpretação da importância das \textit{features}}
 
-A concordância entre os quatro modelos quanto às \textit{features} mais importantes --- \texttt{Feature\_Savgol\_Min}, \texttt{Max\_Drawdown}, \texttt{kmeans\_centroid\_dist} e as métricas IOTA de profundidade e SNR --- oferece confiança de que essas variáveis capturam as assinaturas físicas relevantes de uma ocultação: queda de fluxo (profundidade), localização temporal da queda (duração), e separação entre os níveis de fluxo dentro e fora do evento (bimodalidade via K-Means). A coerência entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) reforça a robustez dessa interpretação.
+A concordância entre os quatro modelos quanto às \textit{features} mais importantes --- \texttt{Feature\_Savgol\_Min}, \texttt{Max\_Drawdown}, \texttt{kmeans\_centroid\_dist} e as métricas observacionais de profundidade e SNR --- oferece confiança de que essas variáveis capturam as assinaturas físicas relevantes de uma ocultação: queda de fluxo (profundidade), localização temporal da queda (duração), e separação entre os níveis de fluxo dentro e fora do evento (bimodalidade via K-Means). A coerência entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) reforça a robustez dessa interpretação.
 
 \subsection{Limitações}
 
