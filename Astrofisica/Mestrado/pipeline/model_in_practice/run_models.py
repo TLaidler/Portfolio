@@ -10,7 +10,7 @@ observacionais (ex.: dados do Quaoar), gerando predições de ocultação.
 Uso:
     python run_models.py quaoar/
     python run_models.py quaoar/ --time_col 3 --flux_col 9
-    python run_models.py quaoar/ --excluded_features IOTA_chi2_constant IOTA_chi2_square_well
+    python run_models.py quaoar/ --excluded_features Occ_chi2_constant Occ_chi2_square_well
 
 Autor: Pipeline de mestrado em Astrofísica
 """
@@ -25,12 +25,12 @@ import joblib
 import numpy as np
 import pandas as pd
 
-# Adiciona model_training ao path para importar extract_features e iota_features
+# Adiciona model_training ao path para importar extract_features e occ_features
 _MODEL_TRAINING_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'model_training')
 sys.path.insert(0, _MODEL_TRAINING_DIR)
 
 from build_dataset import extract_features
-from iota_features import compute_iota_features, IOTA_FEATURE_NAMES
+from occ_features import compute_occ_features, OCC_FEATURE_NAMES
 
 warnings.filterwarnings('ignore', category=FutureWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -51,7 +51,7 @@ def parse_args():
 Exemplos:
   python run_models.py quaoar/
   python run_models.py quaoar/ --time_col 3 --flux_col 9
-  python run_models.py quaoar/ --excluded_features IOTA_chi2_constant
+  python run_models.py quaoar/ --excluded_features Occ_chi2_constant
   python run_models.py quaoar/CFHT_Wircam_Ks_cor-time.dat --output resultados.csv
         """
     )
@@ -94,7 +94,7 @@ Exemplos:
 def load_light_curve(filepath, time_col, flux_col):
     """
     Lê um arquivo .dat e retorna um dicionário de curva compatível com
-    extract_features() e compute_iota_features().
+    extract_features() e compute_occ_features().
 
     Args:
         filepath: Caminho para o arquivo .dat
@@ -209,7 +209,7 @@ def load_models(model_dir):
 
 def extract_all_features(curve, curve_name, use_filter='savgol'):
     """
-    Extrai features estatísticas + IOTA de uma curva de luz.
+    Extrai features estatísticas + observacionais de uma curva de luz.
 
     Args:
         curve: dict com 'time', 'flux', 'flux_normalized'
@@ -223,11 +223,11 @@ def extract_all_features(curve, curve_name, use_filter='savgol'):
     if feats is None:
         return None
 
-    iota_feats = compute_iota_features(curve)
-    if iota_feats is not None:
-        feats.update(iota_feats)
+    occ_feats = compute_occ_features(curve)
+    if occ_feats is not None:
+        feats.update(occ_feats)
     else:
-        for col in IOTA_FEATURE_NAMES:
+        for col in OCC_FEATURE_NAMES:
             feats[col] = np.nan
 
     return feats

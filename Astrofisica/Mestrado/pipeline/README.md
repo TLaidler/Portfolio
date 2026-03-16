@@ -23,7 +23,6 @@ Ocultações estelares são eventos astronômicos onde um objeto do Sistema Sola
 
 ### 📁 data_warehouse/
 Contém scripts e ferramentas para coleta, limpeza e armazenamento de curvas de luz provenientes de bases de dados públicas de ocultações. As principais fontes incluem:
-- IOTA (International Occultation Timing Association)
 - DAMIT (Database of Asteroid Models from Inversion Techniques)
 - ALCDEF (Asteroid Lightcurve Database)
 
@@ -36,22 +35,22 @@ Scripts para extração de características e treinamento dos modelos de machine
 - CatBoost
 - Regressão Logística
 
-#### Etapa de feature engineering IOTA
-Foi adicionada uma etapa modular de feature engineering inspirada nos critérios observacionais da **International Occultation Timing Association (IOTA)** para validação de eventos. O módulo `model_training/iota_features.py` calcula as métricas **apenas a partir das séries de tempo e fluxo** (ou fluxo normalizado) de cada curva, sem alterar a ingestão de dados nem o pré-processamento existente. O dataset final (`outputs/dataset_final.csv`) passa a incluir as novas colunas, utilizadas automaticamente no treino junto com as demais features.
+#### Métricas observacionais de ocultação
+O módulo `model_training/occ_features.py` calcula métricas observacionais **apenas a partir das séries de tempo e fluxo** (ou fluxo normalizado) de cada curva, sem alterar a ingestão de dados nem o pré-processamento existente. O dataset final (`outputs/dataset_final.csv`) passa a incluir as novas colunas, utilizadas automaticamente no treino junto com as demais features.
 
-**Novas features (documentadas em `iota_features.py`):**
-- **IOTA_depth** — profundidade do dip (baseline − flux_min)
-- **IOTA_SNR_dip** — signal-to-noise ratio da queda (depth / baseline_std)
-- **IOTA_duration_s** — duração da queda em segundos (maior run abaixo do baseline)
-- **IOTA_n_frames_below_baseline** — maior número de frames consecutivos abaixo do baseline
-- **IOTA_baseline_std** — desvio padrão do baseline (pontos fora do dip)
-- **IOTA_flux_min** — fluxo mínimo observado
-- **IOTA_flux_min_over_baseline** — razão flux_min / baseline
-- **IOTA_chi2_constant** — χ² do modelo constante (sem evento)
-- **IOTA_chi2_square_well** — χ² do modelo “square well” (poço retangular)
-- **IOTA_chi2_ratio** — razão chi2_constant/chi2_square_well (> 1 indica que o dip explica melhor os dados)
+**Features observacionais (documentadas em `occ_features.py`):**
+- **Occ_depth** — profundidade do dip (baseline − flux_min)
+- **Occ_SNR_dip** — signal-to-noise ratio da queda (depth / baseline_std)
+- **Occ_duration_s** — duração da queda em segundos (maior run abaixo do baseline)
+- **Occ_n_frames_below_baseline** — maior número de frames consecutivos abaixo do baseline
+- **Occ_baseline_std** — desvio padrão do baseline (pontos fora do dip)
+- **Occ_flux_min** — fluxo mínimo observado
+- **Occ_flux_min_over_baseline** — razão flux_min / baseline
+- **Occ_chi2_constant** — χ² do modelo constante (sem evento)
+- **Occ_chi2_square_well** — χ² do modelo “square well” (poço retangular)
+- **Occ_chi2_ratio** — razão chi2_constant/chi2_square_well (> 1 indica que o dip explica melhor os dados)
 
-A pipeline de construção do dataset (leitura do banco, recorte, curvas sintéticas e extração de features originais) permanece inalterada; as features IOTA são incorporadas após cada chamada a `extract_features` e o resultado é salvo no mesmo CSV para treino.
+A pipeline de construção do dataset (leitura do banco, recorte, curvas sintéticas e extração de features originais) permanece inalterada; as features observacionais são incorporadas após cada chamada a `extract_features` e o resultado é salvo no mesmo CSV para treino.
 
 ### 📁 model_in_practice/
 Código para aplicação dos modelos treinados em dados observacionais reais ou não vistos durante o treinamento. Inclui ferramentas para:

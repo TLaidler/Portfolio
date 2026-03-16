@@ -124,7 +124,7 @@ O conjunto final reúne, portanto: positivas do banco (excluindo as usadas para 
 \section{Engenharia de características}
 \label{sec:features}
 
-As curvas de luz são séries temporais (tempo \(\times\) fluxo). Os modelos de classificação utilizados neste trabalho (Regressão Logística, Random Forest, XGBoost, CatBoost) recebem \textbf{vetores numéricos}, não as séries brutas. Por isso, cada curva é convertida em um vetor de \textbf{características} (features) extraídas da série --- por exemplo, amplitude, mínimo do fluxo suavizado, distância entre centróides do K-means, etc. O resultado é uma tabela em que cada linha é uma curva e cada coluna é uma dessas grandezas. As características \textbf{não} foram padronizadas (subtrair média e dividir pelo desvio padrão) antes da entrada nos classificadores: os modelos baseados em árvores são insensíveis à escala; para a Regressão Logística, optou-se por usar a mesma tabela para todos os modelos, permitindo comparação direta. Como discutido no Capítulo 3, a regularização é sensível à escala; no Capítulo 5, se a Regressão Logística mostrar sensibilidade, a padronização apenas para esse modelo pode ser testada em trabalho futuro.
+As curvas de luz são séries temporais (tempo \(\times\) fluxo). Os modelos de classificação utilizados neste trabalho (Regressão Logística, Random Forest, XGBoost, CatBoost) recebem \textbf{vetores numéricos}, não as séries brutas. Por isso, cada curva é convertida em um vetor de \textbf{características} (features) extraídas da série --- por exemplo, amplitude, mínimo do fluxo suavizado, distância entre centróides do K-means, etc. O resultado é uma tabela em que cada linha é uma curva e cada coluna é uma dessas grandezas. As características foram padronizadas (média zero, desvio unitário) \textbf{apenas para a Regressão Logística}, via \texttt{StandardScaler}, uma vez que a regularização $\ell_2$ é sensível à escala das variáveis \citep{geron2019maos}. Os modelos baseados em árvores (Random Forest, XGBoost, CatBoost) recebem as \textit{features} em escala original, pois são insensíveis a transformações monotônicas de cada variável.
 
 \subsection{Estatísticas básicas do fluxo}
 
@@ -178,7 +178,7 @@ A série é dividida em quatro quartis temporais. Para cada par de quartis, apli
 
 \subsection{Métricas de profundidade, duração e ajuste de modelos}
 
-Além das \textit{features} descritas até aqui, a \textit{pipeline} incorpora um conjunto de métricas inspiradas em critérios observacionais discutidos em fóruns entre astrônomos amadores para análise de curvas difíceis de ocultação. Não há documento oficial que defina essas grandezas como critério definitivo para classificar uma curva como positiva; no texto referimo-nos a elas como \textbf{métricas de profundidade, duração e ajuste de modelos}, sem uso de rótulos institucionais. A implementação concreta segue o módulo de engenharia de características do projeto (arquivo \texttt{iota\_features.py}), cujas fórmulas são resumidas abaixo.
+Além das \textit{features} descritas até aqui, a \textit{pipeline} incorpora um conjunto de métricas inspiradas em critérios observacionais discutidos em fóruns entre astrônomos amadores para análise de curvas difíceis de ocultação. Não há documento oficial que defina essas grandezas como critério definitivo para classificar uma curva como positiva; no texto referimo-nos a elas como \textbf{métricas de profundidade, duração e ajuste de modelos}, sem uso de rótulos institucionais. A implementação concreta segue o módulo de engenharia de características do projeto (arquivo \texttt{occ\_features.py}), cujas fórmulas são resumidas abaixo.
 
 \textbf{Baseline.} O nível de fluxo fora da ocultação é estimado pela mediana da série: \(\mathrm{baseline} = \mathrm{mediana}(F)\). Em implementações alternativas pode-se usar a média dos pontos com fluxo acima da mediana. A mediana é robusta a quedas pontuais e a \textit{outliers}.
 
@@ -219,7 +219,7 @@ com \(\mu = \mathrm{baseline}\) e \(\sigma\) uma escala robusta dos resíduos (p
 \end{equation}
 mede o ganho de ajuste ao incluir o dip: valores \(\chi^2_{\mathrm{ratio}} > 1\) indicam que o modelo com dip explica melhor os dados. Na implementação, a razão é limitada ao intervalo \([0{,}1,\, 10]\) para evitar valores extremos. Curvas sem dip tendem a \(\chi^2_{\mathrm{ratio}} \approx 1\).
 
-No dataset gerado pela \textit{pipeline}, essas grandezas aparecem em colunas cujos nomes no código possuem um prefixo nominal (por exemplo, \texttt{IOTA\_depth}, \texttt{IOTA\_duration\_s}); esse prefixo é apenas interno à implementação e não implica critério oficial de nenhuma instituição. No texto, tratamos todas elas como métricas de profundidade, duração e ajuste de modelos.
+No dataset gerado pela \textit{pipeline}, essas grandezas aparecem em colunas cujos nomes no código possuem o prefixo \texttt{Occ\_} (de \textit{occultation}), por exemplo \texttt{Occ\_depth}, \texttt{Occ\_duration\_s}. No texto, tratamos todas elas como métricas de profundidade, duração e ajuste de modelos.
 
 \subsection{Resumo das \textit{features}}
 
@@ -231,7 +231,7 @@ O vetor final de \textit{features} inclui: amplitude e desvio padrão do fluxo; 
 
 \subsection{Preparação dos dados e divisão treino/teste}
 
-O dataset final é carregado a partir do arquivo gerado na etapa anterior. As colunas de metadados (identificador da curva, fonte, rótulo) são separadas das colunas de \textit{features}. Valores faltantes (NaN) são preenchidos (por exemplo, com zero) para evitar falhas nos algoritmos. O rótulo binário (ocultação presente = 1, ausente = 0) é definido como variável alvo.
+O dataset final é carregado a partir do arquivo gerado na etapa anterior. As colunas de metadados (identificador da curva, fonte, rótulo) são separadas das colunas de \textit{features}. Valores faltantes (NaN) são preenchidos pela \textbf{mediana} calculada no conjunto de treino (\texttt{SimpleImputer} com \texttt{strategy='median'}), estratégia robusta a \textit{outliers}. O rótulo binário (ocultação presente = 1, ausente = 0) é definido como variável alvo.
 
 A divisão entre treino e teste pode ser feita de duas formas:
 

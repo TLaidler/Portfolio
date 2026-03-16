@@ -25,8 +25,8 @@ from sklearn.cluster import KMeans
 
 # Importa funções do módulo de acesso a dados
 import astro_data_access as ada
-# Feature engineering inspirado nos critérios IOTA (ocultações estelares)
-from iota_features import compute_iota_features, IOTA_FEATURE_NAMES
+# Métricas observacionais de ocultação
+from occ_features import compute_occ_features, OCC_FEATURE_NAMES
 
 # Diretório de saída
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), 'outputs')
@@ -464,11 +464,11 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
         feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
-            iota_feats = compute_iota_features(curve)
-            if iota_feats is not None:
-                feats.update(iota_feats)
+            occ_feats = compute_occ_features(curve)
+            if occ_feats is not None:
+                feats.update(occ_feats)
             else:
-                for col in IOTA_FEATURE_NAMES:
+                for col in OCC_FEATURE_NAMES:
                     feats[col] = np.nan
             feats['source'] = 'db_positive'
             feats['occ'] = 1
@@ -485,11 +485,11 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
         feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
-            iota_feats = compute_iota_features(curve)
-            if iota_feats is not None:
-                feats.update(iota_feats)
+            occ_feats = compute_occ_features(curve)
+            if occ_feats is not None:
+                feats.update(occ_feats)
             else:
-                for col in IOTA_FEATURE_NAMES:
+                for col in OCC_FEATURE_NAMES:
                     feats[col] = np.nan
             feats['source'] = 'db_negative'
             feats['occ'] = 0
@@ -506,11 +506,11 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
         feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
-            iota_feats = compute_iota_features(curve)
-            if iota_feats is not None:
-                feats.update(iota_feats)
+            occ_feats = compute_occ_features(curve)
+            if occ_feats is not None:
+                feats.update(occ_feats)
             else:
-                for col in IOTA_FEATURE_NAMES:
+                for col in OCC_FEATURE_NAMES:
                     feats[col] = np.nan
             feats['source'] = 'artificial_negative'
             feats['occ'] = 0
@@ -527,11 +527,11 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
         feats = extract_features(curve, curve_name, use_filter=use_filter)
         
         if feats:
-            iota_feats = compute_iota_features(curve)
-            if iota_feats is not None:
-                feats.update(iota_feats)
+            occ_feats = compute_occ_features(curve)
+            if occ_feats is not None:
+                feats.update(occ_feats)
             else:
-                for col in IOTA_FEATURE_NAMES:
+                for col in OCC_FEATURE_NAMES:
                     feats[col] = np.nan
             feats['source'] = 'synthetic'
             feats['occ'] = 0  # Sintéticas são negativas
@@ -544,7 +544,7 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
     print("\nMontando DataFrame final...")
     df = pd.DataFrame(all_features)
     
-    # Reordena colunas (features existentes + features IOTA)
+    # Reordena colunas (features existentes + métricas observacionais)
     cols_order = ['curve_name', 'source', 'occ',
                   # Features básicas (8)
                   'Feature_Amp', 'Feature_mv_av_Max', 'Feature_mv_av_Min', 
@@ -558,8 +558,8 @@ def build_and_save_dataset(positives, negatives_db, artificial_negatives,
                   'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std',
                   'Deriv_Skew', 'Deriv_Kurtosis',
                   'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std',
-                  # Features IOTA (critérios observacionais para ocultações)
-                  *IOTA_FEATURE_NAMES]
+                  # Métricas observacionais de ocultação
+                  *OCC_FEATURE_NAMES]
     
     # Usa apenas colunas que existem
     cols_final = [c for c in cols_order if c in df.columns]

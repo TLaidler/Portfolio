@@ -2,23 +2,23 @@
 # -*- coding: utf-8 -*-
 
 """
-Feature engineering inspirado nos critérios da IOTA para ocultações estelares.
+Métricas observacionais de ocultação estelar.
 
-Este módulo calcula métricas físicas utilizadas pela International Occultation
-Timing Association (IOTA) para validação de eventos de ocultação, usando
-apenas as séries temporais de tempo e fluxo (ou flux_normalized) da curva de luz.
+Este módulo calcula métricas físicas para validação de eventos de ocultação,
+usando apenas as séries temporais de tempo e fluxo (ou flux_normalized)
+da curva de luz.
 
 Features produzidas:
-  - IOTA_depth: profundidade do dip (baseline - flux_min)
-  - IOTA_SNR_dip: signal-to-noise ratio da queda (depth / baseline_std)
-  - IOTA_duration_s: duração da queda em segundos (maior run abaixo do baseline)
-  - IOTA_n_frames_below_baseline: maior número de frames consecutivos abaixo do baseline
-  - IOTA_baseline_std: desvio padrão do baseline (pontos >= baseline)
-  - IOTA_flux_min: fluxo mínimo observado
-  - IOTA_flux_min_over_baseline: razão flux_min / baseline
-  - IOTA_chi2_constant: chi² do modelo constante (sem evento)
-  - IOTA_chi2_square_well: chi² do modelo square well (poço retangular)
-  - IOTA_chi2_ratio: chi2_constant / chi2_square_well ( > 1 indica que o dip explica melhor)
+  - Occ_depth: profundidade do dip (baseline - flux_min)
+  - Occ_SNR_dip: signal-to-noise ratio da queda (depth / baseline_std)
+  - Occ_duration_s: duração da queda em segundos (maior run abaixo do baseline)
+  - Occ_n_frames_below_baseline: maior número de frames consecutivos abaixo do baseline
+  - Occ_baseline_std: desvio padrão do baseline (pontos >= baseline)
+  - Occ_flux_min: fluxo mínimo observado
+  - Occ_flux_min_over_baseline: razão flux_min / baseline
+  - Occ_chi2_constant: chi² do modelo constante (sem evento)
+  - Occ_chi2_square_well: chi² do modelo square well (poço retangular)
+  - Occ_chi2_ratio: chi2_constant / chi2_square_well ( > 1 indica que o dip explica melhor)
 
 Decisões de engenharia:
   - Baseline = mediana(flux) para robustez a outliers.
@@ -140,7 +140,7 @@ def _depth(flux: np.ndarray, baseline: float) -> float:
     Profundidade do dip: baseline - min(flux).
 
     Motivação física: Em ocultações o fluxo cai; a profundidade é a queda
-    em unidades de fluxo. Critério IOTA para magnitude do evento.
+    em unidades de fluxo. Critério observacional para magnitude do evento.
 
     Fórmula: depth = max(0, baseline - min(flux)).
 
@@ -161,8 +161,8 @@ def _snr_dip(depth: float, baseline_std: float) -> float:
     """
     Signal-to-noise ratio da queda: depth / sigma_baseline.
 
-    Motivação física: IOTA exige que a queda seja significativa em relação
-    ao ruído; SNR alto sugere evento real.
+    Motivação física: A queda deve ser significativa em relação ao ruído;
+    SNR alto sugere evento real.
 
     Fórmula: SNR_dip = depth / baseline_std. Retorna 0 se baseline_std <= 0.
 
@@ -209,7 +209,7 @@ def _duration_seconds(
     Duração em segundos do maior run abaixo do baseline.
 
     Motivação física: Duração da ocultação ligada à geometria (tamanho do
-    objeto, velocidade). Critério IOTA para consistência do evento.
+    objeto, velocidade). Critério observacional para consistência do evento.
 
     Args:
         time: Array 1D de tempos (mesmo tamanho que flux).
@@ -323,9 +323,9 @@ def _mad(flux: np.ndarray) -> float:
     return float(np.median(np.abs(valid - med)))
 
 
-def compute_iota_features(curve: dict) -> Optional[dict]:
+def compute_occ_features(curve: dict) -> Optional[dict]:
     """
-    Calcula todas as features IOTA para uma curva de luz.
+    Calcula todas as métricas observacionais de ocultação para uma curva de luz.
 
     Utiliza apenas as chaves 'time', 'flux' e/ou 'flux_normalized' do dicionário
     curve. Preferência por flux_normalized quando existir.
@@ -340,9 +340,9 @@ def compute_iota_features(curve: dict) -> Optional[dict]:
 
     Returns:
         Dicionário com as chaves:
-          IOTA_depth, IOTA_SNR_dip, IOTA_duration_s, IOTA_n_frames_below_baseline,
-          IOTA_baseline_std, IOTA_flux_min, IOTA_flux_min_over_baseline,
-          IOTA_chi2_constant, IOTA_chi2_square_well, IOTA_chi2_ratio.
+          Occ_depth, Occ_SNR_dip, Occ_duration_s, Occ_n_frames_below_baseline,
+          Occ_baseline_std, Occ_flux_min, Occ_flux_min_over_baseline,
+          Occ_chi2_constant, Occ_chi2_square_well, Occ_chi2_ratio.
         Ou None se a curva for inválida.
     """
     flux = np.asarray(curve.get('flux_normalized', curve.get('flux', [])))
@@ -380,29 +380,29 @@ def compute_iota_features(curve: dict) -> Optional[dict]:
     chi2_ratio = _chi2_ratio(chi2_constant, chi2_square_well)
 
     return {
-        'IOTA_depth': depth,
-        'IOTA_SNR_dip': _snr_dip(depth, baseline_std),
-        'IOTA_duration_s': duration_s,
-        'IOTA_n_frames_below_baseline': n_frames,
-        'IOTA_baseline_std': baseline_std,
-        'IOTA_flux_min': flux_min,
-        'IOTA_flux_min_over_baseline': flux_min_over_baseline,
-        'IOTA_chi2_constant': chi2_constant,
-        'IOTA_chi2_square_well': chi2_square_well,
-        'IOTA_chi2_ratio': chi2_ratio,
+        'Occ_depth': depth,
+        'Occ_SNR_dip': _snr_dip(depth, baseline_std),
+        'Occ_duration_s': duration_s,
+        'Occ_n_frames_below_baseline': n_frames,
+        'Occ_baseline_std': baseline_std,
+        'Occ_flux_min': flux_min,
+        'Occ_flux_min_over_baseline': flux_min_over_baseline,
+        'Occ_chi2_constant': chi2_constant,
+        'Occ_chi2_square_well': chi2_square_well,
+        'Occ_chi2_ratio': chi2_ratio,
     }
 
 
-# Ordem fixa das colunas IOTA para consistência no dataset (usado por build_dataset)
-IOTA_FEATURE_NAMES = [
-    'IOTA_depth',
-    'IOTA_SNR_dip',
-    'IOTA_duration_s',
-    'IOTA_n_frames_below_baseline',
-    'IOTA_baseline_std',
-    'IOTA_flux_min',
-    'IOTA_flux_min_over_baseline',
-    'IOTA_chi2_constant',
-    'IOTA_chi2_square_well',
-    'IOTA_chi2_ratio',
+# Ordem fixa das colunas observacionais para consistência no dataset (usado por build_dataset)
+OCC_FEATURE_NAMES = [
+    'Occ_depth',
+    'Occ_SNR_dip',
+    'Occ_duration_s',
+    'Occ_n_frames_below_baseline',
+    'Occ_baseline_std',
+    'Occ_flux_min',
+    'Occ_flux_min_over_baseline',
+    'Occ_chi2_constant',
+    'Occ_chi2_square_well',
+    'Occ_chi2_ratio',
 ]
