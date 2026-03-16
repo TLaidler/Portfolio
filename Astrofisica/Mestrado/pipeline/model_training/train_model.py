@@ -66,7 +66,7 @@ SIZE_CROPPING = 250
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), 'outputs')
 
 # Proporção do conjunto de teste (quando usar split automático)
-TEST_SIZE = 0.2
+TEST_SIZE = 0.35
 
 # Colunas que NÃO são features (metadados)
 METADATA_COLS = ['curve_name', 'source', 'occ']
@@ -82,6 +82,7 @@ ID_COL = 'curve_name'
 EXCLUDED_FEATURES = [
     'Feature_Amp',                    # Redundante com Occ_depth (para fluxo normalizado, max≈median)
     'Feature_Flux_std',               # Redundante com Occ_baseline_std (std geral vs std fora do dip)
+    'Feature_Savgol_Min',
     'Feature_Savgol_Max',             # Variância mínima para fluxo normalizado (max suavizado ≈ 1.0)
     'Occ_flux_min',                   # Redundante com Feature_Savgol_Min (min raw vs min suavizado)
     'Occ_flux_min_over_baseline',     # Algebricamente derivável de Occ_depth e baseline
@@ -164,7 +165,8 @@ def load_dataset(from_csv=None, skip_cropping=False, use_filter='savgol'):
     if from_csv and os.path.exists(from_csv):
         print(f"  Carregando dataset de: {from_csv}")
         df = pd.read_csv(from_csv).dropna() #pd.read_csv(from_csv, sep=';').dropna() 
-        #removendo features - teste  #df = df.drop(columns=['Feature_Amp', 'kmeans_centroid_dist','Feature_Flux_std', 'Feature_Savgol_Max','Feature_Savgol_Min', 'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std', 'Deriv_Skew', 'Deriv_Kurtosis', 'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std', 'Occ_flux_min', 'Occ_flux_min_over_baseline']) #NÃO RETIRAR ESSES COMENTÁRIO
+        #removendo features - teste  #
+        #df = df.drop(columns=['Feature_Amp','kmeans_centroid_dist', 'Feature_Flux_std', 'Feature_Savgol_Max','Feature_Savgol_Min', 'Deriv_Min', 'Deriv_Max', 'Deriv_Mean', 'Deriv_Std', 'Deriv_Skew', 'Deriv_Kurtosis', 'SecondDeriv_Min', 'SecondDeriv_Max', 'SecondDeriv_Std', 'Occ_flux_min', 'Occ_flux_min_over_baseline']) #NÃO RETIRAR ESSES COMENTÁRIO
     else:
         # Carrega via build_dataset (pode demorar se precisar construir do zero)
         print("  Construindo dataset via build_dataset.py...")
@@ -279,7 +281,8 @@ def split_by_curve(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
     Returns:
         tuple: (X_train, X_test, y_train, y_test, df_train, df_test)
     """
-    feature_cols = [c for c in df.columns if c not in METADATA_COLS]
+    feature_cols = [c for c in df.columns
+                    if c not in METADATA_COLS and c not in EXCLUDED_FEATURES]
     curve_info = df[[ID_COL, TARGET_COL]].drop_duplicates()
     curves = curve_info[ID_COL].values
     y_curves = curve_info[TARGET_COL].values
@@ -329,7 +332,8 @@ def split_real_holdout(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
         raise ValueError("split_real_holdout requer coluna 'source' no dataset.")
 
     real_sources = ['db_positive', 'db_negative']
-    feature_cols = [c for c in df.columns if c not in METADATA_COLS]
+    feature_cols = [c for c in df.columns
+                    if c not in METADATA_COLS and c not in EXCLUDED_FEATURES]
 
     df_real = df[df['source'].isin(real_sources)]
     df_non_real = df[~df['source'].isin(real_sources)]
@@ -406,7 +410,8 @@ def split_with_manual_test(df, test_curve_names):
     df_train = df[~mask_test].copy()
     
     # Prepara features e target (NaNs preservados para imputação)
-    feature_cols = [col for col in df.columns if col not in METADATA_COLS]
+    feature_cols = [col for col in df.columns
+                    if col not in METADATA_COLS and col not in EXCLUDED_FEATURES]
     
     X_train = df_train[feature_cols]
     X_test = df_test[feature_cols]
