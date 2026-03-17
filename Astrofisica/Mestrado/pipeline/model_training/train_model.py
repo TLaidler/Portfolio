@@ -70,7 +70,7 @@ SIZE_CROPPING = 250
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), 'outputs')
 
 # Proporção do conjunto de teste (quando usar split automático)
-TEST_SIZE = 0.35
+TEST_SIZE = 0.2
 
 # Colunas que NÃO são features (metadados)
 METADATA_COLS = ['curve_name', 'source', 'occ']
@@ -87,6 +87,7 @@ EXCLUDED_FEATURES = [
     'Feature_Amp',                    # Redundante com Occ_depth (para fluxo normalizado, max≈median)
     'Feature_Flux_std',               # Redundante com Occ_baseline_std (std geral vs std fora do dip)
     'Feature_Savgol_Min',
+    'kmeans_centroid_dist',
     'Feature_Savgol_Max',             # Variância mínima para fluxo normalizado (max suavizado ≈ 1.0)
     'Occ_flux_min',                   # Redundante com Feature_Savgol_Min (min raw vs min suavizado)
     'Occ_flux_min_over_baseline',     # Algebricamente derivável de Occ_depth e baseline
@@ -850,23 +851,33 @@ def run_threshold_analysis(all_metrics, y_test, output_dir=OUTPUT_DIR):
     plt.show()
     print(f"  -> Curva PR salva: {pr_path}")
 
-    # --- Plot 2: Métricas vs threshold para o melhor modelo (maior F1 em tau=0.5) ---
-    best_model = max(all_metrics, key=lambda m: m.get('f1_score', 0))['model']
-    df_best = df_thresh[df_thresh['model'] == best_model]
+    # --- Plot 2: Métricas vs threshold para todos os modelos (um subplot por modelo) ---
+    model_names = [m['model'] for m in all_metrics]
+    n_models = len(model_names)
+    fig2, axes = plt.subplots(2, 2, figsize=(14, 10))
+    axes = axes.flatten()
 
-    fig2, ax2 = plt.subplots(figsize=(9, 6))
-    ax2.plot(df_best['threshold'], df_best['precision'], 'b-', lw=2, label='Precisão')
-    ax2.plot(df_best['threshold'], df_best['recall'], 'r-', lw=2, label='Revocação')
-    ax2.plot(df_best['threshold'], df_best['f1'], 'g--', lw=2, label='F1-score')
-    ax2.plot(df_best['threshold'], df_best['f2'], 'm--', lw=2, label='F$_2$-score')
-    ax2.axvline(x=0.5, color='gray', linestyle=':', alpha=0.7, label='$\\tau = 0.5$ (padrão)')
-    ax2.set_xlabel('Limiar de decisão ($\\tau$)')
-    ax2.set_ylabel('Métrica')
-    ax2.set_title(f'Métricas vs. Limiar — {best_model}')
-    ax2.legend(loc='center left')
-    ax2.set_xlim([0, 1])
-    ax2.set_ylim([0, 1.05])
-    ax2.grid(True, alpha=0.3)
+    for idx, model_name in enumerate(model_names):
+        ax2 = axes[idx]
+        df_model = df_thresh[df_thresh['model'] == model_name]
+        ax2.plot(df_model['threshold'], df_model['precision'], 'b-', lw=2, label='Precisão')
+        ax2.plot(df_model['threshold'], df_model['recall'], 'r-', lw=2, label='Revocação')
+        ax2.plot(df_model['threshold'], df_model['f1'], 'g--', lw=2, label='F1-score')
+        ax2.plot(df_model['threshold'], df_model['f2'], 'm--', lw=2, label='F$_2$-score')
+        ax2.axvline(x=0.5, color='gray', linestyle=':', alpha=0.7, label='$\\tau = 0.5$')
+        ax2.set_xlabel('Limiar ($\\tau$)')
+        ax2.set_ylabel('Métrica')
+        ax2.set_title(model_name)
+        ax2.legend(loc='center left', fontsize=8)
+        ax2.set_xlim([0, 1])
+        ax2.set_ylim([0, 1.05])
+        ax2.grid(True, alpha=0.3)
+
+    # Ocultar eixos extras se houver menos de 4 modelos
+    for idx in range(n_models, len(axes)):
+        axes[idx].set_visible(False)
+
+    fig2.suptitle('Métricas vs. Limiar de Decisão', fontsize=14, y=1.01)
     fig2.tight_layout()
     mt_path = os.path.join(output_dir, 'metrics_vs_threshold.png')
     fig2.savefig(mt_path, dpi=150, bbox_inches='tight')
@@ -1355,9 +1366,9 @@ if __name__ == "__main__":
     TEST_ON_REAL_ONLY = False
 
     # Flags para análises estatísticas adicionais
-    RUN_CV = False           # True para executar validação cruzada k=5
-    RUN_THRESHOLD = False    # True para gerar curva precision-recall e métricas vs limiar
-    RUN_MCNEMAR = False      # True para teste de McNemar entre pares de modelos
+    RUN_CV = True          # True para executar validação cruzada k=5
+    RUN_THRESHOLD = True    # True para gerar curva precision-recall e métricas vs limiar
+    RUN_MCNEMAR = True     # True para teste de McNemar entre pares de modelos
 
     # -------------------------------------------------------------------------
     # EXECUÇÃO DO PIPELINE
