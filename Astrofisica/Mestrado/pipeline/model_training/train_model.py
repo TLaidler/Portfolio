@@ -26,21 +26,25 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
-    accuracy_score, 
-    precision_score, 
-    recall_score, 
-    f1_score, 
-    roc_auc_score, 
-    confusion_matrix, 
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    fbeta_score,
+    roc_auc_score,
+    confusion_matrix,
     roc_curve,
+    precision_recall_curve as sk_precision_recall_curve,
     classification_report
 )
+from scipy.stats import chi2 as chi2_dist
+from itertools import combinations
 
 from xgboost import XGBClassifier
 from catboost import CatBoostClassifier
@@ -698,6 +702,301 @@ def plot_feature_importance(model, feature_names, model_name, top_n=15, save_pat
 
 
 # =============================================================================
+# VALIDAÇÃO CRUZADA ESTRATIFICADA (k-fold)
+# =============================================================================
+
+def run_cross_validation(df, k=5, random_state=RANDOM_STATE):
+    """
+    Executa validação cruzada estratificada por curva (k folds).
+    Cada curva inteira vai para um único fold, evitando data leakage.
+
+    Args:
+        df (pd.DataFrame): Dataset completo com colunas de features, target e metadados.
+        k (int): Número de folds.
+        random_state (int): Seed para reprodutibilidade.
+
+    Returns:
+        pd.DataFrame: Métricas (média ± desvio) por modelo.
+    """
+    feature_cols = [c for c in df.columns
+                    if c not in METADATA_COLS and c not in EXCLUDED_FEATURES]
+
+    # Obtém lista de curvas únicas com seus labels
+    curve_info = df[[ID_COL, TARGET_COL]].drop_duplicates()
+    curves = curve_info[ID_COL].values
+    y_curves = curve_info[TARGET_COL].values
+
+    skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=random_state)
+
+    model_configs = [
+        ('Random Forest', lambda: RandomForestClassifier(**RF_PARAMS), False),
+        ('XGBoost', lambda: XGBClassifier(**XGB_PARAMS), False),
+        ('CatBoost', lambda: CatBoostClassifier(**CAT_PARAMS), False),
+        ('Logistic Regression', lambda: LogisticRegression(**LR_PARAMS), True),
+    ]
+
+    all_results = []
+
+    for fold_idx, (train_idx, test_idx) in enumerate(skf.split(curves, y_curves)):
+        curves_train = curves[train_idx]
+        curves_test = curves[test_idx]
+
+        df_train = df[df[ID_COL].isin(curves_train)]
+        df_test = df[df[ID_COL].isin(curves_test)]
+
+        X_train = df_train[feature_cols].copy()
+        X_test = df_test[feature_cols].copy()
+        y_train = df_train[TARGET_COL]
+        y_test = df_test[TARGET_COL]
+
+        # Imputação
+        imp = SimpleImputer(strategy='median')
+        X_train = pd.DataFrame(imp.fit_transform(X_train), columns=feature_cols)
+        X_test = pd.DataFrame(imp.transform(X_test), columns=feature_cols)
+
+        for model_name, model_factory, needs_scaling in model_configs:
+            model = model_factory()
+            Xtr, Xte = X_train, X_test
+            if needs_scaling:
+                sc = StandardScaler()
+                Xtr = sc.fit_transform(X_train)
+                Xte = sc.transform(X_test)
+            model.fit(Xtr, y_train)
+            y_pred = model.predict(Xte)
+            y_proba = model.predict_proba(Xte)[:, 1]
+
+            all_results.append({
+                'fold': fold_idx,
+                'model': model_name,
+                'accuracy': accuracy_score(y_test, y_pred),
+                'precision': precision_score(y_test, y_pred, zero_division=0),
+                'recall': recall_score(y_test, y_pred, zero_division=0),
+                'f1_score': f1_score(y_test, y_pred, zero_division=0),
+                'roc_auc': roc_auc_score(y_test, y_proba),
+            })
+
+        print(f"  Fold {fold_idx + 1}/{k} concluído.")
+
+    df_results = pd.DataFrame(all_results)
+
+    # Calcula média e desvio padrão por modelo
+    summary = df_results.groupby('model').agg(['mean', 'std']).round(4)
+    summary.columns = ['_'.join(col) for col in summary.columns]
+    summary = summary.reset_index()
+
+    return df_results, summary
+
+
+# =============================================================================
+# THRESHOLD ANALYSIS (curva precision-recall e métricas vs limiar)
+# =============================================================================
+
+def run_threshold_analysis(all_metrics, y_test, output_dir=OUTPUT_DIR):
+    """
+    Analisa o efeito da variação do limiar de decisão sobre as métricas.
+    Gera curva precision-recall e gráfico de métricas vs threshold.
+
+    Args:
+        all_metrics (list): Lista de dicts de métricas (com y_proba).
+        y_test: Target de teste.
+        output_dir (str): Diretório para salvar resultados.
+
+    Returns:
+        pd.DataFrame: Tabela com métricas por modelo e limiar.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    thresholds = np.arange(0.01, 1.0, 0.01)
+    results = []
+
+    for metrics in all_metrics:
+        model_name = metrics['model']
+        proba = metrics['y_proba']
+        y_true = np.array(y_test)
+
+        for tau in thresholds:
+            y_pred_tau = (proba >= tau).astype(int)
+            cm = confusion_matrix(y_true, y_pred_tau)
+            tn, fp, fn, tp = cm.ravel()
+            results.append({
+                'model': model_name,
+                'threshold': round(tau, 2),
+                'precision': precision_score(y_true, y_pred_tau, zero_division=0),
+                'recall': recall_score(y_true, y_pred_tau, zero_division=0),
+                'f1': f1_score(y_true, y_pred_tau, zero_division=0),
+                'f2': fbeta_score(y_true, y_pred_tau, beta=2, zero_division=0),
+                'n_fp': int(fp),
+                'n_fn': int(fn),
+            })
+
+    df_thresh = pd.DataFrame(results)
+    df_thresh.to_csv(os.path.join(output_dir, 'threshold_analysis.csv'), index=False)
+
+    # --- Plot 1: Curva Precision-Recall para todos os modelos ---
+    fig, ax = plt.subplots(figsize=(8, 6))
+    colors = ['#2ecc71', '#3498db', '#e74c3c', '#9b59b6']
+    for metrics, color in zip(all_metrics, colors):
+        prec, rec, _ = sk_precision_recall_curve(y_test, metrics['y_proba'])
+        ax.plot(rec, prec, color=color, lw=2, label=metrics['model'])
+    ax.set_xlabel('Revocação (Recall)')
+    ax.set_ylabel('Precisão')
+    ax.set_title('Curva Precisão-Revocação')
+    ax.legend(loc='lower left')
+    ax.set_xlim([0, 1.05])
+    ax.set_ylim([0, 1.05])
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    pr_path = os.path.join(output_dir, 'precision_recall_curve.png')
+    fig.savefig(pr_path, dpi=150, bbox_inches='tight')
+    plt.show()
+    print(f"  -> Curva PR salva: {pr_path}")
+
+    # --- Plot 2: Métricas vs threshold para o melhor modelo (maior F1 em tau=0.5) ---
+    best_model = max(all_metrics, key=lambda m: m.get('f1_score', 0))['model']
+    df_best = df_thresh[df_thresh['model'] == best_model]
+
+    fig2, ax2 = plt.subplots(figsize=(9, 6))
+    ax2.plot(df_best['threshold'], df_best['precision'], 'b-', lw=2, label='Precisão')
+    ax2.plot(df_best['threshold'], df_best['recall'], 'r-', lw=2, label='Revocação')
+    ax2.plot(df_best['threshold'], df_best['f1'], 'g--', lw=2, label='F1-score')
+    ax2.plot(df_best['threshold'], df_best['f2'], 'm--', lw=2, label='F$_2$-score')
+    ax2.axvline(x=0.5, color='gray', linestyle=':', alpha=0.7, label='$\\tau = 0.5$ (padrão)')
+    ax2.set_xlabel('Limiar de decisão ($\\tau$)')
+    ax2.set_ylabel('Métrica')
+    ax2.set_title(f'Métricas vs. Limiar — {best_model}')
+    ax2.legend(loc='center left')
+    ax2.set_xlim([0, 1])
+    ax2.set_ylim([0, 1.05])
+    ax2.grid(True, alpha=0.3)
+    fig2.tight_layout()
+    mt_path = os.path.join(output_dir, 'metrics_vs_threshold.png')
+    fig2.savefig(mt_path, dpi=150, bbox_inches='tight')
+    plt.show()
+    print(f"  -> Métricas vs threshold salvo: {mt_path}")
+
+    return df_thresh
+
+
+# =============================================================================
+# TESTE DE McNEMAR ENTRE PARES DE MODELOS
+# =============================================================================
+
+def run_mcnemar_tests(all_metrics, y_test, output_dir=OUTPUT_DIR):
+    """
+    Aplica o teste de McNemar a cada par de modelos para verificar se as
+    diferenças de desempenho são estatisticamente significativas.
+
+    Args:
+        all_metrics (list): Lista de dicts de métricas (com y_pred).
+        y_test: Target de teste.
+        output_dir (str): Diretório para salvar resultados.
+
+    Returns:
+        pd.DataFrame: Resultados do teste para cada par.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    y_true = np.array(y_test)
+    results = []
+
+    for (m_a, m_b) in combinations(all_metrics, 2):
+        pred_a = np.array(m_a['y_pred'])
+        pred_b = np.array(m_b['y_pred'])
+        correct_a = (pred_a == y_true)
+        correct_b = (pred_b == y_true)
+
+        # b = A acerta e B erra; c = A erra e B acerta
+        b = int(np.sum(correct_a & ~correct_b))
+        c = int(np.sum(~correct_a & correct_b))
+
+        # Teste de McNemar (com correção de continuidade)
+        if (b + c) == 0:
+            chi2_val, p_val = 0.0, 1.0
+        else:
+            chi2_val = ((abs(b - c) - 1) ** 2) / (b + c)
+            p_val = 1.0 - chi2_dist.cdf(chi2_val, df=1)
+
+        results.append({
+            'model_a': m_a['model'],
+            'model_b': m_b['model'],
+            'b_only_a_correct': b,
+            'c_only_b_correct': c,
+            'chi2': round(chi2_val, 4),
+            'p_value': round(p_val, 4),
+            'significant_005': p_val < 0.05,
+        })
+
+    df_mcnemar = pd.DataFrame(results)
+    path = os.path.join(output_dir, 'mcnemar_results.csv')
+    df_mcnemar.to_csv(path, index=False)
+    print(f"  -> McNemar salvo: {path}")
+
+    return df_mcnemar
+
+
+# =============================================================================
+# CURVA DE APRENDIZADO (F1 vs tamanho do treino, a partir de resultados já salvos)
+# =============================================================================
+
+def plot_learning_curve_from_results(output_base_dir=None, save_path=None):
+    """
+    Lê training_results.csv de múltiplos diretórios de split e plota
+    F1-score vs número de amostras de treino para cada modelo.
+
+    Args:
+        output_base_dir (str): Diretório base que contém os subdiretórios de resultado.
+        save_path (str, optional): Caminho para salvar a figura.
+    """
+    if output_base_dir is None:
+        output_base_dir = OUTPUT_DIR
+
+    # Mapeia diretórios de resultado para nº de amostras de treino
+    split_dirs = {
+        'resultado_split0.4-0.6_less_feature': 676,
+        'resultado_split0.35-0.65_less_feature': 1099,
+        'resultado_split0.8-0.2_less_feature': 1353,
+    }
+
+    all_data = []
+    for dirname, n_train in split_dirs.items():
+        csv_path = os.path.join(output_base_dir, dirname, 'training_results.csv')
+        if os.path.exists(csv_path):
+            df = pd.read_csv(csv_path)
+            df['n_train'] = n_train
+            all_data.append(df)
+
+    if not all_data:
+        print("  [AVISO] Nenhum training_results.csv encontrado para curva de aprendizado.")
+        return
+
+    df_all = pd.concat(all_data, ignore_index=True)
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    markers = {'Random Forest': 'o', 'XGBoost': 's', 'CatBoost': '^', 'Logistic Regression': 'D'}
+    colors = {'Random Forest': '#2ecc71', 'XGBoost': '#3498db',
+              'CatBoost': '#e74c3c', 'Logistic Regression': '#9b59b6'}
+
+    for model_name in df_all['model'].unique():
+        df_m = df_all[df_all['model'] == model_name].sort_values('n_train')
+        ax.plot(df_m['n_train'], df_m['f1_score'],
+                marker=markers.get(model_name, 'o'),
+                color=colors.get(model_name, 'gray'),
+                lw=2, markersize=8, label=model_name)
+
+    ax.set_xlabel('Número de amostras de treino')
+    ax.set_ylabel('F1-score')
+    ax.set_title('Curva de Aprendizado: F1-score vs. Tamanho do Treino')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    ax.set_ylim([0.96, 1.0])
+    fig.tight_layout()
+
+    if save_path:
+        fig.savefig(save_path, dpi=150, bbox_inches='tight')
+        print(f"  -> Curva de aprendizado salva: {save_path}")
+
+    plt.show()
+
+
+# =============================================================================
 # FUNÇÕES DE PERSISTÊNCIA
 # =============================================================================
 
@@ -817,7 +1116,10 @@ def run_pipeline(
     use_filter='savgol',
     test_on_real_only=False,
     show_plots=True,
-    save_plots=True
+    save_plots=True,
+    run_cv=False,
+    run_threshold=False,
+    run_mcnemar=False
 ):
     """
     Executa o pipeline completo de treinamento.
@@ -990,6 +1292,28 @@ def run_pipeline(
             plot_feature_importance(model, feature_names, name, save_path=fi_path)
     
     # -------------------------------------------------------------------------
+    # ETAPA 7 (opcional): Análises estatísticas adicionais
+    # -------------------------------------------------------------------------
+
+    if run_threshold:
+        print("\n[7a] Análise de threshold (curva precision-recall)...")
+        run_threshold_analysis(all_metrics, y_test, output_dir=OUTPUT_DIR)
+
+    if run_mcnemar:
+        print("\n[7b] Teste de McNemar entre pares de modelos...")
+        run_mcnemar_tests(all_metrics, y_test, output_dir=OUTPUT_DIR)
+
+    if run_cv:
+        print("\n[7c] Validação cruzada estratificada (k=5)...")
+        df_cv, cv_summary = run_cross_validation(df)
+        cv_path = os.path.join(OUTPUT_DIR, 'cross_validation_results.csv')
+        df_cv.to_csv(cv_path, index=False)
+        cv_summary_path = os.path.join(OUTPUT_DIR, 'cross_validation_summary.csv')
+        cv_summary.to_csv(cv_summary_path, index=False)
+        print(f"  -> CV resultados: {cv_path}")
+        print(f"  -> CV resumo: {cv_summary_path}")
+
+    # -------------------------------------------------------------------------
     # Resumo Final
     # -------------------------------------------------------------------------
     print("\n" + "=" * 60)
@@ -1024,16 +1348,21 @@ if __name__ == "__main__":
     
     CSV_PATH = os.path.join(OUTPUT_DIR, 'dataset_final.csv')
     TEST_CURVES = None  # Para forçar curvas no teste: ["curve_1", "curve_2", ...]
-    
+
     # test_on_real_only=False (padrão): split por curva em todo o dataset
     # test_on_real_only=True: teste APENAS em curvas reais (db_positive/db_negative)
     #   Use apenas quando quiser validar generalização em dados reais.
     TEST_ON_REAL_ONLY = False
-    
+
+    # Flags para análises estatísticas adicionais
+    RUN_CV = False           # True para executar validação cruzada k=5
+    RUN_THRESHOLD = False    # True para gerar curva precision-recall e métricas vs limiar
+    RUN_MCNEMAR = False      # True para teste de McNemar entre pares de modelos
+
     # -------------------------------------------------------------------------
     # EXECUÇÃO DO PIPELINE
     # -------------------------------------------------------------------------
-    
+
     results = run_pipeline(
         csv_path=CSV_PATH if os.path.exists(CSV_PATH) else None,
         test_curve_names=TEST_CURVES,
@@ -1042,7 +1371,37 @@ if __name__ == "__main__":
         use_filter='savgol',
         test_on_real_only=TEST_ON_REAL_ONLY,
         show_plots=True,
-        save_plots=True
+        save_plots=True,
+        run_cv=RUN_CV,
+        run_threshold=RUN_THRESHOLD,
+        run_mcnemar=RUN_MCNEMAR
     )
+
+    # -------------------------------------------------------------------------
+    # CURVA DE APRENDIZADO (agrega resultados de múltiplos splits já executados)
+    # -------------------------------------------------------------------------
+    # Descomentar após ter executado os splits 0.35, 0.4 e 0.8:
+    # plot_learning_curve_from_results(
+    #     output_base_dir=OUTPUT_DIR,
+    #     save_path=os.path.join(OUTPUT_DIR, 'curva_aprendizado_f1.png')
+    # )
+
+    # -------------------------------------------------------------------------
+    # TODO: EXPERIMENTO REAL HOLDOUT
+    # -------------------------------------------------------------------------
+    # Para validar generalização em dados puramente observacionais, executar:
+    #
+    # results_holdout = run_pipeline(
+    #     csv_path=CSV_PATH,
+    #     test_on_real_only=True,
+    #     test_size=0.5,
+    #     run_threshold=True,
+    #     run_mcnemar=True,
+    #     show_plots=True,
+    #     save_plots=True
+    # )
+    #
+    # Mover outputs para: outputs/resultado_real_holdout/
+    # Copiar figuras para a tese e descomentar seção correspondente no Cap. 5.
 
     print(results)

@@ -1,0 +1,83 @@
+% =============================================================================
+% Capítulo 6 — Conclusões
+% =============================================================================
+
+Este capítulo sintetiza os principais achados da dissertação, responde à hipótese de pesquisa formulada na Introdução, elenca as contribuições originais, reconhece as limitações do trabalho e aponta direções para investigações futuras.
+
+% -----------------------------------------------------------------------------
+\section{Resumo dos achados}
+
+A \textit{pipeline} desenvolvida neste trabalho demonstrou que a detecção automatizada de ocultações estelares em curvas de luz pode atingir desempenho elevado --- F1-score entre 0,978 e 0,994 e AUC-ROC superior a 0,998 --- utilizando \textit{features} clássicas extraídas das séries temporais e \textit{ensembles} de árvores de decisão (Random Forest, XGBoost, CatBoost), além de Regressão Logística como \textit{baseline}.
+
+Os seis experimentos realizados permitiram identificar os seguintes padrões:
+
+\begin{enumerate}
+	\item \textbf{O \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.} A redução de 28 para 13--14 \textit{features} (remoção de variáveis redundantes) não degradou --- e em alguns casos melhorou --- o desempenho, indicando que um conjunto compacto de variáveis fisicamente motivadas é suficiente.
+
+	\item \textbf{A \textit{feature} \texttt{kmeans\_centroid\_dist} é dispensável apesar de sua alta importância atribuída pelos modelos de árvore.} O estudo de ablação (Experimento~6) mostrou que a remoção dessa variável causa degradação desprezível ($\leq$0,3~pp em F1), demonstrando que importância de \textit{feature} não é sinônimo de insubstituibilidade: outras variáveis colineares compensam sua ausência.
+
+	\item \textbf{Os modelos apresentam saturação precoce da curva de aprendizado.} A comparação entre os Experimentos~2, 4 e 5 (splits de 80\%, 40\% e 35\% para treino) revelou que o desempenho estabiliza com aproximadamente 700 amostras de treino, sugerindo que o \textit{dataset} atual é suficiente para a tarefa.
+
+	\item \textbf{O ajuste do limiar de decisão permite operar a \textit{pipeline} em regime de alta revocação} (minimização de falsos negativos) sem retreinamento, explorando a separabilidade elevada entre as classes.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\section{Resposta à hipótese de pesquisa}
+
+A hipótese formulada na Introdução --- de que é possível obter desempenho comparável a abordagens baseadas em redes convolucionais ou inspeção manual usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é \textbf{corroborada} pelos resultados obtidos. Os quatro modelos testados atingiram desempenho elevado e consistente; a concordância entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) quanto à importância das variáveis reforça a interpretabilidade do sistema e a solidez das conclusões.
+
+% -----------------------------------------------------------------------------
+\section{Contribuições originais}
+
+As principais contribuições deste trabalho são:
+
+\begin{enumerate}
+	\item \textbf{Pipeline completa de detecção:} desde a ingestão de curvas de luz já reduzidas até a classificação binária com reportagem de métricas, importância de variáveis e predições por curva, implementada em Python e disponível para reprodução.
+
+	\item \textbf{Conjunto de \textit{features} baseado em domínio:} 13--14 variáveis que capturam assinaturas físicas de ocultações (estatísticas de Savitzky-Golay, \textit{Max Drawdown}, métricas observacionais de profundidade e SNR, testes estatísticos entre quartis), selecionadas por análise de redundância e validadas experimentalmente.
+
+	\item \textbf{Estudo de ablação da \textit{feature} K-Means:} demonstração empírica de que a importância atribuída por algoritmos de árvore não implica insubstituibilidade, com implicação prática para simplificação do \textit{pipeline}.
+
+	\item \textbf{Análise de sensibilidade ao volume de treino:} evidência de saturação da curva de aprendizado, orientando futuras decisões sobre coleta de dados.
+
+	\item \textbf{Análise de ajuste de limiar:} demonstração de que a assimetria de custo entre falsos negativos e falsos positivos pode ser incorporada em pós-processamento, sem retreinamento.
+
+	% TODO: Adicionar contribuição de validação cruzada e McNemar após execução do pipeline.
+	% \item \textbf{Validação cruzada estratificada e teste de McNemar:} estimativa robusta
+	% da variabilidade do desempenho e avaliação de significância estatística das diferenças
+	% entre modelos.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\section{Limitações}
+
+As limitações deste trabalho devem ser explicitadas para contextualizar adequadamente os resultados:
+
+\begin{enumerate}
+	\item \textbf{\textit{Dataset} parcialmente sintético:} das 891 curvas negativas, 702 são sintéticas e 186 são artificiais; apenas 3 são registros reais de detecções negativas. Embora as curvas sintéticas tenham sido geradas com base em propriedades estatísticas de curvas reais, a capacidade de generalização para um cenário puramente observacional não foi validada.
+
+	\item \textbf{\textit{Split} único por experimento:} cada experimento utiliza uma única partição treino/teste. A implementação de validação cruzada estratificada (Seção~5.\ref{sec:cross_validation}) mitiga parcialmente essa limitação; uma validação cruzada repetida com múltiplas sementes fortaleceria as conclusões.
+
+	\item \textbf{Ausência de validação em catálogos externos:} os dados provêm do catálogo do Grupo do Rio (VizieR); a generalização para outros catálogos, condições de observação ou classes de objetos ocultantes não foi avaliada sistematicamente.
+
+	\item \textbf{Hiperparâmetros fixos:} os hiperparâmetros dos modelos foram definidos manualmente com base em valores recomendados pela literatura; não foi realizada busca em grade ou otimização bayesiana.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\section{Trabalhos futuros}
+
+Com base nos resultados e limitações identificados, sugerem-se as seguintes direções para trabalhos futuros:
+
+\begin{itemize}
+	\item \textbf{Validação cruzada repetida:} executar a validação cruzada com múltiplas sementes (e.g., 10 repetições $\times$ 5 dobras) para obter intervalos de confiança robustos das métricas.
+
+	\item \textbf{Experimento \textit{real holdout}:} reservar todas as curvas reais (positivas e negativas genuínas) para o conjunto de teste, treinando apenas com curvas sintéticas e artificiais, para avaliar a transferibilidade do modelo.
+
+	\item \textbf{Aplicação a campanhas específicas:} validar a \textit{pipeline} em dados de campanhas observacionais de objetos como Quaoar, em cenário real de uso integrado ao SORA.
+
+	\item \textbf{\textit{Features} baseadas em difração de Fresnel:} incorporar características derivadas de modelos físicos mais sofisticados (escala de Fresnel, opacidade parcial, diâmetro aparente da estrela), que poderiam melhorar a discriminação em eventos de baixo SNR.
+
+	\item \textbf{Otimização de hiperparâmetros:} aplicar busca em grade ou otimização bayesiana (e.g., Optuna) para ajuste fino dos hiperparâmetros dos modelos.
+
+	\item \textbf{Integração operacional:} incorporar a \textit{pipeline} ao fluxo de trabalho do SORA como módulo de triagem automática, com interface para ajuste do limiar de decisão conforme a campanha.
+\end{itemize}

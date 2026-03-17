@@ -56,13 +56,7 @@ Um \textbf{classificador} é uma função \(f \colon \mathbb{R}^d \longrightarro
 \subsection{Regressão linear como exemplo didático}
 \label{sec:reglin_didatica}
 
-Antes de apresentar os modelos de classificação utilizados na \textit{pipeline}, convém fixar a ideia de treinamento como minimização de uma função de custo. A \textbf{regressão linear} é um dos modelos estatísticos mais simples e fundamentais para o reconhecimento de padrões e por isso serve de exemplo didático. Ela se baseia no princípio dos mínimos quadrados e permite estudar relações entre variáveis: uma variável explicativa \(x\) e uma variável resposta \(y\). Importa esclarecer que o interesse não está em relações \textbf{determinísticas} (como \(C = 2\pi R\) ou a lei de Ohm), e sim em relações \textbf{não determinísticas}, em que o modelo descreve o comportamento médio de \(y\) dado \(x\), e um termo de erro captura a variação não explicada.
-
-Um modelo de regressão linear simples pode ser escrito como
-\[
-y_i = \beta_0 + \beta_1 x_i + \epsilon_i,
-\]
-onde \(\beta_0\) é o intercepto (valor esperado de \(y\) na ausência de \(x\)), \(\beta_1\) é a inclinação (aumento médio de \(y\) por unidade de \(x\)) e \(\epsilon_i\) é o termo de erro. A Figura~\ref{fig:linear} ilustra um exemplo.
+Antes de apresentar os modelos de classificação, convém fixar a ideia de treinamento como minimização de uma função de custo. A \textbf{regressão linear} serve de exemplo didático. O modelo $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$ descreve o comportamento médio de uma variável resposta $y$ dado $x$, com erro $\epsilon_i$ (Figura~\ref{fig:linear}).
 
 \begin{figure}[htbp]
 \begin{center}
@@ -72,16 +66,11 @@ onde \(\beta_0\) é o intercepto (valor esperado de \(y\) na ausência de \(x\))
 \end{center}
 \end{figure}
 
-Os parâmetros \(\beta_0\) e \(\beta_1\) são estimados pelo método dos mínimos quadrados, que minimiza a soma dos quadrados dos resíduos:
-\[
-(\hat{\beta}_0, \hat{\beta}_1) = \arg\min_{\beta_0,\beta_1} \sum_{i=1}^{n} \big( y_i - (\beta_0 + \beta_1 x_i) \big)^2.
-\]
-
-Em notação vetorial (conveniente para múltiplos atributos, como nas \textit{features} das curvas de luz), o modelo prediz \(\hat{y}^{(i)} = \vec{\theta}^\top \vec{x}^{(i)}\) (ou \(\hat{\vec{y}} = X\vec{\theta}\) em forma matricial). A função de custo é a soma dos quadrados dos resíduos,
+Os parâmetros são estimados pelo método dos mínimos quadrados. Em notação vetorial, o modelo prediz $\hat{\vec{y}} = X\vec{\theta}$ e a função de custo é
 \[
 J(\vec{\theta}) = \sum_{i=1}^{m} \big( y^{(i)} - \vec{\theta}^\top \vec{x}^{(i)} \big)^2,
 \]
-e o minimizador admite solução fechada, a \textbf{equação normal}: \(\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}\) \citep{geron2019maos}. O custo de calcular e inverter \(X^\top X\) é \(O(np^2 + p^3)\), o que limita a escalabilidade. Para classificação, não usamos regressão linear diretamente; a \textbf{Regressão Logística} mantém a mesma ideia de combinação linear, mas mapeia a saída ao intervalo \((0,1)\) por uma função sigmoide e utiliza o custo de entropia cruzada, para o qual \textbf{não existe solução fechada} --- o treinamento é feito por algoritmos iterativos (gradiente descendente), detalhados na Seção~\ref{sec:otimizacao}. Os modelos a seguir são apresentados em termos de forma funcional e custo; a Seção~\ref{sec:otimizacao} unifica os métodos de otimização usados no treinamento.
+cujo minimizador admite solução fechada --- a \textbf{equação normal}: $\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}$ \citep{geron2019maos}. Para classificação, não usamos regressão linear diretamente; a \textbf{Regressão Logística} mantém a combinação linear, mas mapeia a saída ao intervalo $(0,1)$ por uma função sigmoide e utiliza o custo de entropia cruzada, para o qual \textbf{não existe solução fechada} --- o treinamento é feito por algoritmos iterativos (Seção~\ref{sec:otimizacao}).
 
 % -----------------------------------------------------------------------------
 \section{Modelos de classificação utilizados na pipeline}
@@ -236,9 +225,61 @@ Com isso, o leitor dispõe de uma referência clara sobre o significado das ``co
 
 A criação e a seleção de \textbf{características numéricas} (atributos) a partir dos dados brutos são fundamentais para o sucesso do ML \citep{geron2019maos}. Incluem: (i)~escolher ou construir variáveis que capturem informação útil para a tarefa (por exemplo, estatísticas da curva de luz, derivadas, comparações entre segmentos); (ii)~combinar ou transformar variáveis existentes (médias móveis, suavização, testes estatísticos entre quartis, etc.). No Capítulo 4, descreve-se em detalhe o conjunto de features extraídas de cada curva de luz (amplitude, desvio padrão, max drawdown, distância entre centróides do K-means no fluxo, estatísticas de derivadas, \(p\)-valores entre quartis, entre outras). Essas grandezas formam o vetor \(\vec{x}\) de entrada dos classificadores.
 
+\subsection{Métricas de avaliação para classificação binária}
+\label{sec:metricas_avaliacao}
+
+A avaliação de um classificador binário parte da \textbf{matriz de confusão}, que contabiliza os acertos e erros do modelo em relação aos rótulos verdadeiros. Sejam \(y_i \in \{0,1\}\) os rótulos reais e \(\hat{y}_i\) as predições; definem-se quatro contagens:
+
+\begin{itemize}
+	\item \textbf{Verdadeiro Positivo (TP):} $\hat{y}_i = 1$ e $y_i = 1$ (acerto na classe positiva).
+	\item \textbf{Verdadeiro Negativo (TN):} $\hat{y}_i = 0$ e $y_i = 0$ (acerto na classe negativa).
+	\item \textbf{Falso Positivo (FP):} $\hat{y}_i = 1$ e $y_i = 0$ (alarme falso).
+	\item \textbf{Falso Negativo (FN):} $\hat{y}_i = 0$ e $y_i = 1$ (evento perdido).
+\end{itemize}
+
+A partir dessas contagens, as métricas mais utilizadas em classificação binária são:
+
+\textbf{Acurácia} --- fração de predições corretas sobre o total:
+\begin{equation}
+\text{Acurácia} = \frac{TP + TN}{TP + TN + FP + FN}.
+\end{equation}
+A acurácia é intuitiva, mas pode ser enganosa em conjuntos desbalanceados: um classificador que prediz sempre a classe majoritária pode atingir acurácia alta sem detectar nenhum evento raro.
+
+\textbf{Precisão} (\textit{Precision}) --- entre os exemplos classificados como positivos, qual fração é realmente positiva:
+\begin{equation}
+\text{Precisão} = \frac{TP}{TP + FP}.
+\end{equation}
+
+\textbf{Revocação} (\textit{Recall}, ou sensibilidade) --- entre os exemplos verdadeiramente positivos, qual fração foi corretamente detectada:
+\begin{equation}
+\text{Revocação} = \frac{TP}{TP + FN}.
+\end{equation}
+
+\textbf{F1-score} --- média harmônica de precisão e revocação, oferecendo um compromisso entre ambas:
+\begin{equation}
+F_1 = 2 \cdot \frac{\text{Precisão} \cdot \text{Revocação}}{\text{Precisão} + \text{Revocação}} = \frac{2\,TP}{2\,TP + FP + FN}.
+\end{equation}
+
+\textbf{F$_\beta$-score} --- generalização do F1-score que permite atribuir peso diferente à revocação:
+\begin{equation}
+F_\beta = (1 + \beta^2) \cdot \frac{\text{Precisão} \cdot \text{Revocação}}{\beta^2 \cdot \text{Precisão} + \text{Revocação}}.
+\end{equation}
+Para $\beta > 1$, o $F_\beta$ penaliza mais os falsos negativos (favorecendo a revocação); para $\beta < 1$, penaliza mais os falsos positivos. Em aplicações de triagem científica, como a detecção de ocultações estelares, $\beta = 2$ é uma escolha natural, pois o custo de perder um evento genuíno (FN) é maior que o de investigar um alarme falso (FP) \citep{Saito2015}.
+
+\textbf{AUC-ROC} (\textit{Area Under the Receiver Operating Characteristic Curve}) --- mede a capacidade discriminativa do modelo ao longo de todos os limiares de decisão possíveis. A curva ROC plota a \textbf{taxa de verdadeiros positivos} (revocação) contra a \textbf{taxa de falsos positivos} ($FP/(FP+TN)$) para cada limiar $\tau$. A área sob essa curva (AUC) varia de 0,5 (classificador aleatório) a 1,0 (classificador perfeito). A AUC-ROC é útil por ser invariante ao limiar escolhido, mas pode ser otimista em conjuntos desbalanceados \citep{Saito2015}.
+
+\textbf{Curva Precision-Recall} --- alternativa à curva ROC, recomendada quando a classe positiva é rara ou quando o custo dos erros é assimétrico \citep{Saito2015}. Plota a precisão contra a revocação para cada limiar~$\tau$. A área sob a curva PR (AUC-PR) é mais informativa que a AUC-ROC em cenários desbalanceados, pois não é inflada por verdadeiros negativos abundantes.
+
+Nesta dissertação, os modelos são avaliados por acurácia, precisão, revocação, F1-score e AUC-ROC no conjunto de teste (Capítulo~5). Para a análise de ajuste de limiar, utilizam-se também o $F_2$-score e a curva precision-recall.
+
 \subsection{Overfitting, underfitting e trade-off viés-variância}
 
-A identificação de \textbf{sobreajuste} (overfitting) e \textbf{subajuste} (underfitting) baseia-se na comparação do desempenho do modelo nos dados usados no treinamento versus nos dados reservados para teste ou validação \citep{geron2019maos}. Em termos intuitivos: \textbf{sobreajuste} ocorre quando o modelo ``decora'' os dados de treino (incluindo o ruído) e deixa de generalizar --- o erro no treino fica muito baixo, mas o erro em dados novos permanece alto. \textbf{Subajuste} ocorre quando o modelo é simples demais e não captura o padrão verdadeiro dos dados --- tanto o erro de treino quanto o de validação ficam altos. O erro de generalização pode ser decomposto em \textbf{viés}, \textbf{variância} e \textbf{ruído irredutível}: modelos muito simples tendem a alto viés (subajuste); modelos muito flexíveis tendem a alta variância (sobreajuste) \citep{Deisenroth2019, Levada2026}. O objetivo prático é encontrar um equilíbrio que minimize o erro total.
+A identificação de \textbf{sobreajuste} (overfitting) e \textbf{subajuste} (underfitting) baseia-se na comparação do desempenho do modelo nos dados usados no treinamento versus nos dados reservados para teste ou validação \citep{geron2019maos}. Em termos intuitivos: \textbf{sobreajuste} ocorre quando o modelo ``decora'' os dados de treino (incluindo o ruído) e deixa de generalizar --- o erro no treino fica muito baixo, mas o erro em dados novos permanece alto. \textbf{Subajuste} ocorre quando o modelo é simples demais e não captura o padrão verdadeiro dos dados --- tanto o erro de treino quanto o de validação ficam altos. O erro de generalização pode ser decomposto em \textbf{viés}, \textbf{variância} e \textbf{ruído irredutível} \citep{Deisenroth2019, Levada2026}. Formalmente, para um modelo $\hat{f}$ treinado em diferentes amostras do mesmo processo gerador, o erro quadrático médio esperado em um ponto $\vec{x}$ é:
+\begin{equation}
+\mathbb{E}\!\left[(y - \hat{f}(\vec{x}))^2\right] = \text{Viés}^2[\hat{f}(\vec{x})] + \text{Var}[\hat{f}(\vec{x})] + \sigma^2,
+\label{eq:bias_variance}
+\end{equation}
+onde $\text{Viés}^2[\hat{f}] = \left(\mathbb{E}[\hat{f}(\vec{x})] - f(\vec{x})\right)^2$ mede o erro sistemático do modelo (quão longe a predição média está do valor verdadeiro), $\text{Var}[\hat{f}]$ mede a sensibilidade do modelo a flutuações nos dados de treino, e $\sigma^2$ é a variância do ruído intrínseco aos dados (irredutível por qualquer modelo). Modelos muito simples tendem a alto viés (subajuste); modelos muito flexíveis tendem a alta variância (sobreajuste). O objetivo prático é encontrar um equilíbrio que minimize o erro total.
 
 \textbf{Diagnóstico.} O sinal mais claro de sobreajuste é um erro muito baixo no treino e um erro alto no teste ou validação; nas \textbf{curvas de aprendizado} (erro em função do tamanho do conjunto de treino), isso aparece como um \textbf{gap} entre a curva de treino e a de validação --- o erro de validação para de cair e pode até subir. No subajuste, as curvas de treino e validação ficam próximas e em um \textbf{platô alto}. A \textbf{validação cruzada} (dividir os dados em \(k\) partes, treinar em \(k-1\) e avaliar na parte restante, rotacionando) permite obter uma estimativa robusta do erro de generalização (média e desvio padrão), facilitando perceber quando o modelo começou a sobreajustar \citep{geron2019maos}.
 

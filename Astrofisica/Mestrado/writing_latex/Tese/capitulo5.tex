@@ -961,6 +961,75 @@ A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável
 \end{figure}
 
 % -----------------------------------------------------------------------------
+\section{Validação cruzada estratificada}
+\label{sec:cross_validation}
+
+Os resultados apresentados nas seções anteriores baseiam-se em um único \textit{split} treino/teste por experimento. Embora útil para comparações controladas, essa abordagem não permite estimar a \textbf{variabilidade} do desempenho em função da partição dos dados. Para obter uma estimativa mais robusta da capacidade de generalização, implementou-se a \textbf{validação cruzada estratificada com $k=5$ dobras}, respeitando o agrupamento por curva de luz (todos os segmentos de uma mesma curva permanecem na mesma dobra, evitando \textit{data leakage}).
+
+O procedimento é o seguinte: os dados são divididos em 5 partições estratificadas (preservando a proporção de classes em cada dobra); em cada rodada, 4 dobras são usadas para treino e 1 para teste, e os quatro modelos (RF, XGBoost, CatBoost, Regressão Logística) são treinados e avaliados independentemente. As métricas coletadas por dobra são: F1-score, precisão, revocação e AUC-ROC. O resultado final é reportado como \textbf{média $\pm$ desvio padrão} sobre as 5 dobras.
+
+% TODO: Inserir tabela com resultados da validação cruzada após execução do pipeline.
+% A tabela deve conter: modelo, F1 (média ± std), Precisão (média ± std),
+% Revocação (média ± std), AUC-ROC (média ± std).
+% Os resultados serão gerados pelo arquivo cross_validation_results.csv
+% produzido pela função run_cross_validation() em train_model.py.
+%
+% \begin{table}[htbp]
+% \centering
+% \small
+% \caption{Validação cruzada estratificada ($k=5$): média $\pm$ desvio padrão das métricas por modelo.}
+% \label{tab:cross_validation}
+% \begin{tabular}{@{}lcccc@{}}
+% \hline
+% \textbf{Modelo} & \textbf{F1} & \textbf{Precisão} & \textbf{Revocação} & \textbf{AUC-ROC} \\
+% \hline
+% Random Forest     & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ \\
+% XGBoost           & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ \\
+% CatBoost          & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ \\
+% Regressão Log.    & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ & $\cdot \pm \cdot$ \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+A validação cruzada cumpre dois objetivos: (1)~confirmar que o desempenho elevado observado nos experimentos anteriores não é artefato de uma partição favorável dos dados; e (2)~fornecer desvios padrão que permitam avaliar se as diferenças entre modelos são significativas ou estão dentro da flutuação estatística. Se o desvio padrão do F1 for pequeno (e.g., $< 0{,}01$), isso reforça a conclusão de que o desempenho é robusto; se for grande, pode indicar sensibilidade à composição do conjunto de teste.
+
+\subsection{Teste de McNemar entre modelos}
+\label{sec:mcnemar}
+
+Para determinar se as diferenças de desempenho entre pares de modelos são \textbf{estatisticamente significativas} --- e não meras flutuações amostrais --- aplicou-se o \textbf{teste de McNemar} \citep{McNemar1947}. Esse teste é apropriado para comparar dois classificadores avaliados no mesmo conjunto de teste: constrói-se uma tabela $2 \times 2$ de concordância/discordância entre as predições dos dois modelos, e testa-se se os padrões de discordância são simétricos.
+
+Sejam $b$ o número de exemplos que o modelo~A erra e o modelo~B acerta, e $c$ o número de exemplos que o modelo~A acerta e o modelo~B erra. A estatística de McNemar (com correção de continuidade) é:
+\begin{equation}
+\chi^2 = \frac{(|b - c| - 1)^2}{b + c},
+\end{equation}
+que segue uma distribuição $\chi^2$ com 1 grau de liberdade sob a hipótese nula $H_0: b = c$ (os modelos têm a mesma taxa de erro). Se $p < 0{,}05$, rejeita-se $H_0$ e conclui-se que a diferença é significativa.
+
+% TODO: Inserir tabela com resultados do teste de McNemar após execução do pipeline.
+% Os resultados serão gerados pelo arquivo mcnemar_results.csv
+% produzido pela função run_mcnemar_tests() em train_model.py.
+%
+% \begin{table}[htbp]
+% \centering
+% \small
+% \caption{Teste de McNemar entre pares de modelos (6 pares). Valores de $p < 0{,}05$ indicam diferença significativa.}
+% \label{tab:mcnemar}
+% \begin{tabular}{@{}llcccl@{}}
+% \hline
+% \textbf{Modelo A} & \textbf{Modelo B} & $b$ & $c$ & $\chi^2$ & $p$ \\
+% \hline
+% RF & XGBoost       & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+% RF & CatBoost      & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+% RF & Reg. Log.     & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+% XGBoost & CatBoost  & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+% XGBoost & Reg. Log. & $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+% CatBoost & Reg. Log.& $\cdot$ & $\cdot$ & $\cdot$ & $\cdot$ \\
+% \hline
+% \end{tabular}
+% \end{table}
+
+Em cenários de alto desempenho (F1 $> 0{,}97$), é comum que os valores de $b$ e $c$ sejam pequenos, o que pode tornar o teste pouco potente. Se o McNemar indicar que as diferenças \textbf{não} são significativas para a maioria dos pares, isso sugere que os modelos são equivalentes no contexto deste \textit{dataset} e que a escolha entre eles pode ser guiada por critérios secundários (interpretabilidade, velocidade de inferência, facilidade de implantação).
+
+% -----------------------------------------------------------------------------
 \section{Discussão dos resultados}
 \label{sec:discussao}
 
@@ -990,7 +1059,7 @@ Em um cenário real de triagem, o custo de perder uma ocultação genuína (fals
 
 \begin{enumerate}
 	\item O \textit{ground truth} (rótulos positivo/negativo) provém dos catálogos VizieR e Grupo do Rio; erros ou inconsistências de rotulagem podem afetar treinamento e avaliação.
-	\item Foi utilizado um único \textit{split} treino/teste fixo; não foram realizados testes de significância estatística nem intervalos de confiança para as métricas, de modo que pequenas diferenças entre experimentos devem ser lidas com cautela.
+	\item Os experimentos individuais utilizam um único \textit{split} treino/teste fixo. A validação cruzada estratificada (Seção~\ref{sec:cross_validation}) e o teste de McNemar (Seção~\ref{sec:mcnemar}) foram implementados para mitigar essa limitação, fornecendo estimativas de variabilidade e testes de significância; contudo, uma validação cruzada repetida com múltiplas sementes fortaleceria ainda mais as conclusões.
 	\item A generalização para outros catálogos, condições de observação ou objetos ocultantes diferentes dos presentes no banco de dados não foi avaliada sistematicamente neste trabalho.
 \end{enumerate}
 
