@@ -1,0 +1,10 @@
+Modelo: Logistic Regression
+
+              precision    recall  f1-score   support
+
+    Negativa     0.9811    0.9968    0.9889       312
+    Positiva     0.9964    0.9786    0.9874       281
+
+    accuracy                         0.9882       593
+   macro avg     0.9887    0.9877    0.9882       593
+weighted avg     0.9883    0.9882    0.9882       593
