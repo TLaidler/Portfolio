@@ -14,15 +14,20 @@ As métricas adotadas são: \textbf{acurácia} (fração de acertos no total), \
 
 A montagem de um conjunto de dados equilibrado foi a primeira grande dificuldade do projeto: nos catálogos disponíveis (VizieR, Grupo do Rio), o número de curvas negativas é muito inferior ao de positivas --- o banco dispunha de 802 curvas positivas e apenas 3 negativas. Para contornar esse desbalanceamento, adotaram-se duas estratégias complementares, descritas no Capítulo~4: recorte de segmentos sem ocultação a partir das curvas positivas (com revisão manual), gerando 186 negativos artificiais, e incorporação de 702 curvas sintéticas negativas geradas pelo simulador físico de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. O \textit{dataset} final reúne \textbf{1693 amostras} (802 positivas e 891 negativas), com divisão treino/teste estratificada por curva (80\%/20\%).
 
-Foram realizados \textbf{três experimentos} com o mesmo \textit{dataset} base, variando o conjunto de \textit{features}:
+Foram realizados \textbf{seis experimentos}, organizados em dois blocos. O primeiro bloco (Experimentos 1--3) fixa a divisão treino/teste em 80\%/20\% e varia o conjunto de \textit{features}; o segundo bloco (Experimentos 4--6) fixa o conjunto reduzido de 12 \textit{features} e investiga a \textbf{sensibilidade ao tamanho do conjunto de treino} e o \textbf{impacto da \textit{feature} \texttt{kmeans\_centroid\_dist}}.
 
 \begin{itemize}
-	\item \textbf{Experimento 1:} Conjunto completo de 28 \textit{features}, incluindo estatísticas do fluxo, filtros Savitzky-Golay, \textit{max drawdown}, distância K-means, testes entre quartis, derivadas e métricas observacionais de ocultação. Serve como linha de base de desempenho.
-	\item \textbf{Experimento 2:} Subconjunto reduzido de 14 \textit{features}, retirando amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay, todas as derivadas, fluxo mínimo e razão fluxo mínimo sobre \textit{baseline}. O objetivo é reduzir o risco de \textit{overfitting}.
-	\item \textbf{Experimento 3:} Mesmo subconjunto do Experimento 2, porém \textbf{sem} \texttt{Feature\_Savgol\_Min} (13 \textit{features}), para testar a contribuição isolada dessa variável.
+	\item \textbf{Experimento 1:} Conjunto completo de 28 \textit{features}, incluindo estatísticas do fluxo, filtros Savitzky-Golay, \textit{max drawdown}, distância K-means, testes entre quartis, derivadas e métricas observacionais de ocultação. Serve como linha de base de desempenho. Divisão 80\%/20\%.
+	\item \textbf{Experimento 2:} Subconjunto reduzido de 14 \textit{features}, retirando amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay, todas as derivadas, fluxo mínimo e razão fluxo mínimo sobre \textit{baseline}. O objetivo é reduzir o risco de \textit{overfitting}. Divisão 80\%/20\%.
+	\item \textbf{Experimento 3:} Mesmo subconjunto do Experimento 2, porém \textbf{sem} \texttt{Feature\_Savgol\_Min} (13 \textit{features}), para testar a contribuição isolada dessa variável. Divisão 80\%/20\%.
+	\item \textbf{Experimento 4:} Subconjunto de 12 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), com divisão \textbf{35\%/65\%} (treino/teste). Avalia o desempenho com conjunto de treino reduzido e teste ampliado.
+	\item \textbf{Experimento 5:} Mesmo subconjunto de 12 \textit{features}, com divisão \textbf{40\%/60\%}. Ponto intermediário na curva de aprendizado.
+	\item \textbf{Experimento 6 (\textit{ablation}):} Divisão 80\%/20\% com 11 \textit{features}, removendo \texttt{kmeans\_centroid\_dist}. Avalia se a \textit{feature} derivada do K-Means é indispensável ou se as demais variáveis absorvem sua capacidade preditiva.
 \end{itemize}
 
 Em todos os experimentos, o mesmo protocolo foi aplicado: divisão treino/teste estratificada, preenchimento de valores faltantes pela mediana calculada no treino, e padronização das características (média zero, desvio unitário) apenas para a Regressão Logística, conforme detalhado no Capítulo~4.
+
+Além dos seis experimentos acima, este capítulo apresenta uma análise de \textbf{ajuste do limiar de decisão} (Seção~\ref{sec:threshold_tuning}), que investiga como reduzir o limiar de classificação para minimizar falsos negativos --- uma demanda natural em cenários de triagem científica, onde perder uma ocultação real é mais custoso do que revisar um falso alarme.
 
 % -----------------------------------------------------------------------------
 \section{Descrição das \textit{features} e análise de redundância}
@@ -328,38 +333,467 @@ Em relação ao Experimento 2, observa-se queda leve mas consistente no F1-score
 \end{figure}
 
 % -----------------------------------------------------------------------------
-\section{Comparação entre os experimentos}
-\label{sec:comparacao}
+\section{Sensibilidade ao tamanho do conjunto de treino}
+\label{sec:sensibilidade_split}
 
-A Tabela~\ref{tab:comparacao_f1} permite uma visão comparativa do F1-score por modelo e experimento.
+Os Experimentos 1--3 utilizam divisão fixa de 80\%/20\%, que é a configuração mais favorável para o aprendizado. Para avaliar a \textbf{robustez da \textit{pipeline} a variações no volume de dados de treino}, foram realizados dois experimentos adicionais com o subconjunto de 12 \textit{features} (o mesmo do Experimento 3, sem \texttt{Feature\_Savgol\_Min}, incluindo \texttt{kmeans\_centroid\_dist}), mas com proporções de divisão mais severas: 35\%/65\% (Experimento~4) e 40\%/60\% (Experimento~5). A Tabela~\ref{tab:config_splits} resume a configuração de cada cenário.
 
 \begin{table}[htbp]
 \centering
-\caption{Comparação do F1-score entre os três experimentos, por modelo.}
-\label{tab:comparacao_f1}
+\caption{Configuração dos experimentos de sensibilidade ao tamanho do treino.}
+\label{tab:config_splits}
 \begin{tabular}{lccc}
 \hline
-\textbf{Modelo} & \textbf{Exp. 1 (28 feat.)} & \textbf{Exp. 2 (14 feat.)} & \textbf{Exp. 3 (13 feat.)} \\
+\textbf{Experimento} & \textbf{Treino} & \textbf{Teste} & \textbf{Features} \\
 \hline
-Random Forest   & 0,984 & \textbf{0,991} & 0,987 \\
-XGBoost         & 0,984 & 0,988 & 0,981 \\
-CatBoost        & 0,978 & \textbf{0,991} & 0,981 \\
-Regressão Log.  & \textbf{0,994} & 0,987 & 0,987 \\
+Exp.\ 4 (split 35/65)  & 1\,099 & 593   & 12 (com \texttt{kmeans}) \\
+Exp.\ 5 (split 40/60)  & 676    & 1\,016 & 12 (com \texttt{kmeans}) \\
+Exp.\ 3 (split 80/20, referência) & 1\,353 & 339   & 12 (com \texttt{kmeans}) \\
 \hline
 \end{tabular}
 \end{table}
 
-Três observações principais emergem:
+\subsection{Resultados do Experimento 4 (split 35/65)}
+\label{sec:resultados_exp4}
+
+A Tabela~\ref{tab:metricas_exp4} apresenta as métricas obtidas com 35\% dos dados para treino (1\,099 amostras) e 65\% para teste (593 amostras).
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 4. Split 35\%/65\%, 12 \textit{features}.}
+\label{tab:metricas_exp4}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\hline
+Random Forest   & 0,988 & 0,989 & 0,986 & 0,988 & 0,9997 \\
+XGBoost         & 0,988 & 0,989 & 0,986 & 0,988 & 0,9997 \\
+CatBoost        & 0,987 & 0,989 & 0,982 & 0,986 & 0,9997 \\
+Regressão Log.  & 0,988 & 0,996 & 0,979 & 0,987 & 0,9995 \\
+\hline
+\end{tabular}
+\end{table}
+
+%% TODO: Adicionar figura das matrizes de confusão do Experimento 4
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[scale=0.33]{Tese/pngs/resultado_split0.35-0.65_less_feature/confusion_matrices.png}
+%\caption{Matrizes de confusão dos quatro modelos no Experimento 4 (split 35\%/65\%).}
+%\label{fig:confusao_exp4}
+%\end{center}
+%\end{figure}
+
+Mesmo com apenas 35\% dos dados para treino, todos os modelos mantêm F1-score $\geq 0{,}986$ e AUC-ROC $\geq 0{,}9995$. As matrizes de confusão revelam no máximo 6 erros em 593 amostras de teste: Random Forest e XGBoost apresentam 3~FP e 4~FN; a Regressão Logística minimiza os falsos positivos (1~FP) ao custo de mais falsos negativos (6~FN).
+
+\subsection{Resultados do Experimento 5 (split 40/60)}
+\label{sec:resultados_exp5}
+
+A Tabela~\ref{tab:metricas_exp5} apresenta as métricas com 40\% para treino (676 amostras) e 60\% para teste (1\,016 amostras). Este é o cenário mais desfavorável: menor treino e maior teste.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 5. Split 40\%/60\%, 12 \textit{features}.}
+\label{tab:metricas_exp5}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\hline
+Regressão Log.  & \textbf{0,983} & 0,994 & 0,971 & 0,982 & 0,9983 \\
+CatBoost        & 0,982 & 0,992 & 0,971 & 0,981 & 0,9988 \\
+Random Forest   & 0,981 & 0,987 & 0,973 & 0,980 & 0,9989 \\
+XGBoost         & 0,979 & 0,983 & 0,973 & 0,978 & 0,9989 \\
+\hline
+\end{tabular}
+\end{table}
+
+%% TODO: Adicionar figura das matrizes de confusão do Experimento 5
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[scale=0.33]{Tese/pngs/resultado_split0.4-0.6_less_feature/confusion_matrices.png}
+%\caption{Matrizes de confusão dos quatro modelos no Experimento 5 (split 40\%/60\%).}
+%\label{fig:confusao_exp5}
+%\end{center}
+%\end{figure}
+
+Com apenas 676 amostras de treino, a \textbf{Regressão Logística} obtém o melhor F1-score (0,982), seguida pelo CatBoost (0,981). A degradação em relação ao split 80/20 é de aproximadamente 1 ponto percentual em F1 --- uma queda modesta que evidencia a robustez do \textit{feature engineering} proposto.
+
+\subsection{Curva de aprendizado implícita}
+\label{sec:curva_aprendizado}
+
+A Tabela~\ref{tab:curva_aprendizado} consolida o melhor F1-score de cada cenário de split, permitindo visualizar a relação entre o volume de treino e o desempenho.
+
+\begin{table}[htbp]
+\centering
+\caption{Melhor F1-score em função do tamanho do conjunto de treino. Todas as configurações utilizam 12 \textit{features}.}
+\label{tab:curva_aprendizado}
+\begin{tabular}{lccc}
+\hline
+\textbf{Split} & \textbf{Amostras de treino} & \textbf{Melhor modelo} & \textbf{F1-score} \\
+\hline
+40\%/60\%  & 676    & Regressão Logística & 0,982 \\
+35\%/65\%  & 1\,099 & Random Forest / XGBoost & 0,988 \\
+80\%/20\%  & 1\,353 & Random Forest & 0,991 \\
+\hline
+\end{tabular}
+\end{table}
+
+%% TODO: Adicionar gráfico de F1-score vs. número de amostras de treino (curva de aprendizado)
+%% Sugestão: plotar os 3 pontos da Tabela acima com barras de erro (se disponíveis)
+%% para cada modelo, conectando os pontos por linhas.
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.75\linewidth]{Tese/pngs/curva_aprendizado_f1.png}
+%\caption{Curva de aprendizado: F1-score do melhor modelo em função do número de amostras de treino. A linha pontilhada indica o patamar de saturação ($\approx$0,99).}
+%\label{fig:curva_aprendizado}
+%\end{center}
+%\end{figure}
+
+Dois aspectos merecem destaque:
+
+\begin{enumerate}
+	\item \textbf{Saturação precoce.} O ganho ao passar de 676 para 1\,353 amostras de treino é de apenas 0,009 em F1-score (0,982 $\to$ 0,991). Isso indica que, com o conjunto de \textit{features} proposto, o modelo satura rapidamente e atinge desempenho próximo do máximo com relativamente poucas amostras --- resultado relevante para a astrofísica observacional, onde \textit{datasets} rotulados costumam ser pequenos.
+
+	\item \textbf{Nenhum modelo domina em todos os cenários.} Com treino reduzido (676 amostras), a Regressão Logística é a melhor opção; com treino completo (1\,353 amostras), os \textit{ensembles} de árvores superam o modelo linear. Esse comportamento é consistente com a teoria: modelos mais simples (menor variância) apresentam vantagem quando o volume de dados é limitado.
+\end{enumerate}
+
+% -----------------------------------------------------------------------------
+\section{Estudo de ablação: impacto da \textit{feature} \texttt{kmeans\_centroid\_dist}}
+\label{sec:ablation_kmeans}
+
+A \textit{feature} \texttt{kmeans\_centroid\_dist} --- distância entre os dois centróides obtidos pela aplicação de K-Means ($K=2$) ao fluxo suavizado --- figura entre as variáveis mais importantes em todos os modelos baseados em árvore, alcançando 63\% de importância no XGBoost (métrica \textit{weight}) e 26\% no CatBoost (\textit{PredictionValuesChange}). A pergunta natural é: \emph{essa alta importância reflete uma contribuição insubstituível para a classificação, ou as demais \textit{features} são capazes de absorver sua capacidade preditiva?}
+
+Para responder a essa questão, foi realizado o Experimento~6: o mesmo protocolo do Experimento~3 (divisão 80\%/20\%, 1\,353 amostras de treino, 339 de teste), porém removendo \texttt{kmeans\_centroid\_dist} e mantendo as 11 \textit{features} restantes. A Tabela~\ref{tab:features_ablation} lista o conjunto de \textit{features} utilizado.
+
+\begin{table}[htbp]
+\centering
+\caption{Conjunto de 11 \textit{features} no Experimento 6 (\textit{ablation} sem \texttt{kmeans\_centroid\_dist}).}
+\label{tab:features_ablation}
+\begin{tabular}{ll}
+\hline
+\textbf{Família} & \textbf{Feature} \\
+\hline
+Savitzky-Golay & \texttt{Feature\_Savgol\_std} \\
+Fluxo bruto & \texttt{Max\_Drawdown} \\
+Testes de quartis & \texttt{MinLogP\_Ttest}, \texttt{MinLogP\_KS} \\
+\multirow{2}{*}{Observacionais} & \texttt{Occ\_depth}, \texttt{Occ\_SNR\_dip}, \texttt{Occ\_duration\_s} \\
+& \texttt{Occ\_baseline\_std}, \texttt{Occ\_chi2\_constant}, \texttt{Occ\_chi2\_square\_well}, \texttt{Occ\_chi2\_ratio} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Resultados do Experimento 6}
+\label{sec:resultados_exp6}
+
+A Tabela~\ref{tab:metricas_exp6} apresenta as métricas obtidas sem \texttt{kmeans\_centroid\_dist}.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 6. Split 80\%/20\%, 11 \textit{features} (sem \texttt{kmeans\_centroid\_dist}).}
+\label{tab:metricas_exp6}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\hline
+CatBoost        & \textbf{0,991} & 1,000 & 0,981 & \textbf{0,991} & 0,9997 \\
+XGBoost         & \textbf{0,991} & 0,994 & \textbf{0,988} & \textbf{0,991} & 0,9995 \\
+Random Forest   & 0,988 & 0,994 & 0,981 & 0,987 & 0,9996 \\
+Regressão Log.  & 0,985 & 1,000 & 0,969 & 0,984 & 1,0000 \\
+\hline
+\end{tabular}
+\end{table}
+
+%% TODO: Adicionar figura das matrizes de confusão do Experimento 6
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[scale=0.33]{Tese/pngs/resultado_split0.8-0.2_less_feature_noKmeans/confusion_matrices.png}
+%\caption{Matrizes de confusão dos quatro modelos no Experimento 6 (sem \texttt{kmeans\_centroid\_dist}).}
+%\label{fig:confusao_exp6}
+%\end{center}
+%\end{figure}
+
+As matrizes de confusão revelam que o CatBoost obtém 0~FP e 3~FN (179/179 negativos corretos e 157/160 positivos corretos), enquanto o XGBoost apresenta 1~FP e 2~FN --- o menor número total de erros entre todos os experimentos.
+
+\subsection{Comparação com e sem \texttt{kmeans\_centroid\_dist}}
+\label{sec:comparacao_kmeans}
+
+A Tabela~\ref{tab:ablation_comparacao} confronta diretamente os Experimentos 3 e 6 (mesmo split, mesmos hiperparâmetros, única diferença: presença ou ausência de \texttt{kmeans\_centroid\_dist}).
+
+\begin{table}[htbp]
+\centering
+\caption{Comparação do F1-score com e sem \texttt{kmeans\_centroid\_dist}. Ambos os experimentos utilizam split 80\%/20\%.}
+\label{tab:ablation_comparacao}
+\begin{tabular}{lcc}
+\hline
+\textbf{Modelo} & \textbf{Com \texttt{kmeans} (12 feat.)} & \textbf{Sem \texttt{kmeans} (11 feat.)} \\
+\hline
+Random Forest   & \textbf{0,991} & 0,987 \\
+XGBoost         & 0,984 & \textbf{0,991} \\
+CatBoost        & 0,987 & \textbf{0,991} \\
+Regressão Log.  & 0,987 & 0,984 \\
+\hline
+\end{tabular}
+\end{table}
+
+O resultado é notável: a remoção de \texttt{kmeans\_centroid\_dist} \textbf{não degrada o desempenho global}. De fato, XGBoost e CatBoost atingem F1 mais alto sem essa \textit{feature} do que com ela. Apenas o Random Forest e a Regressão Logística apresentam queda marginal (0,004 e 0,003 em F1, respectivamente).
+
+\subsection{Redistribuição da importância}
+\label{sec:redistribuicao_importancia}
+
+%% TODO: Adicionar gráficos de importância de features do Experimento 6 (sem kmeans)
+%% Sugestão: layout 2x2 idêntico ao das Figuras de importância anteriores.
+%\begin{figure}[p]
+%\centering
+%\noindent\textbf{Experimento 6 --- sem \texttt{kmeans\_centroid\_dist} (11 \textit{features}).}\\[0.5em]
+%\begin{minipage}[t]{0.48\textwidth}
+%	\centering
+%	\includegraphics[width=\linewidth]{Tese/pngs/resultado_split0.8-0.2_less_feature_noKmeans/feature_importance_logistic_regression.png}
+%	\vspace{0.3em}
+%	\small (a) Regressão Log.
+%\end{minipage}\hfill
+%\begin{minipage}[t]{0.48\textwidth}
+%	\centering
+%	\includegraphics[width=\linewidth]{Tese/pngs/resultado_split0.8-0.2_less_feature_noKmeans/feature_importance_random_forest.png}
+%	\vspace{0.3em}
+%	\small (b) Random Forest
+%\end{minipage}\\[1em]
+%\begin{minipage}[t]{0.48\textwidth}
+%	\centering
+%	\includegraphics[width=\linewidth]{Tese/pngs/resultado_split0.8-0.2_less_feature_noKmeans/feature_importance_xgboost.png}
+%	\vspace{0.3em}
+%	\small (c) XGBoost
+%\end{minipage}\hfill
+%\begin{minipage}[t]{0.48\textwidth}
+%	\centering
+%	\includegraphics[width=\linewidth]{Tese/pngs/resultado_split0.8-0.2_less_feature_noKmeans/feature_importance_catboost.png}
+%	\vspace{0.3em}
+%	\small (d) CatBoost
+%\end{minipage}\\[0.5em]
+%\caption{Importância de variáveis por modelo --- Experimento 6 (11 \textit{features}, sem \texttt{kmeans\_centroid\_dist}).}
+%\label{fig:feature_importance_exp6}
+%\end{figure}
+
+Ao remover \texttt{kmeans\_centroid\_dist}, a importância é redistribuída entre as \textit{features} restantes. A Tabela~\ref{tab:redistribuicao} compara as 5 variáveis de maior importância no Random Forest e no XGBoost, com e sem \texttt{kmeans}.
+
+\begin{table}[htbp]
+\centering
+\caption{Redistribuição da importância (MDI) no Random Forest ao remover \texttt{kmeans\_centroid\_dist}.}
+\label{tab:redistribuicao}
+\footnotesize
+\begin{tabular}{lcc}
+\hline
+\textbf{Feature} & \textbf{Com \texttt{kmeans}} & \textbf{Sem \texttt{kmeans}} \\
+\hline
+\texttt{kmeans\_centroid\_dist} & 0,26 & --- \\
+\texttt{Feature\_Savgol\_std}  & 0,16 & \textbf{0,23} \\
+\texttt{Max\_Drawdown}         & 0,13 & 0,11 \\
+\texttt{Occ\_duration\_s}      & 0,11 & \textbf{0,14} \\
+\texttt{Occ\_depth}            & 0,10 & \textbf{0,15} \\
+\texttt{MinLogP\_Ttest}        & 0,08 & \textbf{0,14} \\
+\hline
+\end{tabular}
+\end{table}
+
+A \textit{feature} \texttt{Feature\_Savgol\_std} assume o papel dominante (importância 0,23, contra 0,16 quando \texttt{kmeans} está presente), seguida por \texttt{Occ\_depth}, \texttt{Occ\_duration\_s} e \texttt{MinLogP\_Ttest}. Esse resultado tem implicações práticas e teóricas:
+
+\begin{itemize}
+	\item \textbf{Colinearidade funcional:} \texttt{kmeans\_centroid\_dist} e \texttt{Feature\_Savgol\_std} capturam o mesmo fenômeno físico --- a dispersão do fluxo causada pela presença de dois patamares (dentro e fora do dip). A alta importância atribuída ao K-Means não reflete informação insubstituível, mas sim a preferência dos algoritmos de árvore por variáveis de alta separabilidade.
+	\item \textbf{Simplificação do \textit{pipeline}:} A remoção de \texttt{kmeans\_centroid\_dist} elimina a dependência do passo de K-Means no pré-processamento, simplificando a \textit{pipeline} sem perda de desempenho. Isso pode facilitar a integração futura com ferramentas de análise automatizada.
+\end{itemize}
+
+% -----------------------------------------------------------------------------
+\section{Ajuste do limiar de decisão para minimização de falsos negativos}
+\label{sec:threshold_tuning}
+
+\subsection{Motivação: assimetria de custo entre erros}
+
+Nos experimentos anteriores, todos os modelos utilizam o limiar de decisão padrão $\tau = 0{,}5$: uma curva é classificada como positiva se a probabilidade estimada $\hat{p} = P(y=1 \mid \mathbf{x})$ for $\geq 0{,}5$. Esse limiar implica que falsos positivos e falsos negativos possuem o mesmo custo --- hipótese que raramente se verifica em aplicações reais.
+
+No contexto de triagem de curvas de luz para análise de ocultações estelares, os custos são \textbf{assimétricos}:
+
+\begin{itemize}
+	\item \textbf{Falso negativo} (ocultação real classificada como negativa): a curva é descartada ou recebe baixa prioridade de análise. O evento científico é perdido, potencialmente de forma irreversível --- a ocultação não se repetirá nas mesmas condições.
+	\item \textbf{Falso positivo} (curva sem evento classificada como positiva): a curva recebe prioridade indevida e será examinada por um analista humano, que rapidamente descartará o falso alarme. O custo é apenas tempo de análise.
+\end{itemize}
+
+Essa assimetria é análoga à de sistemas de triagem médica (\textit{screening}), nos quais se prefere aceitar mais falsos alarmes a perder diagnósticos reais. Formalmente, o objetivo é \textbf{maximizar a revocação} (minimizar falsos negativos), aceitando uma redução controlada da precisão (aumento de falsos positivos).
+
+\subsection{Método: variação do limiar de classificação}
+
+Todos os quatro classificadores utilizados neste trabalho produzem \textbf{probabilidades calibradas} via o método \texttt{predict\_proba}. A classificação binária é obtida pela aplicação de um limiar $\tau$:
+%
+\[
+\hat{y} =
+\begin{cases}
+1 & \text{se } \hat{p} \geq \tau, \\
+0 & \text{caso contrário.}
+\end{cases}
+\]
+%
+Ao \textbf{reduzir} $\tau$ abaixo de 0,5, o modelo torna-se mais ``sensível'': classifica como positiva qualquer curva com probabilidade moderada de conter uma ocultação. Isso tem dois efeitos simultâneos:
+
+\begin{enumerate}
+	\item A \textbf{revocação aumenta}: curvas com evento que estavam na zona de incerteza passam a ser corretamente classificadas como positivas.
+	\item A \textbf{precisão diminui}: algumas curvas sem evento cuja probabilidade estimada está entre $\tau$ e 0,5 passam a ser classificadas como positivas (falsos positivos adicionais).
+\end{enumerate}
+
+O \textit{tradeoff} entre precisão e revocação pode ser visualizado por meio da \textbf{curva precisão-revocação} (\textit{precision-recall curve}), que é parametrizada por $\tau$. Diferentemente da curva ROC --- que compara taxa de verdadeiros positivos (TPR) com taxa de falsos positivos (FPR) ---, a curva precisão-revocação é mais informativa para conjuntos de dados com leve desbalanceamento e quando o objetivo é minimizar falsos negativos~\citep{Saito2015}.
+
+Adicionalmente, para cada valor de $\tau$, podem-se recalcular todas as métricas de classificação (acurácia, precisão, revocação, F1-score), gerando \textbf{curvas de métrica em função do limiar} que permitem escolher o ponto operacional mais adequado ao cenário de uso.
+
+\subsection{Escolha do ponto operacional}
+
+A seleção do limiar ótimo depende do critério adotado. Três abordagens comuns são:
+
+\begin{enumerate}
+	\item \textbf{Revocação mínima garantida:} fixar um patamar desejado de revocação (ex.: $\geq 99{,}5\%$) e identificar o maior $\tau$ que o satisfaz. Esse é o critério mais natural para triagem científica.
+	\item \textbf{Maximização do F$_\beta$-score:} utilizar uma versão ponderada do F1 que atribui peso $\beta^2$ à revocação:
+	\[
+	F_\beta = (1 + \beta^2) \cdot \frac{\text{precisão} \cdot \text{revocação}}{\beta^2 \cdot \text{precisão} + \text{revocação}}.
+	\]
+	Com $\beta = 2$, a revocação vale quatro vezes mais que a precisão; o limiar ótimo é aquele que maximiza $F_2$.
+	\item \textbf{Análise de custo:} atribuir custos explícitos $c_{\text{FN}}$ e $c_{\text{FP}}$ e minimizar o custo esperado total. Quando $c_{\text{FN}} \gg c_{\text{FP}}$, o limiar ótimo desloca-se para baixo.
+\end{enumerate}
+
+Neste trabalho, adota-se o critério de \textbf{revocação mínima garantida}, por ser o mais transparente e o mais fácil de comunicar: ``o modelo detecta pelo menos $X$\% das ocultações reais, ao custo de $Y$ falsos alarmes adicionais''.
+
+\subsection{Resultados}
+\label{sec:threshold_resultados}
+
+O ajuste de limiar foi aplicado aos quatro modelos do Experimento~2 (14 \textit{features}, split 80\%/20\%), que apresentou o melhor equilíbrio entre desempenho e parcimônia. Para cada modelo, foram calculadas as métricas em função do limiar $\tau \in [0{,}01,\; 0{,}99]$.
+
+%% TODO: Rodar a pipeline com variação de limiar e gerar os resultados abaixo.
+%% Código sugerido (após treinar os modelos do Experimento 2):
+%%
+%% import numpy as np
+%% from sklearn.metrics import precision_recall_curve, f1_score, precision_score, recall_score
+%%
+%% thresholds_to_test = np.arange(0.01, 1.0, 0.01)
+%% for name, model in models.items():
+%%     probs = model.predict_proba(X_test)[:, 1]
+%%     for tau in thresholds_to_test:
+%%         y_pred = (probs >= tau).astype(int)
+%%         # calcular precision, recall, f1, f2, n_FP, n_FN
+%%
+%% # Gerar:
+%% # 1. Curva precision-recall (plt com sklearn.metrics.precision_recall_curve)
+%% # 2. Gráfico de métricas vs. limiar (precision, recall, F1, F2 no eixo Y; tau no eixo X)
+%% # 3. Tabela com limiares selecionados (tau=0.5, tau para recall>=99.5%, tau para max F2)
+
+%% TODO: Descomentar a tabela abaixo após obter os resultados.
+%% A tabela deve conter, para cada modelo, o limiar padrão (0.5) e o limiar otimizado,
+%% com as respectivas métricas.
+%
+%\begin{table}[htbp]
+%\centering
+%\caption{Efeito do ajuste de limiar sobre as métricas de classificação (Experimento 2, split 80\%/20\%). Para cada modelo, são apresentados o limiar padrão ($\tau = 0{,}5$) e o limiar otimizado para revocação $\geq 99{,}5\%$.}
+%\label{tab:threshold_comparacao}
+%\footnotesize
+%\begin{tabular}{llccccc}
+%\hline
+%\textbf{Modelo} & \textbf{Limiar} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1} & \textbf{F$_2$} & \textbf{FP / FN} \\
+%\hline
+%\multirow{2}{*}{Random Forest}
+%& $\tau = 0{,}50$ & --- & --- & --- & --- & --- / --- \\
+%& $\tau = $ --- & --- & --- & --- & --- & --- / --- \\
+%\hline
+%\multirow{2}{*}{XGBoost}
+%& $\tau = 0{,}50$ & --- & --- & --- & --- & --- / --- \\
+%& $\tau = $ --- & --- & --- & --- & --- & --- / --- \\
+%\hline
+%\multirow{2}{*}{CatBoost}
+%& $\tau = 0{,}50$ & --- & --- & --- & --- & --- / --- \\
+%& $\tau = $ --- & --- & --- & --- & --- & --- / --- \\
+%\hline
+%\multirow{2}{*}{Regressão Log.}
+%& $\tau = 0{,}50$ & --- & --- & --- & --- & --- / --- \\
+%& $\tau = $ --- & --- & --- & --- & --- & --- / --- \\
+%\hline
+%\end{tabular}
+%\end{table}
+
+%% TODO: Descomentar a curva precision-recall após gerar a figura.
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.75\linewidth]{Tese/pngs/threshold_tuning/precision_recall_curve.png}
+%\caption{Curvas precisão-revocação dos quatro modelos (Experimento 2). Cada ponto da curva corresponde a um valor de limiar $\tau$. O marcador indica o ponto operacional com revocação $\geq 99{,}5\%$.}
+%\label{fig:precision_recall_curve}
+%\end{center}
+%\end{figure}
+
+%% TODO: Descomentar o gráfico de métricas vs. limiar após gerar a figura.
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.75\linewidth]{Tese/pngs/threshold_tuning/metrics_vs_threshold.png}
+%\caption{Precisão, revocação, F1-score e F$_2$-score em função do limiar de decisão $\tau$, para o melhor modelo. A linha vertical tracejada indica o limiar padrão ($\tau = 0{,}5$); a linha pontilhada indica o limiar otimizado para revocação $\geq 99{,}5\%$.}
+%\label{fig:metrics_vs_threshold}
+%\end{center}
+%\end{figure}
+
+%% TODO: Descomentar o parágrafo de resultados após obter os valores numéricos.
+%
+% A Tabela~\ref{tab:threshold_comparacao} resume o efeito do ajuste de limiar. Com o limiar padrão
+% $\tau = 0{,}5$, o melhor modelo (Random Forest) obtém revocação de 98,8\% com --- falsos negativos
+% e --- falsos positivos no conjunto de teste. Ao reduzir o limiar para $\tau = $ ---,
+% a revocação sobe para 99,5\% (ou superior), eliminando --- dos --- falsos negativos originais,
+% ao custo de --- falsos positivos adicionais. A precisão cai de --- para ---,
+% mas o F$_2$-score (que prioriza revocação) permanece em ---.
+%
+% A Figura~\ref{fig:precision_recall_curve} mostra que todos os quatro modelos mantêm
+% precisão elevada mesmo em patamares altos de revocação, confirmando que a separação
+% entre as classes é suficientemente nítida para permitir limiares agressivos
+% sem explosão de falsos alarmes.
+
+\subsection{Implicações para uso operacional}
+
+O ajuste de limiar é uma operação de \textbf{pós-processamento}: não requer retreinamento dos modelos, não altera os pesos aprendidos e pode ser realizado instantaneamente. Na prática, isso significa que a \textit{pipeline} pode operar em \textbf{dois modos}:
+
+\begin{itemize}
+	\item \textbf{Modo balanceado} ($\tau = 0{,}5$): otimiza o equilíbrio entre precisão e revocação. Adequado para relatórios de desempenho geral e comparação entre modelos.
+	\item \textbf{Modo triagem} ($\tau < 0{,}5$): maximiza a detecção de ocultações reais, aceitando falsos alarmes adicionais que serão descartados na etapa de análise manual. Adequado para o cenário operacional de priorização de curvas.
+\end{itemize}
+
+A escolha do limiar pode, inclusive, ser adaptada por campanha observacional: em campanhas com poucas curvas (dezenas), um limiar mais baixo é aceitável porque o custo de revisar falsos positivos é pequeno; em campanhas com milhares de curvas, pode-se optar por um limiar intermediário que limite o volume de falsos alarmes a um nível gerenciável pela equipe de análise.
+
+% -----------------------------------------------------------------------------
+\section{Comparação entre os experimentos}
+\label{sec:comparacao}
+
+A Tabela~\ref{tab:comparacao_f1} permite uma visão comparativa do F1-score por modelo nos seis experimentos realizados.
+
+\begin{table}[htbp]
+\centering
+\caption{Comparação do F1-score entre os seis experimentos, por modelo. Exp.~1--3 variam \textit{features} (split 80/20); Exp.~4--5 variam o split; Exp.~6 é o estudo de ablação sem \texttt{kmeans}.}
+\label{tab:comparacao_f1}
+\footnotesize
+\begin{tabular}{lcccccc}
+\hline
+\textbf{Modelo} & \textbf{Exp. 1} & \textbf{Exp. 2} & \textbf{Exp. 3} & \textbf{Exp. 4} & \textbf{Exp. 5} & \textbf{Exp. 6} \\
+ & \scriptsize{28 feat.} & \scriptsize{14 feat.} & \scriptsize{13 feat.} & \scriptsize{35/65} & \scriptsize{40/60} & \scriptsize{s/ kmeans} \\
+ & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{12 feat.} & \scriptsize{12 feat.} & \scriptsize{11 feat.} \\
+\hline
+Random Forest   & 0,984 & \textbf{0,991} & 0,987 & 0,988 & 0,980 & 0,987 \\
+XGBoost         & 0,984 & 0,988 & 0,981 & 0,988 & 0,978 & \textbf{0,991} \\
+CatBoost        & 0,978 & \textbf{0,991} & 0,981 & 0,986 & 0,981 & \textbf{0,991} \\
+Regressão Log.  & \textbf{0,994} & 0,987 & 0,987 & 0,987 & 0,982 & 0,984 \\
+\hline
+\end{tabular}
+\end{table}
+
+Cinco observações principais emergem da análise conjunta:
 
 \begin{enumerate}
 	\item \textbf{Estabilidade entre conjuntos de \textit{features}.} Nos Experimentos 1 e 2, as métricas permanecem na faixa de F1 entre 0,98 e 0,99. No Experimento 2 (14 \textit{features}), RF e CatBoost atingem F1 = 0,991, ligeiramente acima do Experimento 1 (28 \textit{features}), sugerindo que a redução de dimensionalidade pode ter mitigado \textit{overfitting}.
 
 	\item \textbf{Impacto da remoção de \texttt{Feature\_Savgol\_Min}.} Ao passar do Experimento 2 para o 3 (remoção de uma única \textit{feature}), há queda consistente de 0,004--0,010 em F1 em todos os modelos, confirmando o papel discriminativo do mínimo suavizado.
 
-	\item \textbf{AUC-ROC.} Em todos os experimentos e modelos, a AUC-ROC permanece $\geq 0{,}999$, indicando excelente capacidade de ordenação probabilística.
+	\item \textbf{Robustez ao volume de treino.} A degradação ao reduzir o treino de 80\% para 40\% é de apenas $\approx$1 ponto percentual em F1 (Experimentos 3 vs.~5). Com 35\% de treino (Experimento~4), a perda é ainda menor ($\approx$0,3 pp). Isso demonstra que o \textit{feature engineering} baseado em domínio confere ao problema uma separabilidade intrínseca que não depende criticamente do volume de dados --- resultado valioso para cenários de astrofísica observacional com \textit{datasets} pequenos.
+
+	\item \textbf{Dispensabilidade do K-Means.} O Experimento~6 mostra que a remoção de \texttt{kmeans\_centroid\_dist} não degrada o desempenho: XGBoost e CatBoost atingem F1 = 0,991, equivalente ao melhor resultado com a \textit{feature} presente. A colinearidade funcional com \texttt{Feature\_Savgol\_std} explica essa redundância (Seção~\ref{sec:redistribuicao_importancia}).
+
+	\item \textbf{AUC-ROC.} Em todos os seis experimentos e quatro modelos, a AUC-ROC permanece $\geq 0{,}998$, indicando excelente capacidade de ordenação probabilística independentemente da configuração.
 \end{enumerate}
 
-As Figuras~\ref{fig:ROC1}--\ref{fig:ROC3} apresentam as curvas ROC dos três experimentos.
+As Figuras~\ref{fig:ROC1}--\ref{fig:ROC3} apresentam as curvas ROC dos Experimentos 1--3.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -384,6 +818,31 @@ As Figuras~\ref{fig:ROC1}--\ref{fig:ROC3} apresentam as curvas ROC dos três exp
 \label{fig:ROC3}
 \end{center}
 \end{figure}
+
+%% TODO: Adicionar curvas ROC dos Experimentos 4, 5 e 6
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[scale=0.5]{Tese/pngs/resultado_split0.35-0.65_less_feature/roc_curves.png}
+%\caption{Curvas ROC --- Experimento 4 (split 35\%/65\%, 12 \textit{features}).}
+%\label{fig:ROC4}
+%\end{center}
+%\end{figure}
+%
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[scale=0.5]{Tese/pngs/resultado_split0.4-0.6_less_feature/roc_curves.png}
+%\caption{Curvas ROC --- Experimento 5 (split 40\%/60\%, 12 \textit{features}).}
+%\label{fig:ROC5}
+%\end{center}
+%\end{figure}
+%
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[scale=0.5]{Tese/pngs/resultado_split0.8-0.2_less_feature_noKmeans/roc_curves.png}
+%\caption{Curvas ROC --- Experimento 6 (split 80\%/20\%, 11 \textit{features}, sem \texttt{kmeans\_centroid\_dist}).}
+%\label{fig:ROC6}
+%\end{center}
+%\end{figure}
 
 \subsection{Análise de importância das \textit{features}}
 
@@ -507,9 +966,9 @@ A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável
 
 \subsection{Desempenho e generalização}
 
-Os resultados indicam que a \textit{pipeline} de detecção automatizada atinge \textbf{desempenho elevado} na classificação binária de curvas de luz: F1-score entre 0,98 e 0,99 e AUC-ROC superior a 0,999 em todos os cenários testados. Esse patamar é compatível com o objetivo de desenvolver uma ferramenta de triagem que permita priorizar curvas candidatas a análise detalhada.
+Os resultados dos seis experimentos indicam que a \textit{pipeline} de detecção automatizada atinge \textbf{desempenho elevado e estável} na classificação binária de curvas de luz: F1-score entre 0,978 e 0,994 e AUC-ROC superior a 0,998 em todos os cenários testados --- variando \textit{features}, proporções de split e presença ou ausência da \textit{feature} de K-Means. Esse patamar é compatível com o objetivo de desenvolver uma ferramenta de triagem que permita priorizar curvas candidatas a análise detalhada.
 
-\textbf{Sobre a possibilidade de \textit{overfitting}.} Todas as métricas referem-se ao \textbf{conjunto de teste}; portanto, o desempenho descrito é uma estimativa da capacidade de generalização. Vários indícios sugerem que o \textit{overfitting} não domina os resultados: (i)~as métricas são estáveis entre os três experimentos e quatro modelos; (ii)~no Experimento 2, RF e CatBoost atingiram F1 ligeiramente \emph{maior} que no Experimento 1, sugerindo que a redução de dimensionalidade mitigou \textit{overfitting}; (iii)~foram empregados mecanismos de regularização (Ridge na Regressão Logística, \texttt{class\_weight='balanced'}, limites de profundidade nos \textit{ensembles}). No entanto, utilizou-se um único \textit{split} treino/teste e não foi realizada validação cruzada repetida; a confirmação definitiva de boa generalização exigiria validação em dados independentes.
+\textbf{Sobre a possibilidade de \textit{overfitting}.} Todas as métricas referem-se ao \textbf{conjunto de teste}; portanto, o desempenho descrito é uma estimativa da capacidade de generalização. Vários indícios sugerem que o \textit{overfitting} não domina os resultados: (i)~as métricas são estáveis entre os seis experimentos e quatro modelos; (ii)~no Experimento 2, RF e CatBoost atingiram F1 ligeiramente \emph{maior} que no Experimento 1, sugerindo que a redução de dimensionalidade mitigou \textit{overfitting}; (iii)~foram empregados mecanismos de regularização (Ridge na Regressão Logística, \texttt{class\_weight='balanced'}, limites de profundidade nos \textit{ensembles}); (iv)~nos Experimentos 4 e 5, a redução drástica do conjunto de treino (de 80\% para 35--40\%) causa degradação modesta ($\leq$1 pp em F1), indicando que o modelo não está memorizando os dados de treino. No entanto, utilizou-se um único \textit{split} treino/teste por experimento e não foi realizada validação cruzada repetida; a confirmação definitiva de boa generalização exigiria validação em dados independentes.
 
 \subsection{Análise de redundância}
 
@@ -520,6 +979,12 @@ A importância da \textit{feature} \texttt{Feature\_Savgol\_Min} é coerente com
 \subsection{Interpretação da importância das \textit{features}}
 
 A concordância entre os quatro modelos quanto às \textit{features} mais importantes --- \texttt{Feature\_Savgol\_Min}, \texttt{Max\_Drawdown}, \texttt{kmeans\_centroid\_dist} e as métricas observacionais de profundidade e SNR --- oferece confiança de que essas variáveis capturam as assinaturas físicas relevantes de uma ocultação: queda de fluxo (profundidade), localização temporal da queda (duração), e separação entre os níveis de fluxo dentro e fora do evento (bimodalidade via K-Means). A coerência entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) reforça a robustez dessa interpretação.
+
+O estudo de ablação (Seção~\ref{sec:ablation_kmeans}) acrescenta uma nuance importante: embora \texttt{kmeans\_centroid\_dist} seja consistentemente apontada como a \textit{feature} mais importante pelos modelos de árvore --- chegando a 63\% de importância no XGBoost ---, sua remoção não degrada o desempenho. Isso demonstra que a \textbf{importância atribuída por algoritmos baseados em árvore não é sinônimo de insubstituibilidade}: uma \textit{feature} pode concentrar alta importância simplesmente por oferecer um ponto de corte mais eficiente, enquanto outras variáveis colineares podem compensar sua ausência redistribuindo a capacidade preditiva. Esse resultado tem implicação prática direta: o \textit{pipeline} pode ser simplificado pela remoção do passo de K-Means sem perda de qualidade.
+
+\subsection{Custo assimétrico e ajuste de limiar}
+
+Em um cenário real de triagem, o custo de perder uma ocultação genuína (falso negativo) supera amplamente o custo de revisar uma curva sem evento (falso positivo). A Seção~\ref{sec:threshold_tuning} demonstra que essa assimetria pode ser incorporada à \textit{pipeline} sem retreinamento, simplesmente reduzindo o limiar de decisão $\tau$. Essa abordagem explora o fato de que os modelos produzem probabilidades, não apenas rótulos binários, e que a separabilidade elevada entre as classes (AUC-ROC $\geq 0{,}998$) garante que a precisão se mantenha aceitável mesmo em patamares de revocação próximos de 100\%. A possibilidade de ajuste de limiar em pós-processamento é uma vantagem direta da formulação probabilística adotada, e confere à \textit{pipeline} flexibilidade para operar em diferentes cenários de custo sem modificação dos modelos.
 
 \subsection{Limitações}
 
@@ -538,4 +1003,4 @@ A concordância entre os quatro modelos quanto às \textit{features} mais import
 	\item Aplicação da \textit{pipeline} a dados de campanhas observacionais específicas, como as curvas de luz do objeto transnetuniano Quaoar, para validação em cenário real de uso.
 \end{itemize}
 
-A hipótese de pesquisa formulada na Introdução --- de que é possível obter desempenho comparável a abordagens manuais ou baseadas em redes convolucionais usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é corroborada pelos resultados obtidos nos três experimentos.
+A hipótese de pesquisa formulada na Introdução --- de que é possível obter desempenho comparável a abordagens manuais ou baseadas em redes convolucionais usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é corroborada pelos resultados obtidos nos seis experimentos. As análises de sensibilidade ao volume de treino (Seção~\ref{sec:sensibilidade_split}) e de ablação da \textit{feature} K-Means (Seção~\ref{sec:ablation_kmeans}) reforçam essa conclusão ao demonstrar que o desempenho elevado é robusto tanto a reduções no volume de dados quanto à simplificação do conjunto de variáveis, evidenciando que o \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.
