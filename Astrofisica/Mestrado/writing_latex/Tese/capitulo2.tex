@@ -40,9 +40,39 @@ Do ponto de vista observacional, uma curva de luz de ocultação é uma série t
 
 \textbf{Relação sinal-ruído e qualidade.} A confiabilidade da detecção e da extração de parâmetros físicos depende da relação sinal-ruído (S/N) da curva. Em astronomia, muitas medições são feitas no limite da detectabilidade instrumental, onde o ruído pode produzir excursões que imitam fontes tênues; definições operacionais claras de detecção e critérios estatísticos são essenciais para interpretar os dados de forma confiável \citep{Wall2003}. S/N alto favorece a identificação clara da queda e a precisão dos instantes de imersão e emersão; curvas com S/N baixo são mais difíceis de classificar e mais suscetíveis a falsos positivos e negativos. Na \textit{pipeline} desta dissertação, as características extraídas de cada curva (estatísticas de fluxo, derivadas, métricas de forma, etc.) são escolhidas de forma a capturar padrões discriminativos entre curvas com e sem ocultação, mesmo na presença de ruído; o conjunto preciso de \textit{features} e o protocolo de treinamento são apresentados no Capítulo 4.
 
+% TODO: Inserir aqui diagrama esquemático da geometria de ocultação (sombra projetada,
+% cordas, observadores na Terra, estrela, corpo ocultante). Figura esquemática a ser
+% criada pelo autor.
+% \begin{figure}[htbp]
+% \begin{center}
+% 	\includegraphics[width=0.85\textwidth]{pngs/diagrama_geometria_ocultacao.png}
+% \caption{Representação esquemática da geometria de uma ocultação estelar: a sombra do
+% corpo ocultante projeta-se na superfície terrestre; cada observador registra uma corda
+% cuja duração depende da sua posição em relação ao trajeto da sombra.}
+% \label{fig:geometria_ocultacao}
+% \end{center}
+% \end{figure}
+
+% TODO: Inserir aqui exemplos de curvas de luz: (a) detecção positiva clara, (b) detecção
+% positiva ruidosa, (c) detecção negativa. Figuras a serem extraídas do banco de dados ou
+% geradas a partir de curvas reais do pipeline.
+% \begin{figure}[htbp]
+% \begin{center}
+% 	\includegraphics[width=0.85\textwidth]{pngs/exemplos_curvas_luz.png}
+% \caption{Exemplos de curvas de luz de ocultações estelares: (a)~detecção positiva com
+% alta relação S/N, (b)~detecção positiva com baixa S/N e (c)~detecção negativa.}
+% \label{fig:exemplos_curvas}
+% \end{center}
+% \end{figure}
+
+\textbf{Exemplo numérico: escala de Fresnel.} Para um objeto transnetuniano (TNO) a uma distância típica de $D = 40$\,UA $\approx 6{,}0 \times 10^{12}$\,m, observado no visível ($\lambda = 500$\,nm), a escala de Fresnel é
+\[
+f = \sqrt{\frac{D\lambda}{2}} \approx \sqrt{\frac{6{,}0 \times 10^{12} \times 5{,}0 \times 10^{-7}}{2}} \approx 1{,}2\;\text{km}.
+\]
+Essa escala define a resolução espacial efetiva na direção perpendicular à corda: detalhes menores que $f$ são suavizados pela difração. Ainda assim, trata-se de uma resolução da ordem de quilômetros a dezenas de unidades astronômicas de distância --- superior à de qualquer telescópio óptico terrestre operando por imageamento direto. É essa capacidade de resolução que torna as ocultações estelares uma ferramenta única para a caracterização de pequenos corpos do Sistema Solar.
+
 % -----------------------------------------------------------------------------
-%\section{Considerações finais do capítulo}
-%\label{sec:consideracoes_cap2}
+\section{Considerações finais do capítulo}
+\label{sec:consideracoes_cap2}
 
-
-%Este capítulo situou as ocultações estelares como fenômeno astronômico e as curvas de luz como produto observacional central. Foi destacado o papel da geometria da sombra, das cordas e da precisão astrométrica (Gaia, efemérides) na previsão e no aproveitamento dos eventos; a coleta e o armazenamento dos dados foram descritos em linhas gerais, com remissão ao Capítulo 4 para a arquitetura da \textit{pipeline} e do banco de dados; e foram resumidas as características observacionais das curvas (positiva vs.\ negativa, fatores que afetam a forma, S/N). Com isso, o leitor dispõe da base conceitual necessária para acompanhar a metodologia de detecção por ML (Capítulos 3 e 4) e a discussão dos resultados (Capítulo 5).
+Este capítulo situou as ocultações estelares como fenômeno astronômico e as curvas de luz como produto observacional central. Foi destacado o papel da geometria da sombra, das cordas e da precisão astrométrica (Gaia, efemérides) na previsão e no aproveitamento dos eventos; a coleta e o armazenamento dos dados foram descritos em linhas gerais, com remissão ao Capítulo~4 para a arquitetura da \textit{pipeline} e do banco de dados; e foram resumidas as características observacionais das curvas (positiva vs.\ negativa, fatores que afetam a forma, S/N). O volume crescente de dados produzidos por redes de telescópios e catálogos como o Gaia torna inviável a triagem manual de todas as curvas de luz; essa escala motiva o desenvolvimento de métodos automatizados de detecção baseados em aprendizado de máquina, cujos fundamentos são apresentados no Capítulo~3 e cuja implementação é detalhada no Capítulo~4.
