@@ -1,0 +1,10 @@
+Modelo: CatBoost
+
+              precision    recall  f1-score   support
+
+    Negativa     0.9889    0.9944    0.9916       179
+    Positiva     0.9937    0.9875    0.9906       160
+
+    accuracy                         0.9912       339
+   macro avg     0.9913    0.9910    0.9911       339
+weighted avg     0.9912    0.9912    0.9911       339

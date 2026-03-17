@@ -22,6 +22,8 @@ import random
 import warnings
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')          # backend não-interativo — evita conflito com Tkinter
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
@@ -70,7 +72,7 @@ SIZE_CROPPING = 250
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), 'outputs')
 
 # Proporção do conjunto de teste (quando usar split automático)
-TEST_SIZE = 0.2
+TEST_SIZE = 0.35
 
 # Colunas que NÃO são features (metadados)
 METADATA_COLS = ['curve_name', 'source', 'occ']
@@ -102,6 +104,7 @@ EXCLUDED_FEATURES = [
     'SecondDeriv_Max',
     'SecondDeriv_Std',
 ]
+
 
 # -----------------------------------------------------------------------------
 # HIPERPARÂMETROS DOS MODELOS (baseline - ajustar conforme necessário)
@@ -320,30 +323,33 @@ def split_by_curve(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
 def split_real_holdout(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
     """
     Divide dados de forma que o conjunto de teste contenha apenas curvas reais
-    (db_positive, db_negative). Treino = synthetic + artificial + curvas reais
-    não usadas em teste. Útil para validar generalização em dados reais.
-    
+    e artificiais (db_positive, db_negative, artificial_*). Curvas sintéticas
+    (synthetic_*) são usadas apenas no treino.
+
+    Artificiais são curvas reais recortadas, portanto válidas para avaliação.
+    Sintéticas são geradas computacionalmente e devem ficar fora do teste.
+
     Requer coluna 'source' no DataFrame.
-    
+
     Args:
         df (pd.DataFrame): Dataset completo
-        test_size (float): Proporção de curvas reais para teste
+        test_size (float): Proporção de curvas elegíveis para teste
         random_state (int): Seed para reprodutibilidade
-    
+
     Returns:
         tuple: (X_train, X_test, y_train, y_test, df_train, df_test)
     """
     if 'source' not in df.columns:
         raise ValueError("split_real_holdout requer coluna 'source' no dataset.")
 
-    real_sources = ['db_positive', 'db_negative']
     feature_cols = [c for c in df.columns
                     if c not in METADATA_COLS and c not in EXCLUDED_FEATURES]
 
-    df_real = df[df['source'].isin(real_sources)]
-    df_non_real = df[~df['source'].isin(real_sources)]
+    # Sintéticas vão apenas para treino; reais e artificiais são elegíveis para teste
+    df_synthetic = df[df['source'].str.startswith('synthetic')].copy()
+    df_eligible = df[~df['source'].str.startswith('synthetic')].copy()
 
-    curve_info = df_real[[ID_COL, TARGET_COL]].drop_duplicates()
+    curve_info = df_eligible[[ID_COL, TARGET_COL]].drop_duplicates()
     curves = curve_info[ID_COL].values
     y_curves = curve_info[TARGET_COL].values
 
@@ -359,9 +365,9 @@ def split_real_holdout(df, test_size=TEST_SIZE, random_state=RANDOM_STATE):
             curves, test_size=test_size, random_state=random_state
         )
 
-    df_test = df_real[df_real[ID_COL].isin(curves_test)].copy()
-    df_train_real = df_real[df_real[ID_COL].isin(curves_train)].copy()
-    df_train = pd.concat([df_non_real, df_train_real], ignore_index=True)
+    df_test = df_eligible[df_eligible[ID_COL].isin(curves_test)].copy()
+    df_train_eligible = df_eligible[df_eligible[ID_COL].isin(curves_train)].copy()
+    df_train = pd.concat([df_synthetic, df_train_eligible], ignore_index=True)
 
     X_train = df_train[feature_cols]
     X_test = df_test[feature_cols]
@@ -612,8 +618,8 @@ def plot_roc_curves(all_metrics, y_test, save_path=None):
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  -> Gráfico ROC salvo em: {save_path}")
-    
-    plt.show()
+
+    plt.close('all')
 
 
 def plot_confusion_matrices(all_metrics, save_path=None):
@@ -655,8 +661,8 @@ def plot_confusion_matrices(all_metrics, save_path=None):
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  -> Matrizes de confusão salvas em: {save_path}")
-    
-    plt.show()
+
+    plt.close('all')
 
 
 def plot_feature_importance(model, feature_names, model_name, top_n=15, save_path=None):
@@ -698,8 +704,8 @@ def plot_feature_importance(model, feature_names, model_name, top_n=15, save_pat
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  -> Feature importance salvo em: {save_path}")
-    
-    plt.show()
+
+    plt.close('all')
 
 
 # =============================================================================
@@ -848,41 +854,40 @@ def run_threshold_analysis(all_metrics, y_test, output_dir=OUTPUT_DIR):
     fig.tight_layout()
     pr_path = os.path.join(output_dir, 'precision_recall_curve.png')
     fig.savefig(pr_path, dpi=150, bbox_inches='tight')
-    plt.show()
+    plt.close(fig)
     print(f"  -> Curva PR salva: {pr_path}")
 
-    # --- Plot 2: Métricas vs threshold para todos os modelos (um subplot por modelo) ---
+    # --- Plot 2: Métricas vs threshold para todos os modelos (2 figuras de 2x1) ---
     model_names = [m['model'] for m in all_metrics]
-    n_models = len(model_names)
-    fig2, axes = plt.subplots(2, 2, figsize=(14, 10))
-    axes = axes.flatten()
 
-    for idx, model_name in enumerate(model_names):
-        ax2 = axes[idx]
-        df_model = df_thresh[df_thresh['model'] == model_name]
-        ax2.plot(df_model['threshold'], df_model['precision'], 'b-', lw=2, label='Precisão')
-        ax2.plot(df_model['threshold'], df_model['recall'], 'r-', lw=2, label='Revocação')
-        ax2.plot(df_model['threshold'], df_model['f1'], 'g--', lw=2, label='F1-score')
-        ax2.plot(df_model['threshold'], df_model['f2'], 'm--', lw=2, label='F$_2$-score')
-        ax2.axvline(x=0.5, color='gray', linestyle=':', alpha=0.7, label='$\\tau = 0.5$')
-        ax2.set_xlabel('Limiar ($\\tau$)')
-        ax2.set_ylabel('Métrica')
-        ax2.set_title(model_name)
-        ax2.legend(loc='center left', fontsize=8)
-        ax2.set_xlim([0, 1])
-        ax2.set_ylim([0, 1.05])
-        ax2.grid(True, alpha=0.3)
+    for fig_idx in range(2):
+        pair = model_names[fig_idx * 2 : fig_idx * 2 + 2]
+        if not pair:
+            break
+        fig2, axes = plt.subplots(len(pair), 1, figsize=(9, 5 * len(pair)))
+        if len(pair) == 1:
+            axes = [axes]
 
-    # Ocultar eixos extras se houver menos de 4 modelos
-    for idx in range(n_models, len(axes)):
-        axes[idx].set_visible(False)
+        for ax2, model_name in zip(axes, pair):
+            df_model = df_thresh[df_thresh['model'] == model_name]
+            ax2.plot(df_model['threshold'], df_model['precision'], 'b-', lw=2, label='Precisão')
+            ax2.plot(df_model['threshold'], df_model['recall'], 'r-', lw=2, label='Revocação')
+            ax2.plot(df_model['threshold'], df_model['f1'], 'g--', lw=2, label='F1-score')
+            ax2.plot(df_model['threshold'], df_model['f2'], 'm--', lw=2, label='F$_2$-score')
+            ax2.axvline(x=0.5, color='gray', linestyle=':', alpha=0.7, label='$\\tau = 0.5$')
+            ax2.set_xlabel('Limiar ($\\tau$)')
+            ax2.set_ylabel('Métrica')
+            ax2.set_title(model_name)
+            ax2.legend(loc='center left', fontsize=8)
+            ax2.set_xlim([0, 1])
+            ax2.set_ylim([0, 1.05])
+            ax2.grid(True, alpha=0.3)
 
-    fig2.suptitle('Métricas vs. Limiar de Decisão', fontsize=14, y=1.01)
-    fig2.tight_layout()
-    mt_path = os.path.join(output_dir, 'metrics_vs_threshold.png')
-    fig2.savefig(mt_path, dpi=150, bbox_inches='tight')
-    plt.show()
-    print(f"  -> Métricas vs threshold salvo: {mt_path}")
+        fig2.tight_layout()
+        mt_path = os.path.join(output_dir, f'metrics_vs_threshold_{fig_idx + 1}.png')
+        fig2.savefig(mt_path, dpi=150, bbox_inches='tight')
+        plt.close(fig2)
+        print(f"  -> Métricas vs threshold salvo: {mt_path}")
 
     return df_thresh
 
@@ -1004,7 +1009,7 @@ def plot_learning_curve_from_results(output_base_dir=None, save_path=None):
         fig.savefig(save_path, dpi=150, bbox_inches='tight')
         print(f"  -> Curva de aprendizado salva: {save_path}")
 
-    plt.show()
+    plt.close(fig)
 
 
 # =============================================================================
@@ -1361,9 +1366,9 @@ if __name__ == "__main__":
     TEST_CURVES = None  # Para forçar curvas no teste: ["curve_1", "curve_2", ...]
 
     # test_on_real_only=False (padrão): split por curva em todo o dataset
-    # test_on_real_only=True: teste APENAS em curvas reais (db_positive/db_negative)
-    #   Use apenas quando quiser validar generalização em dados reais.
-    TEST_ON_REAL_ONLY = False
+    # test_on_real_only=True: teste APENAS em curvas reais + artificiais (exclui sintéticas do teste)
+    #   Artificiais são recortes de curvas reais; sintéticas são geradas computacionalmente.
+    TEST_ON_REAL_ONLY = True
 
     # Flags para análises estatísticas adicionais
     RUN_CV = True          # True para executar validação cruzada k=5
