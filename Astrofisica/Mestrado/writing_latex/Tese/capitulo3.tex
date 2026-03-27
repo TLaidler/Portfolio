@@ -2,11 +2,9 @@
 % Capítulo 3 — Modelos de Machine Learning para Classificação e Agrupamento
 % =============================================================================
 
-Este capítulo apresenta os fundamentos teóricos e o funcionamento dos principais algoritmos de ML utilizados nesta dissertação, em linguagem acessível a leitores com formação em física ou astronomia e boa base matemática, mas eventualmente pouco familiarizados com ciência da computação. Serão tratados: modelos de \textbf{classificação supervisionada} (Regressão Logística, Random Forest, XGBoost e CatBoost) --- isto é, algoritmos que aprendem a partir de exemplos cuja resposta correta (\textbf{rótulo}) é conhecida e que, após um processo de \textbf{treinamento} (ajuste de parâmetros por minimização de uma função de custo, análogo ao ajuste de um modelo a dados), passam a prever a classe de novos exemplos --- e um algoritmo de \textbf{agrupamento} não supervisionado (K-means), usado apenas para extrair uma característica numérica das curvas (Capítulo 4). A exposição está organizada em quatro blocos: (1)~conceitos fundamentais de ML e motivação para classificação na detecção de ocultações; (2)~formulação matemática do problema de classificação, regressão linear como exemplo didático e apresentação de cada modelo; (3)~algoritmos de otimização usados no treinamento; e (4)~extração de características, validação e problemas práticos (\textbf{sobreajuste} e \textbf{subajuste}). O objetivo é fornecer a base conceitual necessária para interpretar a metodologia e os resultados apresentados nos capítulos seguintes.
-
 \section{Objetivos do capítulo}
 
-Os objetivos deste capítulo são: (1) situar o ML no contexto científico e explicar por que a detecção de ocultações estelares é tratada como um problema de classificação supervisionada; (2) formalizar o problema de classificação (espaço de atributos, rótulos, regiões de decisão), usar a regressão linear como exemplo didático de minimização de custo e apresentar os modelos utilizados na \textit{pipeline} (Regressão Logística, árvores de decisão, Random Forest, XGBoost, CatBoost) e o K-means para engenharia de características; (3) descrever os algoritmos de otimização no treinamento (solução fechada, gradiente descendente, métodos de segunda ordem) e sua relação com cada modelo; e (4) discutir engenharia de características, validação de modelos e os riscos de overfitting e underfitting. Ao final, o leitor terá uma visão clara dos modelos que serão treinados e avaliados no Capítulo 4 e dos métodos usados para ajustá-los.
+Os objetivos deste capítulo são: (1) situar os modelos de Machine Learning no contexto científico e explicar por que a detecção de ocultações estelares é tratada como um problema de classificação supervisionada; (2) formalizar o problema de classificação (espaço de atributos, rótulos, regiões de decisão), usar a regressão linear como exemplo didático de minimização de custo e apresentar os modelos utilizados na \textit{pipeline} (Regressão Logística, árvores de decisão, Random Forest, XGBoost, CatBoost) e o K-means para engenharia de características; (3) descrever os algoritmos de otimização no treinamento (solução fechada, gradiente descendente, métodos de segunda ordem) e sua relação com cada modelo; e (4) discutir engenharia de características, validação de modelos e os riscos de overfitting e underfitting. Ao final, o leitor terá uma visão clara dos modelos que serão treinados e avaliados no Capítulo 4 e dos métodos usados para ajustá-los.
 
 % -----------------------------------------------------------------------------
 \section{Conceitos fundamentais de Machine Learning}
@@ -16,9 +14,7 @@ Os objetivos deste capítulo são: (1) situar o ML no contexto científico e exp
 
 O \textit{Machine Learning} (ML), ou aprendizado de máquina, é uma área na qual os sistemas ``aprendem'' a partir de dados, sem serem explicitamente programados para cada tarefa \citep{geron2019maos}. Em termos operacionais: em vez de regras fixas codificadas à mão, um algoritmo de ML é alimentado com dados e \textbf{ajusta seus próprios parâmetros} (por exemplo, coeficientes de uma combinação linear ou estruturas de decisão) para capturar padrões ou relações nos dados. Esse processo de ajuste é o que se chama de \textbf{treinamento}; ao final, o modelo está ``treinado'' e pode ser aplicado a novos dados. O objetivo é permitir que o sistema melhore seu desempenho à medida que mais dados ou mais iterações estão disponíveis, especialmente em problemas sem solução analítica fechada ou com grandes volumes de dados.
 
-No contexto científico, o ML costuma ser visto como uma ``caixa-preta'' que produz previsões sem explicação. Essa visão reflete usos industriais em que a precisão preditiva prevalece sobre a interpretabilidade. Em ciência, porém, o ML pode ir além da previsão: atua como ferramenta de descoberta, revelando padrões que depois podem ser incorporados a uma teoria formal de causa e efeito. O papel do ML não é substituir a teoria, mas auxiliar na sua formulação, identificando os padrões que a teoria buscará explicar \citep{lopez2020ml}.
-
-Segundo \cite{lopez2020ml}, o uso do ML na ciência pode ser agrupado em algumas funções típicas:
+No contexto científico, o ML costuma ser visto como uma ``caixa-preta'' que produz previsões sem explicação. Essa visão reflete usos industriais em que a precisão preditiva prevalece sobre a interpretabilidade. Em ciência, porém, o ML pode ir além da previsão: atua como ferramenta de descoberta, revelando padrões que depois podem ser incorporados a uma teoria formal de causa e efeito. O papel do ML não é substituir a teoria, mas auxiliar na sua formulação, identificando os padrões que a teoria buscará explicar. Segundo \cite{lopez2020ml}, o uso do ML na ciência pode ser agrupado em algumas funções típicas:
 
 \textbf{Sugerir a existência de algo novo:} o ML pode encontrar padrões inesperados, indicando a existência de relações ainda não descobertas. Em matemática, algoritmos já auxiliaram a conjecturar teoremas que depois foram demonstrados formalmente \citep{gryak2018conjugacy}.
 
@@ -47,16 +43,11 @@ Neste trabalho, o foco é o \textbf{paradigma supervisionado}, em particular a \
 \section{O problema da classificação supervisionada}
 \label{sec:problema_classificacao}
 
-\subsection{Formulação matemática}
-
 Em notação matemática, uma amostra rotulada é representada pela tupla \(Z = (X, Y)\). Aqui \(X = \{\vec{x}_1, \vec{x}_2, \ldots, \vec{x}_n\}\) é o conjunto de \textbf{vetores de características}: cada \(\vec{x}_i \in \mathbb{R}^d\) é um vetor com \(d\) números que resumem uma curva de luz (amplitude, mínimo do fluxo suavizado, distância entre centróides, etc.). O número \(d\) é a ``dimensionalidade'' do problema (no nosso caso, 14 ou 28 features). O conjunto \(Y = \{y_1, y_2, \ldots, y_n\}\) contém os \textbf{rótulos}: a classificação verdadeira de cada exemplo, com \(y_i \in \{0,1\}\) no caso binário (0 = sem ocultação, 1 = com ocultação).
 
-Um \textbf{classificador} é uma função \(f \colon \mathbb{R}^d \longrightarrow \{0,1\}\) (ou, em geral, \(\{1,\ldots,c\}\) para \(c\) classes) que, dado um vetor \(\vec{x}\), prediz um rótulo \(y\). Em muitos modelos, \(f\) produz primeiro uma \textbf{probabilidade} de a classe ser positiva; a decisão final é então ``positivo'' se essa probabilidade for maior ou igual a 0,5, e ``negativo'' caso contrário. A função \(f\) divide o espaço \(\mathbb{R}^d\) em \textbf{regiões de decisão}: \(R_k = \{\vec{x} \in \mathbb{R}^d \mid f(\vec{x}) = k\}\). Cada região corresponde a uma classe. O objetivo do treinamento é estimar \(f\) a partir dos dados \((X,Y)\) de modo que \(f\) generalize bem para novos exemplos não vistos.
+Um \textbf{classificador} é uma função \(f \colon \mathbb{R}^d \longrightarrow \{0,1\}\) (ou, em geral, \(\{1,\ldots,c\}\) para \(c\) classes) que, dado um vetor \(\vec{x}\), prediz um rótulo \(y\). Em muitos modelos, \(f\) produz primeiro uma \textbf{probabilidade} de a classe ser positiva; a decisão final é então ``positivo'' se essa probabilidade for maior ou igual a 0,5, e ``negativo'' caso contrário. O uso do valor 0,5 é intuitivo, mas cabe frisar que é arbitrário e dependerá do objetivo do modelo que está sendo treinado (esse limite decisório é chamado de 'threshold' nas pipelines de ML, ou $\tau$, e será melhor explorada mais adiante). A função \(f\) divide o espaço \(\mathbb{R}^d\) em \textbf{regiões de decisão}: \(R_k = \{\vec{x} \in \mathbb{R}^d \mid f(\vec{x}) = k\}\). Cada região corresponde a uma classe. O objetivo do treinamento é estimar \(f\) a partir dos dados \((X,Y)\) de modo que \(f\) generalize bem para novos exemplos não vistos.
 
-\subsection{Regressão linear como exemplo didático}
-\label{sec:reglin_didatica}
-
-Antes de apresentar os modelos de classificação, convém fixar a ideia de treinamento como minimização de uma função de custo. A \textbf{regressão linear} serve de exemplo didático. O modelo $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$ descreve o comportamento médio de uma variável resposta $y$ dado $x$, com erro $\epsilon_i$ (Figura~\ref{fig:linear}).
+Antes de apresentar os modelos de classificação, convém fixar a ideia de treinamento como minimização de uma função de custo. O exemplo mais natural de ser explorado é a \textbf{regressão linear}. O modelo $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$ descreve o comportamento médio de uma variável resposta $y$ dado $x$, com erro $\epsilon_i$ (Figura~\ref{fig:linear}).
 
 \begin{figure}[htbp]
 \begin{center}
@@ -66,11 +57,41 @@ Antes de apresentar os modelos de classificação, convém fixar a ideia de trei
 \end{center}
 \end{figure}
 
-Os parâmetros são estimados pelo método dos mínimos quadrados. Em notação vetorial, o modelo prediz $\hat{\vec{y}} = X\vec{\theta}$ e a função de custo é
+Os parâmetros são estimados pelo método dos mínimos quadrados (que também pode ser interpretado como nosso primeiro exemplo de algoritmo de \textit{otimização}). No geral, em notação vetorial, o modelo prediz $\hat{\vec{y}} = X\vec{\theta}$ e a função de custo é
 \[
 J(\vec{\theta}) = \sum_{i=1}^{m} \big( y^{(i)} - \vec{\theta}^\top \vec{x}^{(i)} \big)^2,
 \]
-cujo minimizador admite solução fechada --- a \textbf{equação normal}: $\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}$ \citep{geron2019maos}. Para classificação, não usamos regressão linear diretamente; a \textbf{Regressão Logística} mantém a combinação linear, mas mapeia a saída ao intervalo $(0,1)$ por uma função sigmoide e utiliza o custo de entropia cruzada, para o qual \textbf{não existe solução fechada} --- o treinamento é feito por algoritmos iterativos (Seção~\ref{sec:otimizacao}).
+cujo minimizador admite solução fechada; a \textbf{equação normal}: $\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}$ \citep{geron2019maos}.
+Em geral, após estimar os parâmetros e construir
+a reta de regressão, utilizamos essa equação recém descoberta para estimar valores de $y$ a partir de novos valores de $x$.
+
+A equação de custo em notação vetorial é muito útil para generalizar soluções de problemas que possuem múltiplas variáveis independentes. Nesses casos, o grau de ajuste do hiperplano (ao invés de uma simples reta) aos vetores é definido em termos dos erros entre os verdadeiros valores de $y_i$ e suas predições $\hat{y}_i$. Ou seja, um modelo linear dado por:
+
+\[
+y_i = \beta_0 + \beta_1 x_{i1} + ... + \beta_k x_ik + \epsilon_i = \vec{x}_i^T \vec{\beta} + \epsilon_i \longrightarrow \vec{y} = X \vec{\beta} + \vec{\epsilon}
+\]
+
+Em que $X$ é a matriz dos dados e $\vec{\beta}$ é o vetor de parâmetros que controlam o hiperplano ótimo. Após o cálculo do vetor de parãmetros, podemos estimar $\vec{y}$ para novos dados de entrada. Em termos matemáticos, deseja-se encontrar o vetor $\vec{\beta}$ que minimiza a soma dos resíduos ao quadrado:
+
+\[
+J(\vec{\beta}) = \sum_{i=1}^{n} \epsilon_i^2 = \vec{\epsilon}^T \vec{\epsilon} = (\vec{y} - \vec{\hat{y}})^T (\vec{y} - \vec{\hat{y}}) = (\vec{y} - X \vec{\beta})^T (\vec{y} - X \vec{\beta})
+\]
+
+Assim, a condição para minimizar o custo passa por:
+
+\[
+\frac{\partial J(\vec{\beta})}{\partial \vec{\beta}} = X^T (\vec{y} - X \vec{\beta}) = \vec{0}
+\]
+
+Essa resolução funciona para qualquer dimensão $\mathbb{R}^d$. Nos exemplos mais fundamentais ($\mathbb{R}^2$) a minimização de custo passa por
+
+\[
+J(\alpha,\beta) = \sum_{i=1}^{n} \epsilon_i^2 = \sum_{i=1}^{n} (y_i - \alpha \beta x_i)^2 \longrightarrow \frac{\partial J}{\partial \beta} = 0
+\]
+
+Para $y = \alpha + \beta x$.
+
+Apesar dos problemas de regressão servirem de excelente passo inicial para se compreender as métricas e interpretações básicas dos modelos de ML, para problemas de classificação, não usamos regressão linear diretamente - a solução completa desses problemas podem ser acompanhadas no capítulo 2 de \citep{Levada2026}. A \textbf{Regressão Logística} mantém a combinação linear, mas mapeia a saída ao intervalo $(0,1)$ por uma função sigmoide e utiliza o custo de entropia cruzada, para o qual \textbf{não existe solução fechada} (o treinamento é feito por algoritmos iterativos - Seção~\ref{sec:otimizacao}).
 
 % -----------------------------------------------------------------------------
 \section{Modelos de classificação utilizados na pipeline}
@@ -78,23 +99,48 @@ cujo minimizador admite solução fechada --- a \textbf{equação normal}: $\vec
 
 \subsection{Regressão Logística}
 
-A Regressão Logística é um classificador probabilístico que utiliza a estrutura dos modelos lineares para prever categorias discretas \citep{geron2019maos}. Ela funciona como ponte entre modelos lineares (saída contínua) e classificação probabilística: a combinação linear \(\vec{\theta}^\top \vec{x}\) é mapeada pela função sigmoide ao intervalo \((0,1)\), interpretado como a probabilidade da classe positiva \citep{Levada2026}. Em notação vetorial, seja \(\vec{\theta}\) o vetor de parâmetros (incluindo o termo de polarização) e \(\vec{x}\) o vetor de atributos; a probabilidade predita é
+A Regressão Logística é um classificador probabilístico que utiliza a estrutura dos modelos lineares para prever categorias discretas \citep{geron2019maos}, ao transformar combinações lineares de características em probabilidades válidas. Esse tipo de modelo calcula uma soma ponderada das características de entrada, mas, em vez de gerar o resultado diretamente (como o modelo de Regressão Linear) gera a \textit{logística} (função sigmoide) desse resultado. 
+
+Suponha um problema de classificação em que se deseja verificar se um tumor é binigno ou não a partir do tamanho do mesmo. A figura a seguir ilustra a aplicação da regressão linear nos dados.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese_old/pngs/regressao_linear_ex1.png}
+    \label{fig:placeholder}
+\end{figure}
+
+Nesse caso teríamos infinitos valores para a variável de saída. Uma possível solução seria considerar um limiar simples na metade da reta. No entanto, suponha que no mesmo conjunto de dados tivéssemos um elemento \textit{outlier}. A figura a seguir ilusta a situação (nesse caso o limiar não funciona bem).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese_old/pngs/regressao_linear_ex2.png}
+    \caption{Exemplo utilizado por \citep{Levada2026}, capítulo 5.}
+    \label{fig:placeholder}
+\end{figure}
+
+A reta de regressão se altera significativamente com a adição de novos pontos, de modo que é fácil concluir que haverá erro na classificação. Além disso, note que na regressão linear a saída pode assumir valores fora do intervalo desejado para uma medida de probabilidade (entre 0 e 1). 
+
+Ou seja, a regressão logística funciona como ponte entre modelos lineares (saída contínua) e classificação probabilística: a combinação linear \(\vec{\theta}^\top \vec{x}\) é mapeada pela logística ao intervalo \((0,1)\), interpretado como a probabilidade da classe positiva \citep{Levada2026}. Em notação vetorial, seja \(\vec{\theta}\) o vetor de parâmetros  e \(\vec{x}\) o vetor de atributos; a probabilidade predita é
 \[
 \hat{p} = h_{\vec{\theta}}(\vec{x}) = \sigma(\vec{\theta}^\top \vec{x}) = \frac{1}{1 + e^{-\vec{\theta}^\top \vec{x}}}.
 \]
-A decisão é: classe 1 se \(\hat{p} \geq 0{,}5\), caso contrário classe 0.
+A decisão é: classe 1 se \(\hat{p} \geq 0{,}5\), caso contrário classe 0. Vale lembrar que o valor de 0,5 pode ser alterado a depender da calibração do modelo, como discutido no início do capítulo.
 
-Para o treinamento, utiliza-se a função de custo de \textbf{entropia cruzada} (ou \textit{log loss}): uma medida que penaliza predições distantes do rótulo real --- por exemplo, se o rótulo é 1 (ocultação presente) e o modelo prediz probabilidade baixa, o custo é alto \citep{geron2019maos}. Para um conjunto de \(m\) exemplos, com rótulos \(y^{(i)} \in \{0,1\}\) e probabilidades preditas \(\hat{p}^{(i)}\), a função é
+Para o treinamento, utiliza-se a função de custo de \textbf{entropia cruzada} (ou \textit{log loss}): uma medida que penaliza predições distantes do rótulo real - por exemplo, se o rótulo é 1 (ocultação presente) e o modelo prediz probabilidade baixa, o custo é alto \citep{geron2019maos}. Para um conjunto de \(m\) exemplos, com rótulos \(y^{(i)} \in \{0,1\}\) e probabilidades preditas \(\hat{p}^{(i)}\), a função é
 \begin{equation}
 J(\vec{\theta}) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(\hat{p}^{(i)}) + (1 - y^{(i)}) \log(1 - \hat{p}^{(i)}) \right].
 \end{equation}
-A minimização de \(J(\vec{\theta})\) é equivalente à maximização da log-verossimilhança (MLE), de modo que os parâmetros estimados são estatisticamente ótimos sob o modelo probabilístico assumido \citep{geron2019maos, Levada2026}. O ajuste é realizado por gradiente descendente (Seção~\ref{sec:otimizacao}). O gradiente de \(J\) em relação a \(\vec{\theta}\) pode ser escrito na forma vetorial
+A minimização de \(J(\vec{\theta})\) é equivalente à maximização da log-verossimilhança (MLE), de modo que os parâmetros estimados são estatisticamente ótimos sob o modelo probabilístico assumido \citep{geron2019maos, Levada2026}. O ajuste é realizado por gradiente descendente (veremos mais detalhes sobre os algoritmos de otimização na Seção~\ref{sec:otimizacao}). O gradiente de \(J\) em relação a \(\vec{\theta}\) pode ser escrito na forma vetorial
 \[
 \nabla_{\vec{\theta}} J(\vec{\theta}) = \frac{1}{m} X^\top \big( \sigma(X\vec{\theta}) - \vec{y} \big),
 \]
-onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) --- análogo ao passo de um método numérico de minimização.
+onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) (análogo ao passo de um método numérico de minimização).
 
-Para evitar sobreajuste, aplica-se \textbf{regularização} \citep{geron2019maos, Levada2026}. A regularização \(\ell_2\) (\textbf{Ridge}) adiciona ao custo o termo \(\frac{\alpha}{2} \sum_j \theta_j^2\), resultando em encolhimento (\textit{shrinkage}) dos coeficientes: os pesos são reduzidos em direção a zero, mas raramente se anulam, de modo que todos os atributos permanecem no modelo. Ridge tende a funcionar bem mesmo com \textit{features} fortemente correlacionadas e possui solução em forma fechada (sempre inversível). A regularização \(\ell_1\) (\textbf{Lasso}) adiciona \(\alpha \sum_j |\theta_j|\), o que tende a zerar coeficientes de atributos irrelevantes, promovendo \textbf{esparsidade} e atuando como seleção automática de variáveis; em contrapartida, o Lasso pode comportar-se de forma errática quando há muitas variáveis correlacionadas (tendendo a escolher apenas uma delas) ou quando o número de variáveis supera o de instâncias. Nesses casos recomenda-se o \textbf{Elastic Net}, que combina as penalidades Ridge e Lasso com uma taxa de mistura. Do ponto de vista bayesiano (estimativa MAP), Ridge equivale a assumir uma distribuição prévia Gaussiana para os parâmetros, e o Lasso a uma distribuição de Laplace (com pico em zero). A função de custo do Lasso não é diferenciável em \(\theta_j = 0\), exigindo o uso de subgradientes na otimização; não há solução analítica fechada simples como no Ridge. O hiperparâmetro \(\alpha\) (ou \(C\), inversamente relacionado) controla a força da penalização e pode ser escolhido via validação cruzada. É essencial \textbf{escalonar} as \textit{features} (e.g.\ StandardScaler) antes de aplicar Ridge ou Lasso, pois ambas as penalidades são sensíveis à escala dos dados. Nesta dissertação, utiliza-se Ridge ou Lasso na Regressão Logística, conforme documentado no Apêndice~\ref{ap:hiperparametros}.
+
+Para evitar sobreajuste, aplica-se a \textbf{regularização} \citep{geron2019maos, Levada2026}, que é o método de restringir o grau de liberdade do modelo. A regularização \(\ell_2\) (\textbf{Ridge}) adiciona ao custo o termo \(\frac{\alpha}{2} \sum_j \theta_j^2\), resultando em encolhimento (\textit{shrinkage}) dos coeficientes: os pesos são reduzidos em direção a zero, mas raramente se anulam, de modo que todos os atributos permanecem no modelo.
+
+%%tornar mais didático o parágrafo de regularização
+Ridge tende a funcionar bem mesmo com \textit{features} fortemente correlacionadas e possui solução em forma fechada (sempre inversível). A regularização \(\ell_1\) (\textbf{Lasso}) adiciona \(\alpha \sum_j |\theta_j|\), o que tende a zerar coeficientes de atributos irrelevantes, promovendo \textbf{esparsidade} e atuando como seleção automática de variáveis; em contrapartida, o Lasso pode comportar-se de forma errática quando há muitas variáveis correlacionadas (tendendo a escolher apenas uma delas) ou quando o número de variáveis supera o de instâncias. Nesses casos recomenda-se o \textbf{Elastic Net}, que combina as penalidades Ridge e Lasso com uma taxa de mistura. Do ponto de vista bayesiano (estimativa MAP), Ridge equivale a assumir uma distribuição prévia Gaussiana para os parâmetros, e o Lasso a uma distribuição de Laplace (com pico em zero). A função de custo do Lasso não é diferenciável em \(\theta_j = 0\), exigindo o uso de subgradientes na otimização; não há solução analítica fechada simples como no Ridge. O hiperparâmetro \(\alpha\) (ou \(C\), inversamente relacionado) controla a força da penalização e pode ser escolhido via validação cruzada. É essencial \textbf{escalonar} as \textit{features} (e.g.\ StandardScaler) antes de aplicar Ridge ou Lasso, pois ambas as penalidades são sensíveis à escala dos dados. Nesta dissertação, utiliza-se Ridge ou Lasso na Regressão Logística, conforme documentado no Apêndice~\ref{ap:hiperparametros}.
 
 A Regressão Logística serve de base conceitual para entender classificadores probabilísticos e foi também treinada e avaliada na \textit{pipeline} desta dissertação, junto com os ensembles de árvores (Random Forest, XGBoost, CatBoost), que tipicamente oferecem melhor desempenho em dados tabulares e fornecem importância de variáveis. A função sigmoide \(\sigma(z) = 1/(1+e^{-z})\) está ilustrada na Figura~\ref{fig:sigmoide}.
 
