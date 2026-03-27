@@ -2,6 +2,8 @@
 % Capítulo 3 — Modelos de Machine Learning para Classificação e Agrupamento
 % =============================================================================
 
+O Capítulo~2 mostrou que cada campanha de ocultação estelar produz centenas a milhares de curvas de luz, cada uma das quais pode ser resumida por um conjunto de números --- amplitude do fluxo, profundidade da queda, estatísticas de ruído, entre outros. A questão central é: \emph{dada essa descrição numérica de uma curva, é possível decidir automaticamente se ela contém ou não uma ocultação?} Esse é, por definição, um problema de \textbf{classificação binária}, e os métodos de \textit{Machine Learning} são as ferramentas naturais para resolvê-lo. Este capítulo apresenta os fundamentos teóricos necessários para compreender os modelos treinados e avaliados no Capítulo~4.
+
 \section{Objetivos do capítulo}
 
 Os objetivos deste capítulo são: (1) situar os modelos de Machine Learning no contexto científico e explicar por que a detecção de ocultações estelares é tratada como um problema de classificação supervisionada; (2) formalizar o problema de classificação (espaço de atributos, rótulos, regiões de decisão), usar a regressão linear como exemplo didático de minimização de custo e apresentar os modelos utilizados na \textit{pipeline} (Regressão Logística, árvores de decisão, Random Forest, XGBoost, CatBoost) e o K-means para engenharia de características; (3) descrever os algoritmos de otimização no treinamento (solução fechada, gradiente descendente, métodos de segunda ordem) e sua relação com cada modelo; e (4) discutir engenharia de características, validação de modelos e os riscos de overfitting e underfitting. Ao final, o leitor terá uma visão clara dos modelos que serão treinados e avaliados no Capítulo 4 e dos métodos usados para ajustá-los.
@@ -42,6 +44,7 @@ Neste trabalho, o foco é o \textbf{paradigma supervisionado}, em particular a \
 % -----------------------------------------------------------------------------
 \section{O problema da classificação supervisionada}
 \label{sec:problema_classificacao}
+\label{sec:reglin_didatica}
 
 Em notação matemática, uma amostra rotulada é representada pela tupla \(Z = (X, Y)\). Aqui \(X = \{\vec{x}_1, \vec{x}_2, \ldots, \vec{x}_n\}\) é o conjunto de \textbf{vetores de características}: cada \(\vec{x}_i \in \mathbb{R}^d\) é um vetor com \(d\) números que resumem uma curva de luz (amplitude, mínimo do fluxo suavizado, distância entre centróides, etc.). O número \(d\) é a ``dimensionalidade'' do problema (no nosso caso, 14 ou 28 features). O conjunto \(Y = \{y_1, y_2, \ldots, y_n\}\) contém os \textbf{rótulos}: a classificação verdadeira de cada exemplo, com \(y_i \in \{0,1\}\) no caso binário (0 = sem ocultação, 1 = com ocultação).
 
@@ -57,39 +60,19 @@ Antes de apresentar os modelos de classificação, convém fixar a ideia de trei
 \end{center}
 \end{figure}
 
-Os parâmetros são estimados pelo método dos mínimos quadrados (que também pode ser interpretado como nosso primeiro exemplo de algoritmo de \textit{otimização}). No geral, em notação vetorial, o modelo prediz $\hat{\vec{y}} = X\vec{\theta}$ e a função de custo é
+Os parâmetros são estimados pelo método dos \textbf{mínimos quadrados}, que constitui o primeiro exemplo de algoritmo de otimização nesta dissertação. No caso mais simples ($\mathbb{R}^2$), o modelo é $y = \alpha + \beta x$ e a função de custo é
 \[
-J(\vec{\theta}) = \sum_{i=1}^{m} \big( y^{(i)} - \vec{\theta}^\top \vec{x}^{(i)} \big)^2,
+J(\alpha,\beta) = \sum_{i=1}^{n} (y_i - \alpha - \beta x_i)^2,
 \]
-cujo minimizador admite solução fechada; a \textbf{equação normal}: $\vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}$ \citep{geron2019maos}.
-Em geral, após estimar os parâmetros e construir
-a reta de regressão, utilizamos essa equação recém descoberta para estimar valores de $y$ a partir de novos valores de $x$.
-
-A equação de custo em notação vetorial é muito útil para generalizar soluções de problemas que possuem múltiplas variáveis independentes. Nesses casos, o grau de ajuste do hiperplano (ao invés de uma simples reta) aos vetores é definido em termos dos erros entre os verdadeiros valores de $y_i$ e suas predições $\hat{y}_i$. Ou seja, um modelo linear dado por:
-
+minimizada pela condição $\partial J / \partial \alpha = 0$, $\partial J / \partial \beta = 0$. A generalização para múltiplas variáveis ($d$ dimensões) segue naturalmente em notação vetorial. O modelo prediz $\hat{\vec{y}} = X\vec{\theta}$, com $X$ a matriz de dados (cada linha é um exemplo, cada coluna uma variável) e $\vec{\theta}$ o vetor de parâmetros. A função de custo torna-se
 \[
-y_i = \beta_0 + \beta_1 x_{i1} + ... + \beta_k x_ik + \epsilon_i = \vec{x}_i^T \vec{\beta} + \epsilon_i \longrightarrow \vec{y} = X \vec{\beta} + \vec{\epsilon}
+J(\vec{\theta}) = (\vec{y} - X\vec{\theta})^\top (\vec{y} - X\vec{\theta}) = \sum_{i=1}^{n} \big( y_i - \vec{\theta}^\top \vec{x}_i \big)^2.
 \]
-
-Em que $X$ é a matriz dos dados e $\vec{\beta}$ é o vetor de parâmetros que controlam o hiperplano ótimo. Após o cálculo do vetor de parãmetros, podemos estimar $\vec{y}$ para novos dados de entrada. Em termos matemáticos, deseja-se encontrar o vetor $\vec{\beta}$ que minimiza a soma dos resíduos ao quadrado:
-
+A condição de mínimo, $\nabla_{\vec{\theta}} J = \vec{0}$, fornece a \textbf{equação normal}:
 \[
-J(\vec{\beta}) = \sum_{i=1}^{n} \epsilon_i^2 = \vec{\epsilon}^T \vec{\epsilon} = (\vec{y} - \vec{\hat{y}})^T (\vec{y} - \vec{\hat{y}}) = (\vec{y} - X \vec{\beta})^T (\vec{y} - X \vec{\beta})
+X^\top (X\vec{\theta} - \vec{y}) = \vec{0} \quad \Longrightarrow \quad \vec{\theta}^* = (X^\top X)^{-1} X^\top \vec{y}.
 \]
-
-Assim, a condição para minimizar o custo passa por:
-
-\[
-\frac{\partial J(\vec{\beta})}{\partial \vec{\beta}} = X^T (\vec{y} - X \vec{\beta}) = \vec{0}
-\]
-
-Essa resolução funciona para qualquer dimensão $\mathbb{R}^d$. Nos exemplos mais fundamentais ($\mathbb{R}^2$) a minimização de custo passa por
-
-\[
-J(\alpha,\beta) = \sum_{i=1}^{n} \epsilon_i^2 = \sum_{i=1}^{n} (y_i - \alpha \beta x_i)^2 \longrightarrow \frac{\partial J}{\partial \beta} = 0
-\]
-
-Para $y = \alpha + \beta x$.
+Após estimar $\vec{\theta}^*$, o modelo pode predizer $\vec{y}$ para novos dados de entrada \citep{geron2019maos, Levada2026}.
 
 Apesar dos problemas de regressão servirem de excelente passo inicial para se compreender as métricas e interpretações básicas dos modelos de ML, para problemas de classificação, não usamos regressão linear diretamente - a solução completa desses problemas podem ser acompanhadas no capítulo 2 de \citep{Levada2026}. A \textbf{Regressão Logística} mantém a combinação linear, mas mapeia a saída ao intervalo $(0,1)$ por uma função sigmoide e utiliza o custo de entropia cruzada, para o qual \textbf{não existe solução fechada} (o treinamento é feito por algoritmos iterativos - Seção~\ref{sec:otimizacao}).
 
@@ -103,19 +86,20 @@ A Regressão Logística é um classificador probabilístico que utiliza a estrut
 
 Suponha um problema de classificação em que se deseja verificar se um tumor é binigno ou não a partir do tamanho do mesmo. A figura a seguir ilustra a aplicação da regressão linear nos dados.
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.5\linewidth]{Tese_old/pngs/regressao_linear_ex1.png}
-    \label{fig:placeholder}
+    \includegraphics[width=0.5\linewidth]{pngs/regressao_linear_ex1.png}
+\caption{Aplicação da regressão linear a um problema de classificação binária: a reta produz saídas fora do intervalo $[0,1]$ \citep{Levada2026}.}
+    \label{fig:reglin_classif_ex1}
 \end{figure}
 
-Nesse caso teríamos infinitos valores para a variável de saída. Uma possível solução seria considerar um limiar simples na metade da reta. No entanto, suponha que no mesmo conjunto de dados tivéssemos um elemento \textit{outlier}. A figura a seguir ilusta a situação (nesse caso o limiar não funciona bem).
+Nesse caso teríamos infinitos valores para a variável de saída. Uma possível solução seria considerar um limiar simples na metade da reta. No entanto, suponha que no mesmo conjunto de dados tivéssemos um elemento \textit{outlier}. A Figura~\ref{fig:reglin_classif_ex2} ilustra a situação: o limiar não funciona bem.
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.5\linewidth]{Tese_old/pngs/regressao_linear_ex2.png}
-    \caption{Exemplo utilizado por \citep{Levada2026}, capítulo 5.}
-    \label{fig:placeholder}
+    \includegraphics[width=0.5\linewidth]{pngs/regressao_linear_ex2.png}
+    \caption{O mesmo problema com um \textit{outlier}: a reta de regressão se desloca e o limiar passa a classificar incorretamente \citep{Levada2026}.}
+    \label{fig:reglin_classif_ex2}
 \end{figure}
 
 A reta de regressão se altera significativamente com a adição de novos pontos, de modo que é fácil concluir que haverá erro na classificação. Além disso, note que na regressão linear a saída pode assumir valores fora do intervalo desejado para uma medida de probabilidade (entre 0 e 1). 
@@ -137,10 +121,17 @@ A minimização de \(J(\vec{\theta})\) é equivalente à maximização da log-ve
 onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) (análogo ao passo de um método numérico de minimização).
 
 
-Para evitar sobreajuste, aplica-se a \textbf{regularização} \citep{geron2019maos, Levada2026}, que é o método de restringir o grau de liberdade do modelo. A regularização \(\ell_2\) (\textbf{Ridge}) adiciona ao custo o termo \(\frac{\alpha}{2} \sum_j \theta_j^2\), resultando em encolhimento (\textit{shrinkage}) dos coeficientes: os pesos são reduzidos em direção a zero, mas raramente se anulam, de modo que todos os atributos permanecem no modelo.
+Para evitar sobreajuste, aplica-se a \textbf{regularização}: restringe-se o grau de liberdade do modelo adicionando um termo de penalização à função de custo \citep{geron2019maos, Levada2026}. As três formas principais são:
 
-%%tornar mais didático o parágrafo de regularização
-Ridge tende a funcionar bem mesmo com \textit{features} fortemente correlacionadas e possui solução em forma fechada (sempre inversível). A regularização \(\ell_1\) (\textbf{Lasso}) adiciona \(\alpha \sum_j |\theta_j|\), o que tende a zerar coeficientes de atributos irrelevantes, promovendo \textbf{esparsidade} e atuando como seleção automática de variáveis; em contrapartida, o Lasso pode comportar-se de forma errática quando há muitas variáveis correlacionadas (tendendo a escolher apenas uma delas) ou quando o número de variáveis supera o de instâncias. Nesses casos recomenda-se o \textbf{Elastic Net}, que combina as penalidades Ridge e Lasso com uma taxa de mistura. Do ponto de vista bayesiano (estimativa MAP), Ridge equivale a assumir uma distribuição prévia Gaussiana para os parâmetros, e o Lasso a uma distribuição de Laplace (com pico em zero). A função de custo do Lasso não é diferenciável em \(\theta_j = 0\), exigindo o uso de subgradientes na otimização; não há solução analítica fechada simples como no Ridge. O hiperparâmetro \(\alpha\) (ou \(C\), inversamente relacionado) controla a força da penalização e pode ser escolhido via validação cruzada. É essencial \textbf{escalonar} as \textit{features} (e.g.\ StandardScaler) antes de aplicar Ridge ou Lasso, pois ambas as penalidades são sensíveis à escala dos dados. Nesta dissertação, utiliza-se Ridge ou Lasso na Regressão Logística, conforme documentado no Apêndice~\ref{ap:hiperparametros}.
+\begin{itemize}
+	\item \textbf{Ridge (\(\ell_2\)):} adiciona ao custo o termo \(\frac{\alpha}{2} \sum_j \theta_j^2\). Os coeficientes são \textit{encolhidos} em direção a zero, mas raramente se anulam --- todos os atributos permanecem no modelo. Funciona bem com \textit{features} correlacionadas e possui solução em forma fechada.
+
+	\item \textbf{Lasso (\(\ell_1\)):} adiciona \(\alpha \sum_j |\theta_j|\). Tende a \textbf{zerar} coeficientes de atributos irrelevantes, promovendo esparsidade e atuando como seleção automática de variáveis. Em contrapartida, pode comportar-se de forma errática com muitas variáveis correlacionadas (tendendo a escolher apenas uma) ou quando o número de variáveis supera o de instâncias. A função de custo não é diferenciável em \(\theta_j = 0\), exigindo subgradientes na otimização.
+
+	\item \textbf{Elastic Net:} combina as penalidades Ridge e Lasso com uma taxa de mistura, unindo os benefícios de ambas. É recomendado quando há muitas variáveis correlacionadas.
+\end{itemize}
+
+Do ponto de vista bayesiano (estimativa MAP), Ridge equivale a uma distribuição prévia Gaussiana e Lasso a uma distribuição de Laplace (com pico em zero) sobre os parâmetros. O hiperparâmetro \(\alpha\) (ou \(C\), inversamente relacionado) controla a força da penalização e pode ser escolhido via validação cruzada. É essencial \textbf{escalonar} as \textit{features} (e.g.\ StandardScaler) antes de aplicar Ridge ou Lasso, pois ambas as penalidades são sensíveis à escala dos dados. Nesta dissertação, utiliza-se Ridge ou Lasso na Regressão Logística, conforme documentado no Apêndice~\ref{ap:hiperparametros}.
 
 A Regressão Logística serve de base conceitual para entender classificadores probabilísticos e foi também treinada e avaliada na \textit{pipeline} desta dissertação, junto com os ensembles de árvores (Random Forest, XGBoost, CatBoost), que tipicamente oferecem melhor desempenho em dados tabulares e fornecem importância de variáveis. A função sigmoide \(\sigma(z) = 1/(1+e^{-z})\) está ilustrada na Figura~\ref{fig:sigmoide}.
 
@@ -289,7 +280,7 @@ A partir dessas contagens, as métricas mais utilizadas em classificação biná
 \begin{equation}
 \text{Acurácia} = \frac{TP + TN}{TP + TN + FP + FN}.
 \end{equation}
-A acurácia é intuitiva, mas pode ser enganosa em conjuntos desbalanceados: um classificador que prediz sempre a classe majoritária pode atingir acurácia alta sem detectar nenhum evento raro.
+A acurácia é intuitiva, mas pode ser enganosa em conjuntos desbalanceados. \textbf{Exemplo numérico:} considere 100 curvas de luz, das quais 10 contêm ocultação (positivas) e 90 não (negativas). Um classificador que \textbf{sempre} prediz ``negativo'' acerta 90 das 100 curvas --- acurácia de 90\% --- mas não detecta \textit{nenhuma} ocultação ($\text{revocação} = 0$). Esse paradoxo evidencia que, em cenários desbalanceados, a acurácia sozinha é insuficiente para avaliar o modelo.
 
 \textbf{Precisão} (\textit{Precision}) --- entre os exemplos classificados como positivos, qual fração é realmente positiva:
 \begin{equation}
