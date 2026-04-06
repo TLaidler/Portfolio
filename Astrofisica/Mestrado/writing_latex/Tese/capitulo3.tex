@@ -82,25 +82,25 @@ Apesar dos problemas de regressão servirem de excelente passo inicial para se c
 
 A Regressão Logística é um classificador probabilístico. Similarmente à Regressão Linear, este modelo calcula uma soma ponderada das características de entrada, mas, em vez de gerar o resultado diretamente, gera a \textit{logística} (função sigmoide) desse resultado \citep{geron2019maos}. Em outras palavras, ele transforma combinações lineares de características em probabilidades válidas.
 
-Suponha um problema de classificação no qual se deseja verificar a probabilidade de um tumor ser binigno ou não a partir do tamanho do mesmo. A figura a seguir ilustra a aplicação da regressão linear nos dados.
+Suponha um problema de classificação no qual se deseja identificar uma ocultação em uma curva de luz a partir de uma única informação: o \textbf{tamanho da amplitude máxima do fluxo}. Curvas com maiores quedas possuem maior probabilidade de conter a ocultação. A figura a seguir ilustra a aplicação da regressão linear em dados bem comportados.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.5\linewidth]{pngs/regressao_linear_ex1.png}
-\caption{Aplicação da regressão linear ao problema de classificação binária do tumor: a reta produz saídas fora do intervalo $[0,1]$ \citep{Levada2026}. Nosso conjunto de dados mostra quatro amostras de tumores benignos e quatro amostras de tumores não benignos, claramente distinguiveis pelo tamanho. Nesse exemplo simples, o valor de 0,5 para o recorte da reta divide perfeitamente as duas classificações.}
+\caption{Aplicação da regressão linear ao problema de classificação binária: a reta produz saídas fora do intervalo $[0,1]$ \citep{Levada2026}. Nosso conjunto de dados mostra quatro amostras de curvas de luz com grandes amplitudes e outras quatro com baixas amplitudes. Nesse exemplo simples, o valor de 0,5 para o recorte da reta divide perfeitamente as duas classificações.}
     \label{fig:reglin_classif_ex1}
 \end{figure}
 
-Nesse caso teríamos infinitos valores para a variável de saída. Uma possível solução seria considerar um limiar simples na metade da reta. No entanto, suponha que no mesmo conjunto de dados tivéssemos um elemento \textit{outlier}. A Figura~\ref{fig:reglin_classif_ex2} ilustra a situação: o limiar não funciona bem.
+Nesse caso, teríamos infinitos valores para a variável de saída, mas uma possível solução seria considerar um limiar simples na metade da reta. No entanto, suponha que, no mesmo conjunto de dados, tivéssemos um elemento \textit{outlier}, uma anomalia. A Figura~\ref{fig:reglin_classif_ex2} ilustra a situação: o limiar não funciona bem.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.5\linewidth]{pngs/regressao_linear_ex2.png}
-    \caption{O mesmo problema anterior com um \textit{outlier} (anomalia): a reta de regressão se desloca e o limiar 0,5 passa a classificar incorretamente \citep{Levada2026}.}
+    \caption{O mesmo problema anterior, mas com a adição de um \textit{outlier}. Uma das curvas possui tamanho de amplitude muito diferente da escala normal, possivelmente resultado da falta de normalização. Veja como a reta de regressão se desloca e o limiar 0,5 passa a classificar incorretamente \citep{Levada2026}.}
     \label{fig:reglin_classif_ex2}
 \end{figure}
 
-A reta de regressão se altera significativamente com a adição de novos pontos, de modo que é fácil concluir que haverá erro na classificação. Além disso, a regressão linear permite com que a saída possa assumir valores fora do intervalo desejado para uma medida de probabilidade (entre 0 e 1). 
+A reta de regressão se altera significativamente com a adição de novos pontos, de modo que é fácil concluir que haverá erro na classificação em um conjunto de dados muito extenso e rico em informações. Além disso, a regressão linear permite com que a saída possa assumir valores fora do intervalo desejado para uma medida de probabilidade (entre 0 e 1). 
 
 Ou seja, a regressão logística funciona como ponte entre modelos lineares (saída contínua) e classificação probabilística: a combinação linear \(\vec{\theta}^\top \vec{x}\) é mapeada pela logística ao intervalo \((0,1)\), interpretado como a probabilidade da classe positiva \citep{Levada2026}. Em notação vetorial, seja \(\vec{\theta}\) o vetor de parâmetros  e \(\vec{x}\) o vetor de atributos; a probabilidade predita é
 \[
