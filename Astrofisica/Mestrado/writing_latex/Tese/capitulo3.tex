@@ -121,8 +121,33 @@ A minimização de \(J(\vec{\theta})\) é equivalente à maximização da log-ve
 \]
 onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) (análogo ao passo de um método numérico de minimização).
 
+\vspace{0.3cm}
+\noindent\textbf{Exemplo numérico: uma iteração do gradiente descendente.}
+Para tornar o mecanismo concreto, considere $m = 4$ curvas com uma única feature $x$ (amplitude da queda de fluxo, normalizada entre 0 e 1) e rótulos $y$ (0 = sem ocultação, 1 = com ocultação):
 
-Para evitar problemas de sobreajuste (quando o modelo 'decora' os dados de treino, mas não consegue replicar o aprendizado em dados de teste), aplica-se a \textbf{regularização}: processo em que restringe-se o grau de liberdade do modelo ao adicionar um termo de penalização à função de custo \citep{geron2019maos, Levada2026}. As três principais formas principais são:
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{cccc}
+\hline
+Curva & $x$ & $y$ & $\hat{p}$ (inicial) \\
+\hline
+1 & 0{,}2 & 0 & 0{,}50 \\
+2 & 0{,}4 & 0 & 0{,}50 \\
+3 & 0{,}7 & 1 & 0{,}50 \\
+4 & 0{,}9 & 1 & 0{,}50 \\
+\hline
+\end{tabular}
+\caption{Dados do exemplo numérico da Regressão Logística (valores ilustrativos).}
+\label{tab:exemplo_logistica}
+\end{table}
+
+Inicializamos $\theta_0 = 0$ e $\theta_1 = 0$. Como $\sigma(0) = 0{,}5$, todas as curvas recebem probabilidade $\hat{p} = 0{,}5$ e o custo inicial é $J = -\log(0{,}5) \approx 0{,}693$. Os gradientes são $\partial J / \partial \theta_0 = \frac{1}{4}\sum_i (\hat{p}_i - y_i) = 0$ e $\partial J / \partial \theta_1 = \frac{1}{4}\sum_i (\hat{p}_i - y_i)\,x_i = -0{,}15$. Com taxa de aprendizado $\eta = 1{,}0$, a atualização dá $\theta_1 \leftarrow 0 - 1{,}0 \times (-0{,}15) = 0{,}15$. Recalculando as probabilidades com o novo $\theta_1$, obtemos $\hat{p}_1 = \sigma(0{,}03) \approx 0{,}507$, $\hat{p}_2 \approx 0{,}515$, $\hat{p}_3 \approx 0{,}526$ e $\hat{p}_4 \approx 0{,}534$. O custo cai para $J \approx 0{,}685$. Uma única iteração já empurrou as probabilidades na direção correta: as curvas com maior amplitude (3 e 4, positivas) receberam $\hat{p}$ ligeiramente maior que as negativas. Após centenas de iterações, a separação se consolida.
+\vspace{0.3cm}
+
+Sem nenhuma restrição, a Regressão Logística é livre para atribuir pesos enormes a qualquer feature --- inclusive ao ruído. Se uma curva de treino por acaso tem um pico espúrio que coincide com a classe positiva, o modelo pode atribuir peso grande a essa flutuação; na hora de classificar curvas novas, esse peso exagerado prejudica a predição. Esse é o problema do \textbf{sobreajuste} (overfitting, discutido em detalhe na Seção~\ref{sec:overfitting}): o modelo ``decorou'' particularidades do treino em vez de aprender o padrão geral.
+
+A solução é a \textbf{regularização}: impor um custo adicional aos pesos grandes, forçando o modelo a manter coeficientes moderados e a distribuir a ``explicação'' entre múltiplas features em vez de apostar tudo em uma \citep{geron2019maos, Levada2026}. As três formas principais são:
 
 \begin{itemize}
 	\item \textbf{Ridge (\(\ell_2\)):} adiciona ao custo o termo \(\frac{\alpha}{2} \sum_j \theta_j^2\). Os coeficientes são \textit{encolhidos} em direção a zero, mas raramente se anulam - todos os atributos permanecem no modelo. Funciona bem com \textit{features} correlacionadas, reduzindo overfit (sobreajuste) sem descartar características.
@@ -319,6 +344,7 @@ Para $\beta > 1$, o $F_\beta$ penaliza mais os falsos negativos (favorecendo a r
 Nesta dissertação, os modelos são avaliados por acurácia, precisão, revocação, F1-score e AUC-ROC no conjunto de teste (Capítulo~5). Para a análise de ajuste de limiar, utilizam-se também o $F_2$-score e a curva precision-recall.
 
 \subsection{Overfitting, underfitting e trade-off viés-variância}
+\label{sec:overfitting}
 
 A identificação de \textbf{sobreajuste} (overfitting) e \textbf{subajuste} (underfitting) baseia-se na comparação do desempenho do modelo nos dados usados no treinamento versus nos dados reservados para teste ou validação \citep{geron2019maos}. Em termos intuitivos: \textbf{sobreajuste} ocorre quando o modelo "decora" os dados de treino (incluindo o ruído) e deixa de generalizar --- o erro no treino fica muito baixo, mas o erro em dados novos permanece alto. \textbf{Subajuste} ocorre quando o modelo é simples demais e não captura o padrão verdadeiro dos dados --- tanto o erro de treino quanto o de validação ficam altos. O erro de generalização pode ser decomposto em \textbf{viés}, \textbf{variância} e \textbf{ruído irredutível} \citep{Deisenroth2019, Levada2026}. Formalmente, para um modelo $\hat{f}$ treinado em diferentes amostras do mesmo processo gerador, o erro quadrático médio esperado em um ponto $\vec{x}$ é:
 \begin{equation}
@@ -339,7 +365,21 @@ As \textbf{curvas de aprendizado} mostram o desempenho do modelo (por exemplo, a
 
 \subsection{Validação de modelos}
 
-Para estimar o desempenho em dados não vistos e evitar otimismo, é essencial separar os dados usados no treino daqueles usados na avaliação \citep{geron2019maos}:
+Para estimar o desempenho em dados não vistos e evitar otimismo, é essencial separar os dados usados no treino daqueles usados na avaliação \citep{geron2019maos}. Imagine que treinamos o modelo usando todas as curvas de luz disponíveis e depois o avaliamos nessas mesmas curvas. O resultado seria enganosamente bom --- como julgar a qualidade de uma previsão de efeméride comparando-a com as próprias observações usadas para ajustá-la. Para estimar honestamente o desempenho, é preciso reservar dados que o modelo nunca viu. A \textbf{validação cruzada} sistematiza esse processo: em vez de uma única divisão treino/teste (que pode ser sortuda ou azarada), roda-se o experimento $k$ vezes, cada vez deixando uma fatia diferente de fora. A média dos $k$ resultados é uma estimativa muito mais robusta do erro de generalização.
+
+% TODO: Inserir diagrama de validação cruzada k-fold (k=5):
+% cinco linhas horizontais, cada uma com 5 blocos; em cada linha,
+% um bloco diferente é destacado como "validação" e os demais como "treino".
+% \begin{figure}[htbp]
+% \begin{center}
+%   \includegraphics[width=0.75\textwidth]{pngs/diagrama_kfold.png}
+% \caption{Esquema da validação cruzada com $k=5$: em cada rodada, uma fatia diferente
+% (em destaque) é usada como conjunto de validação, e as demais como treino.}
+% \label{fig:kfold}
+% \end{center}
+% \end{figure}
+
+As estratégias mais comuns são:
 
 \begin{itemize}
 	\item \textbf{Conjunto de teste:} uma fração dos dados é reservada e nunca usada no treino; o desempenho nesse conjunto fornece uma estimativa do erro de generalização.
