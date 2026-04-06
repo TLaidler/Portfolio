@@ -372,17 +372,14 @@ As \textbf{curvas de aprendizado} mostram o desempenho do modelo (por exemplo, a
 
 Para estimar o desempenho em dados não vistos e evitar otimismo, é essencial separar os dados usados no treino daqueles usados na avaliação \citep{geron2019maos}. Imagine que treinamos o modelo usando todas as curvas de luz disponíveis e depois o avaliamos nessas mesmas curvas. O resultado seria enganosamente bom --- como julgar a qualidade de uma previsão de efeméride comparando-a com as próprias observações usadas para ajustá-la. Para estimar honestamente o desempenho, é preciso reservar dados que o modelo nunca viu. A \textbf{validação cruzada} sistematiza esse processo: em vez de uma única divisão treino/teste (que pode ser sortuda ou azarada), roda-se o experimento $k$ vezes, cada vez deixando uma fatia diferente de fora. A média dos $k$ resultados é uma estimativa muito mais robusta do erro de generalização.
 
-% TODO: Inserir diagrama de validação cruzada k-fold (k=5):
-% cinco linhas horizontais, cada uma com 5 blocos; em cada linha,
-% um bloco diferente é destacado como "validação" e os demais como "treino".
-% \begin{figure}[htbp]
-% \begin{center}
-%   \includegraphics[width=0.75\textwidth]{pngs/diagrama_kfold.png}
-% \caption{Esquema da validação cruzada com $k=5$: em cada rodada, uma fatia diferente
-% (em destaque) é usada como conjunto de validação, e as demais como treino.}
-% \label{fig:kfold}
-% \end{center}
-% \end{figure}
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.75\textwidth]{pngs/kfold.png}
+\caption{Esquema da validação cruzada com $k=5$: em cada rodada, uma fatia diferente (em destaque) é usada como conjunto de validação, e as demais como treino. Fonte: adaptado de Nishad~(2023)\protect\footnotemark.}
+\label{fig:kfold}
+\end{center}
+\end{figure}
+\footnotetext{Disponível em: \url{https://medium.com/@nishad009adi/k-fold-cross-validation-with-simple-example-e023bb2e2d43}. Acesso em: 6 abr. 2026.}
 
 As estratégias mais comuns são:
 
