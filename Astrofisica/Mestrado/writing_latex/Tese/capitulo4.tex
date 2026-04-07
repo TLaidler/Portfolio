@@ -257,33 +257,11 @@ Os valores concretos dos hiperparâmetros utilizados nos experimentos (e eventua
 
 \subsection{Métricas de avaliação}
 
-Para classificação binária, utilizam-se as métricas consagradas abaixo. Em problemas de detecção de eventos (como ocultações), a matriz de confusão e as métricas dela derivadas — precisão, recall (revocação) e F1-score — permitem avaliar a capacidade do modelo de tomar decisões confiáveis: a precisão mede a proporção de positivos preditos que são reais; o recall mede a proporção de positivos reais que foram encontrados; o F1-score equilibra ambas \citep{Cazeneuve2023}. Sendo TP, TN, FP e FN respectivamente verdadeiros positivos, verdadeiros negativos, falsos positivos e falsos negativos:
+As definições formais das métricas de classificação binária utilizadas neste trabalho --- acurácia, precisão, revocação, F1-score, $F_\beta$-score, AUC-ROC e curva precision-recall --- foram apresentadas na Seção~\ref{sec:metricas_avaliacao} (Capítulo~3). Aqui, discutem-se as escolhas específicas adotadas na \textit{pipeline} à luz do problema de detecção de ocultações.
 
-\textbf{Acurácia:}
-\begin{equation}
-\text{Acurácia} = \frac{TP + TN}{TP + TN + FP + FN}.
-\end{equation}
+Em problemas de detecção de eventos, a matriz de confusão e as métricas dela derivadas permitem avaliar a capacidade do modelo de tomar decisões confiáveis \citep{Cazeneuve2023}. A \textbf{curva ROC} visualiza o \textit{trade-off} entre a taxa de verdadeiros positivos (revocação) e a taxa de falsos positivos à medida que o limiar de decisão varia; a \textbf{área sob a curva} (AUC-ROC) resume a capacidade de ordenação do modelo de forma independente do limiar escolhido \citep{AUC-curve}. Em problemas com classe positiva rara, a \textbf{curva precision-recall} pode ser mais informativa, pois não é inflada por verdadeiros negativos abundantes.
 
-\textbf{Precisão:}
-\begin{equation}
-\text{Precisão} = \frac{TP}{TP + FP}.
-\end{equation}
-
-\textbf{Recall (sensibilidade):}
-\begin{equation}
-\text{Recall} = \frac{TP}{TP + FN}.
-\end{equation}
-
-\textbf{F1-score:}
-\begin{equation}
-F_1 = 2 \times \frac{\text{Precisão} \times \text{Recall}}{\text{Precisão} + \text{Recall}}.
-\end{equation}
-
-\textbf{Curva ROC e área sob a curva (AUC).} A curva ROC (\textit{Receiver Operating Characteristic}) é uma das ferramentas mais utilizadas para avaliar classificadores binários, permitindo analisar a capacidade de discriminação do modelo para além de métricas fixas como a acurácia, e é especialmente útil em conjuntos assimétricos. Ela visualiza a relação entre duas taxas à medida que o limiar de decisão varia: a \textbf{taxa de verdadeiros positivos} (TPR), ou sensibilidade/revocação, \(\mathrm{TPR} = \mathrm{TP}/(\mathrm{TP}+\mathrm{FN})\), e a \textbf{taxa de falsos positivos} (FPR), \(\mathrm{FPR} = \mathrm{FP}/(\mathrm{FP}+\mathrm{TN}) = 1 - \text{especificidade}\). Graficamente, a curva ROC plota sensibilidade versus \(1 - \text{especificidade}\). Muitos classificadores (como a Regressão Logística) produzem primeiro um \textit{score} ou probabilidade; existe um trade-off: quanto maior a revocação (TPR), mais falsos positivos (FPR) o modelo tende a gerar. Um classificador puramente aleatório corresponde à diagonal (TPR = FPR); um bom classificador curva-se em direção ao canto superior esquerdo. A \textbf{área sob a curva} (AUC) resume a capacidade de ordenação: um classificador perfeito tem AUC = 1; um aleatório, AUC = 0{,}5. Interpretação usual: a AUC é a probabilidade de que o modelo atribua pontuação maior a um exemplo positivo do que a um negativo escolhidos ao acaso \citep{AUC-curve}. A matriz de confusão (TP, TN, FP, FN) complementa a análise, mostrando onde o modelo acerta e onde erra.
-
-Em problemas com classe positiva rara ou quando o foco é evitar falsos positivos, a \textbf{curva de precisão-revocação} (PR) pode ser mais informativa que a ROC: em dados muito desbalanceados, a ROC pode dar uma visão excessivamente otimista, enquanto a curva PR deixa claro se ainda há margem para melhoria. Quando o conjunto é mais equilibrado ou interessa o desempenho global em ambas as classes, a ROC e a AUC-ROC são referências adequadas.
-
-Em dados desbalanceados (muitas curvas sem ocultação), a \textbf{acurácia} sozinha pode ser enganosa: um modelo que nunca prevê ocultação pode atingir acurácia alta e falhar no objetivo científico. Para detecção de ocultações estelares, a \textbf{revocação (recall)} tem prioridade, pois não perder eventos raros é essencial; a \textbf{precisão} evita excesso de falsos positivos que sobrecarregariam a triagem humana. O \textbf{F1-score} equilibra precisão e revocação e é adequado para comparar Random Forest, XGBoost e CatBoost em cenário desbalanceado. A \textbf{AUC-ROC} avalia a capacidade de separação das classes de forma independente do limiar de decisão escolhido.
+No contexto desta dissertação, em que os dados são desbalanceados (muitas curvas sem ocultação), a \textbf{acurácia} sozinha pode ser enganosa, conforme ilustrado pelo exemplo numérico do Capítulo~3. Para detecção de ocultações estelares, a \textbf{revocação} tem prioridade, pois não perder eventos raros é essencial; a \textbf{precisão} evita excesso de falsos positivos que sobrecarregariam a triagem humana. O \textbf{F1-score} equilibra precisão e revocação e é adequado para comparar os quatro modelos em cenário desbalanceado. A \textbf{AUC-ROC} avalia a capacidade de separação das classes de forma global.
 
 \subsection{Fluxo de treinamento e persistência}
 
