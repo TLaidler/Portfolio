@@ -10,7 +10,7 @@
 
 Este capítulo apresenta os resultados obtidos com a \textit{pipeline} de detecção automatizada de ocultações estelares em curvas de luz, descrita no Capítulo~4. O problema é formulado como \textbf{classificação binária}: cada curva é rotulada como \textbf{positiva} (evento de ocultação presente) ou \textbf{negativa} (ausência de evento). Foram treinados e avaliados quatro classificadores --- Regressão Logística, Random Forest, XGBoost e CatBoost --- cujo desempenho foi medido exclusivamente no \textbf{conjunto de teste}, isto é, em dados que não participaram do treinamento.
 
-As métricas adotadas são: \textbf{acurácia} (fração de acertos no total), \textbf{precisão} (entre as curvas classificadas como positivas, quantas eram realmente positivas), \textbf{revocação} ou \textit{recall} (entre todas as curvas realmente positivas, quantas foram detectadas), \textbf{F1-score} (média harmônica entre precisão e revocação) e \textbf{área sob a curva ROC} (AUC-ROC), que resume a capacidade do modelo de separar as duas classes para diversos limiares de decisão. As \textbf{matrizes de confusão} mostram quantos verdadeiros positivos (TP), verdadeiros negativos (TN), falsos positivos (FP) e falsos negativos (FN) cada modelo produziu.
+As métricas adotadas são: \textbf{acurácia} (fração de acertos no total), \textbf{precisão} (entre as curvas classificadas como positivas, quantas eram realmente positivas), \textbf{sensibilidade} ou \textit{recall} (entre todas as curvas realmente positivas, quantas foram detectadas), \textbf{F1-score} (média harmônica entre precisão e sensibilidade) e \textbf{área sob a curva ROC} (AUC-ROC), que resume a capacidade do modelo de separar as duas classes para diversos limiares de decisão. As \textbf{matrizes de confusão} mostram quantos verdadeiros positivos (TP), verdadeiros negativos (TN), falsos positivos (FP) e falsos negativos (FN) cada modelo produziu.
 
 A montagem de um conjunto de dados equilibrado foi a primeira grande dificuldade do projeto: nos catálogos disponíveis (VizieR, Grupo do Rio), o número de curvas negativas é muito inferior ao de positivas --- o banco dispunha de 802 curvas positivas e apenas 3 negativas. Para contornar esse desbalanceamento, adotaram-se duas estratégias complementares, descritas no Capítulo~4: recorte de segmentos sem ocultação a partir das curvas positivas (com revisão manual), gerando 186 negativos artificiais, e incorporação de 702 curvas sintéticas negativas geradas pelo simulador físico de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. O \textit{dataset} final reúne \textbf{1693 amostras} (802 positivas e 891 negativas), com divisão treino/teste estratificada por curva (80\%/20\%).
 
@@ -243,11 +243,11 @@ No Experimento 1 foram utilizadas as 28 \textit{features} descritas na Tabela~\r
 
 \begin{table}[htbp]
 \centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 1. Conjunto completo de 28 \textit{features}, split 80\%/20\%.}
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 1. Conjunto completo de 28 \textit{features}, \textit{split} 80\%/20\%.}
 \label{tab:metricas_1}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 Random Forest   & \textbf{0,9941} & 1,0000 & 0,9875 & \textbf{0,9937} & 0,9997 \\
 CatBoost        & 0,9912 & 0,9937 & 0,9875 & 0,9906 & 0,9998 \\
@@ -257,7 +257,7 @@ XGBoost         & 0,9853 & 0,9814 & 0,9875 & 0,9844 & 0,9997 \\
 \end{tabular}
 \end{table}
 
-O melhor desempenho em F1-score e acurácia foi obtido pelo \textbf{Random Forest} (F1 = 0,9937; acurácia = 0,9941). A revocação de 98,75\% indica que a grande maioria das curvas com ocultação foi corretamente identificada; a precisão de 100\% indica ausência de falsos positivos nesse modelo. A Regressão Logística também alcança precisão de 100\%. A AUC-ROC muito alta ($\geq 0{,}9997$) confirma excelente capacidade de separação das classes.
+O melhor desempenho em F1-score e acurácia foi obtido pelo \textbf{Random Forest} (F1 = 0,9937; acurácia = 0,9941). A sensibilidade de 98,75\% indica que a grande maioria das curvas com ocultação foi corretamente identificada; a precisão de 100\% indica ausência de falsos positivos nesse modelo. A Regressão Logística também alcança precisão de 100\%. A AUC-ROC muito alta ($\geq 0{,}9997$) confirma excelente capacidade de separação das classes.
 
 A Figura~\ref{fig:confusao_1} apresenta as matrizes de confusão dos quatro modelos no Experimento 1.
 
@@ -277,11 +277,11 @@ No Experimento 2 foi utilizado um subconjunto reduzido de \textbf{14 \textit{fea
 
 \begin{table}[htbp]
 \centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 2. Subconjunto de 14 \textit{features}, split 80\%/20\%.}
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 2. Subconjunto de 14 \textit{features}, \textit{split} 80\%/20\%.}
 \label{tab:metricas_2}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 CatBoost        & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9996 \\
 Random Forest   & 0,9882 & 0,9937 & 0,9813 & 0,9874 & 0,9997 \\
@@ -309,11 +309,11 @@ No Experimento 3 foi removida a \textit{feature} \texttt{Feature\_Savgol\_Min}, 
 
 \begin{table}[htbp]
 \centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 3. 13 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), split 80\%/20\%.}
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 3. 13 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), \textit{split} 80\%/20\%.}
 \label{tab:metricas_3}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 Random Forest   & \textbf{0,9912} & 1,0000 & 0,9813 & \textbf{0,9905} & 0,9998 \\
 CatBoost        & 0,9882 & 1,0000 & 0,9750 & 0,9873 & 0,9998 \\
@@ -346,11 +346,11 @@ No Experimento 4 foi removida \texttt{kmeans\_centroid\_dist}, mantendo 12 \text
 
 \begin{table}[htbp]
 \centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 4. 12 \textit{features} (sem \texttt{kmeans\_centroid\_dist}), split 80\%/20\%.}
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 4. 12 \textit{features} (sem \texttt{kmeans\_centroid\_dist}), \textit{split} 80\%/20\%.}
 \label{tab:metricas_4}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 Random Forest   & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9998 \\
 XGBoost         & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9997 \\
@@ -377,11 +377,11 @@ No Experimento 5 foram removidas tanto \texttt{Feature\_Savgol\_Min} quanto \tex
 
 \begin{table}[htbp]
 \centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 5. 11 \textit{features} (sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans\_centroid\_dist}), split 80\%/20\%.}
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 5. 11 \textit{features} (sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans\_centroid\_dist}), \textit{split} 80\%/20\%.}
 \label{tab:metricas_5}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 XGBoost         & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9995 \\
 CatBoost        & \textbf{0,9912} & 1,0000 & 0,9813 & \textbf{0,9905} & 0,9997 \\
@@ -448,7 +448,7 @@ A Tabela~\ref{tab:metricas_6} apresenta as métricas obtidas com 65\% dos dados 
 \label{tab:metricas_6}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 XGBoost         & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9995 \\
 CatBoost        & \textbf{0,9912} & 1,0000 & 0,9813 & \textbf{0,9905} & 0,9997 \\
@@ -499,7 +499,7 @@ A Tabela~\ref{tab:metricas_7} apresenta as métricas no conjunto de teste restri
 \label{tab:metricas_7}
 \begin{tabular}{lccccc}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
 XGBoost         & \textbf{0,9712} & 0,9892 & 0,9751 & \textbf{0,9821} & 0,9968 \\
 Random Forest   & 0,9683 & 0,9891 & 0,9715 & 0,9803 & 0,9950 \\
@@ -538,7 +538,7 @@ No contexto de triagem de curvas de luz para análise de ocultações estelares,
 	\item \textbf{Falso positivo} (curva sem evento classificada como positiva): a curva recebe prioridade indevida e será examinada por um analista humano, que rapidamente descartará o falso alarme. O custo é apenas tempo de análise.
 \end{itemize}
 
-Essa assimetria é análoga à de sistemas de triagem médica (\textit{screening}), nos quais se prefere aceitar mais falsos alarmes a perder diagnósticos reais. Formalmente, o objetivo é \textbf{maximizar a revocação} (minimizar falsos negativos), aceitando uma redução controlada da precisão (aumento de falsos positivos).
+Essa assimetria é análoga à de sistemas de triagem médica (\textit{screening}), nos quais se prefere aceitar mais falsos alarmes a perder diagnósticos reais. Formalmente, o objetivo é \textbf{maximizar a sensibilidade} (minimizar falsos negativos), aceitando uma redução controlada da precisão (aumento de falsos positivos).
 
 \subsection{Método: variação do limiar de classificação}
 
@@ -555,29 +555,29 @@ Todos os quatro classificadores utilizados neste trabalho produzem \textbf{proba
 Ao \textbf{reduzir} $\tau$ abaixo de 0,5, o modelo torna-se mais ``sensível'': classifica como positiva qualquer curva com probabilidade moderada de conter uma ocultação. Isso tem dois efeitos simultâneos:
 
 \begin{enumerate}
-	\item A \textbf{revocação aumenta}: curvas com evento que estavam na zona de incerteza passam a ser corretamente classificadas como positivas.
+	\item A \textbf{sensibilidade aumenta}: curvas com evento que estavam na zona de incerteza passam a ser corretamente classificadas como positivas.
 	\item A \textbf{precisão diminui}: algumas curvas sem evento cuja probabilidade estimada está entre $\tau$ e 0,5 passam a ser classificadas como positivas (falsos positivos adicionais).
 \end{enumerate}
 
-O \textit{tradeoff} entre precisão e revocação pode ser visualizado por meio da \textbf{curva precisão-revocação} (\textit{precision-recall curve}), que é parametrizada por $\tau$. Diferentemente da curva ROC --- que compara taxa de verdadeiros positivos (TPR) com taxa de falsos positivos (FPR) ---, a curva precisão-revocação é mais informativa para conjuntos de dados com leve desbalanceamento e quando o objetivo é minimizar falsos negativos~\citep{Saito2015}.
+O \textit{tradeoff} entre precisão e sensibilidade pode ser visualizado por meio da \textbf{curva precisão-sensibilidade} (\textit{precision-recall curve}), que é parametrizada por $\tau$. Diferentemente da curva ROC --- que compara taxa de verdadeiros positivos (TPR) com taxa de falsos positivos (FPR) ---, a curva precisão-sensibilidade é mais informativa para conjuntos de dados com leve desbalanceamento e quando o objetivo é minimizar falsos negativos~\citep{Saito2015}.
 
-Adicionalmente, para cada valor de $\tau$, podem-se recalcular todas as métricas de classificação (acurácia, precisão, revocação, F1-score), gerando \textbf{curvas de métrica em função do limiar} que permitem escolher o ponto operacional mais adequado ao cenário de uso.
+Adicionalmente, para cada valor de $\tau$, podem-se recalcular todas as métricas de classificação (acurácia, precisão, sensibilidade, F1-score), gerando \textbf{curvas de métrica em função do limiar} que permitem escolher o ponto operacional mais adequado ao cenário de uso.
 
 \subsection{Escolha do ponto operacional}
 
 A seleção do limiar ótimo depende do critério adotado. Três abordagens comuns são:
 
 \begin{enumerate}
-	\item \textbf{Revocação mínima garantida:} fixar um patamar desejado de revocação (ex.: $\geq 99{,}5\%$) e identificar o maior $\tau$ que o satisfaz. Esse é o critério mais natural para triagem científica.
-	\item \textbf{Maximização do F$_\beta$-score:} utilizar uma versão ponderada do F1 que atribui peso $\beta^2$ à revocação:
+	\item \textbf{Sensibilidade mínima garantida:} fixar um patamar desejado de sensibilidade (ex.: $\geq 99{,}5\%$) e identificar o maior $\tau$ que o satisfaz. Esse é o critério mais natural para triagem científica.
+	\item \textbf{Maximização do F$_\beta$-score:} utilizar uma versão ponderada do F1 que atribui peso $\beta^2$ à sensibilidade:
 	\[
-	F_\beta = (1 + \beta^2) \cdot \frac{\text{precisão} \cdot \text{revocação}}{\beta^2 \cdot \text{precisão} + \text{revocação}}.
+	F_\beta = (1 + \beta^2) \cdot \frac{\text{precisão} \cdot \text{sensibilidade}}{\beta^2 \cdot \text{precisão} + \text{sensibilidade}}.
 	\]
-	Com $\beta = 2$, a revocação vale quatro vezes mais que a precisão; o limiar ótimo é aquele que maximiza $F_2$.
+	Com $\beta = 2$, a sensibilidade vale quatro vezes mais que a precisão; o limiar ótimo é aquele que maximiza $F_2$.
 	\item \textbf{Análise de custo:} atribuir custos explícitos $c_{\text{FN}}$ e $c_{\text{FP}}$ e minimizar o custo esperado total. Quando $c_{\text{FN}} \gg c_{\text{FP}}$, o limiar ótimo desloca-se para baixo.
 \end{enumerate}
 
-Neste trabalho, adota-se o critério de \textbf{revocação mínima garantida}, por ser o mais transparente e o mais fácil de comunicar: ``o modelo detecta pelo menos $X$\% das ocultações reais, ao custo de $Y$ falsos alarmes adicionais''.
+Neste trabalho, adota-se o critério de \textbf{sensibilidade mínima garantida}, por ser o mais transparente e o mais fácil de comunicar: ``o modelo detecta pelo menos $X$\% das ocultações reais, ao custo de $Y$ falsos alarmes adicionais''.
 
 \subsection{Resultados}
 \label{sec:threshold_resultados}
@@ -591,12 +591,12 @@ O ajuste de limiar foi aplicado aos quatro modelos do Experimento~3 (13 \textit{
 \footnotesize
 \begin{tabular}{llccccc}
 \hline
-\textbf{Modelo} & \textbf{Limiar} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1} & \textbf{F$_2$} & \textbf{FP / FN} \\
+\textbf{Modelo} & \textbf{Limiar} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1} & \textbf{F$_2$} & \textbf{FP / FN} \\
 \hline
 \multirow{3}{*}{Random Forest}
 & $\tau = 0{,}50$ (padrão) & 1,0000 & 0,9813 & 0,9905 & 0,9849 & 0 / 3 \\
 & $\tau = 0{,}45$ (sensível) & 0,9938 & 0,9938 & 0,9938 & 0,9938 & 1 / 1 \\
-& $\tau = 0{,}01$ (máx. revocação) & 0,7921 & 1,0000 & 0,8840 & 0,9501 & 42 / 0 \\
+& $\tau = 0{,}01$ (máx. sensibilidade) & 0,7921 & 1,0000 & 0,8840 & 0,9501 & 42 / 0 \\
 \hline
 Regressão Log. (ótimo) & $\tau = 0{,}16$ & 0,9938 & 1,0000 & 0,9969 & 0,9988 & 1 / 0 \\
 \hline
@@ -607,14 +607,14 @@ CatBoost (ótimo) & $\tau = 0{,}37$ & 0,9875 & 0,9875 & 0,9875 & 0,9875 & 2 / 2 
 \end{tabular}
 \end{table}
 
-\textbf{Destaque:} A Regressão Logística com $\tau = 0{,}16$ atinge revocação de 100\% com apenas 1 falso positivo --- ponto operacional ideal para triagem em que minimizar falsos negativos é prioritário.
+\textbf{Destaque:} A Regressão Logística com $\tau = 0{,}16$ atinge sensibilidade de 100\% com apenas 1 falso positivo --- ponto operacional ideal para triagem em que minimizar falsos negativos é prioritário.
 
-As Figuras~\ref{fig:precision_recall_curve} e \ref{fig:metrics_vs_threshold} ilustram as curvas precisão-revocação e as métricas em função do limiar (Experimento~3).
+As Figuras~\ref{fig:precision_recall_curve} e \ref{fig:metrics_vs_threshold} ilustram as curvas precisão-sensibilidade e as métricas em função do limiar (Experimento~3).
 
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[width=0.75\linewidth]{Tese/pngs/exp3/precision_recall_curve.png}
-\caption{Curvas precisão-revocação dos quatro modelos (Experimento 3). Cada ponto corresponde a um valor de limiar $\tau$.}
+\caption{Curvas precisão-sensibilidade dos quatro modelos (Experimento 3). Cada ponto corresponde a um valor de limiar $\tau$.}
 \label{fig:precision_recall_curve}
 \end{center}
 \end{figure}
@@ -622,7 +622,7 @@ As Figuras~\ref{fig:precision_recall_curve} e \ref{fig:metrics_vs_threshold} ilu
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[width=0.75\linewidth]{Tese/pngs/exp3/metrics_vs_threshold_1.png}
-\caption{Precisão, revocação, F1-score e F$_2$-score em função do limiar de decisão $\tau$ (Experimento 3).}
+\caption{Precisão, sensibilidade, F1-score e F$_2$-score em função do limiar de decisão $\tau$ (Experimento 3).}
 \label{fig:metrics_vs_threshold}
 \end{center}
 \end{figure}
@@ -632,7 +632,7 @@ As Figuras~\ref{fig:precision_recall_curve} e \ref{fig:metrics_vs_threshold} ilu
 O ajuste de limiar é uma operação de \textbf{pós-processamento}: não requer retreinamento dos modelos, não altera os pesos aprendidos e pode ser realizado instantaneamente. Na prática, isso significa que a \textit{pipeline} pode operar em \textbf{dois modos}:
 
 \begin{itemize}
-	\item \textbf{Modo balanceado} ($\tau = 0{,}5$): otimiza o equilíbrio entre precisão e revocação. Adequado para relatórios de desempenho geral e comparação entre modelos.
+	\item \textbf{Modo balanceado} ($\tau = 0{,}5$): otimiza o equilíbrio entre precisão e sensibilidade. Adequado para relatórios de desempenho geral e comparação entre modelos.
 	\item \textbf{Modo triagem} ($\tau < 0{,}5$): maximiza a detecção de ocultações reais, aceitando falsos alarmes adicionais que serão descartados na etapa de análise manual. Adequado para o cenário operacional de priorização de curvas.
 \end{itemize}
 
@@ -857,7 +857,7 @@ A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável
 
 Os resultados apresentados nas seções anteriores baseiam-se em um único \textit{split} treino/teste por experimento. Embora útil para comparações controladas, essa abordagem não permite estimar a \textbf{variabilidade} do desempenho em função da partição dos dados. Para obter uma estimativa mais robusta da capacidade de generalização, implementou-se a \textbf{validação cruzada estratificada com $k=5$ dobras}, respeitando o agrupamento por curva de luz (todos os segmentos de uma mesma curva permanecem na mesma dobra, evitando \textit{data leakage}).
 
-O procedimento é o seguinte: os dados são divididos em 5 partições estratificadas (preservando a proporção de classes em cada dobra); em cada rodada, 4 dobras são usadas para treino e 1 para teste, e os quatro modelos (RF, XGBoost, CatBoost, Regressão Logística) são treinados e avaliados independentemente. As métricas coletadas por dobra são: F1-score, precisão, revocação e AUC-ROC. O resultado final é reportado como \textbf{média $\pm$ desvio padrão} sobre as 5 dobras.
+O procedimento é o seguinte: os dados são divididos em 5 partições estratificadas (preservando a proporção de classes em cada dobra); em cada rodada, 4 dobras são usadas para treino e 1 para teste, e os quatro modelos (RF, XGBoost, CatBoost, Regressão Logística) são treinados e avaliados independentemente. As métricas coletadas por dobra são: F1-score, precisão, sensibilidade e AUC-ROC. O resultado final é reportado como \textbf{média $\pm$ desvio padrão} sobre as 5 dobras.
 
 A Tabela~\ref{tab:cross_validation} apresenta a média e o desvio padrão das métricas na validação cruzada estratificada 5-fold (Experimento~3, 13 \textit{features}).
 
@@ -868,7 +868,7 @@ A Tabela~\ref{tab:cross_validation} apresenta a média e o desvio padrão das m�
 \label{tab:cross_validation}
 \begin{tabular}{@{}lccccc@{}}
 \hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Revocação} & \textbf{F1} & \textbf{AUC-ROC} \\
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1} & \textbf{AUC-ROC} \\
 \hline
 CatBoost          & $0{,}9876 \pm 0{,}0067$ & $0{,}9912 \pm 0{,}0034$ & $0{,}9825 \pm 0{,}0148$ & $0{,}9868 \pm 0{,}0072$ & $0{,}9993 \pm 0{,}0005$ \\
 XGBoost           & $0{,}9864 \pm 0{,}0058$ & $0{,}9888 \pm 0{,}0090$ & $0{,}9825 \pm 0{,}0167$ & $0{,}9856 \pm 0{,}0062$ & $0{,}9992 \pm 0{,}0008$ \\
@@ -940,7 +940,7 @@ O estudo de ablação (Seção~\ref{sec:ablation_kmeans}) acrescenta uma nuance 
 
 \subsection{Custo assimétrico e ajuste de limiar}
 
-Em um cenário real de triagem, o custo de perder uma ocultação genuína (falso negativo) supera amplamente o custo de revisar uma curva sem evento (falso positivo). A Seção~\ref{sec:threshold_tuning} demonstra que essa assimetria pode ser incorporada à \textit{pipeline} sem retreinamento, simplesmente reduzindo o limiar de decisão $\tau$. Essa abordagem explora o fato de que os modelos produzem probabilidades, não apenas rótulos binários, e que a separabilidade elevada entre as classes (AUC-ROC $\geq 0{,}998$) garante que a precisão se mantenha aceitável mesmo em patamares de revocação próximos de 100\%. A possibilidade de ajuste de limiar em pós-processamento é uma vantagem direta da formulação probabilística adotada, e confere à \textit{pipeline} flexibilidade para operar em diferentes cenários de custo sem modificação dos modelos.
+Em um cenário real de triagem, o custo de perder uma ocultação genuína (falso negativo) supera amplamente o custo de revisar uma curva sem evento (falso positivo). A Seção~\ref{sec:threshold_tuning} demonstra que essa assimetria pode ser incorporada à \textit{pipeline} sem retreinamento, simplesmente reduzindo o limiar de decisão $\tau$. Essa abordagem explora o fato de que os modelos produzem probabilidades, não apenas rótulos binários, e que a separabilidade elevada entre as classes (AUC-ROC $\geq 0{,}998$) garante que a precisão se mantenha aceitável mesmo em patamares de sensibilidade próximos de 100\%. A possibilidade de ajuste de limiar em pós-processamento é uma vantagem direta da formulação probabilística adotada, e confere à \textit{pipeline} flexibilidade para operar em diferentes cenários de custo sem modificação dos modelos.
 
 \subsection{Limitações}
 
