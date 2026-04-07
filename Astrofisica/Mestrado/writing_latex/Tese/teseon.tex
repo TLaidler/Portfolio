@@ -52,7 +52,7 @@ colorlinks,linkcolor=blue,citecolor=red,urlcolor=magenta,menucolor=cyan}
 % usar abreviatura das instituicoes
 % exemplo: OV/UFRJ
 %          UDELAR, Uruguai
-\author{Thiago}{Laidler}
+\author{Thiago}{Laidler Vidal Cunha}
 \advisor{Dr.}{J\'ulio}{Camargo}{Observat\'orio Nacional}
 %\coadvisor{Prof.}{Nome}{Sobrenome}{Instituicao}
 %\coadvisor{Prof.}{Nome}{Sobrenome}{Instituicao}
@@ -90,10 +90,10 @@ colorlinks,linkcolor=blue,citecolor=red,urlcolor=magenta,menucolor=cyan}
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%
-\frontmatter
-\dedication{%
-Dedicat\'oria (opcional).
-}
+%\frontmatter
+%\dedication{%
+%Dedicat\'oria (opcional).
+%}
 
 %%%%
 \acknowledgments
@@ -103,7 +103,31 @@ Dedicat\'oria (opcional).
 \cleardoublepage
 \thispagestyle{plain}
 %\epigraph{Ep\'igrafe (opcional).}
-\vspace*{\fill}
+%\vspace*{\fill}
+
+
+%----------------------------------------------------------------------------------------
+%   EPÍGRAFE (ESTA PÁGINA É OPCIONAL)
+%----------------------------------------------------------------------------------------
+
+
+\pagestyle{empty} % No headers or footers for the following pages
+
+\null\vfill\vfill\vfill\vfill\vfill\vfill\vfill % Add some space to move the quote down the page a bit
+
+\begin{flushright}
+{\normalsize 
+
+\textit{"O primeiro princípio é que você não deve enganar a si mesmo - e você é a pessoa mais fácil de se enganar."}
+
+--- Richard Feynman
+
+}
+\end{flushright}
+
+\vfill\vfill\vfill\null % Add some space at the bottom to position the quote just right
+
+\clearpage
 
 %%%%
 \begin{abstract}
