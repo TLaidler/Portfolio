@@ -61,6 +61,8 @@ As limitações deste trabalho devem ser explicitadas para contextualizar adequa
 	\item \textbf{Ausência de validação em catálogos externos:} os dados provêm do catálogo do Grupo do Rio (VizieR); a generalização para outros catálogos, condições de observação ou classes de objetos ocultantes não foi avaliada sistematicamente.
 
 	\item \textbf{Hiperparâmetros fixos:} os hiperparâmetros dos modelos foram definidos manualmente com base em valores recomendados pela literatura; não foi realizada busca em grade ou otimização bayesiana.
+
+	\item \textbf{Predominância de curvas com ocultações bem definidas:} o elevado desempenho dos modelos reflete, em parte, a predominância de curvas com ocultações claras (alto S/N, queda pronunciada) no conjunto de dados. Para curvas com baixo S/N ou eventos rasantes, a tarefa de classificação é substancialmente mais difícil e o desempenho real da \textit{pipeline} nessas condições ainda não foi avaliado sistematicamente.
 \end{enumerate}
 
 % -----------------------------------------------------------------------------
@@ -80,4 +82,10 @@ Com base nos resultados e limitações identificados, sugerem-se as seguintes di
 	\item \textbf{Otimização de hiperparâmetros:} aplicar busca em grade ou otimização bayesiana (e.g., Optuna) para ajuste fino dos hiperparâmetros dos modelos.
 
 	\item \textbf{Integração operacional:} incorporar a \textit{pipeline} ao fluxo de trabalho do SORA como módulo de triagem automática, com interface para ajuste do limiar de decisão conforme a campanha.
+
+	\item \textbf{Detecção em regime de baixo S/N:} construir um subconjunto de teste composto exclusivamente por curvas difíceis --- baixo S/N, ocultações rasantes, eventos com poucos pontos no \textit{dip} --- para avaliar o desempenho da \textit{pipeline} nas condições em que a triagem automática é de fato necessária, isto é, onde a inspeção visual é ambígua.
+
+	\item \textbf{Classificação multi-classe de eventos:} estender a formulação binária (ocultação presente/ausente) para uma classificação multi-classe que distinga o \textbf{tipo} de evento observado: ocultação por corpo sólido, assinatura atmosférica (refração e absorção), detecção de anéis e padrões de difração de Fresnel. Essa extensão exigiria \textit{features} adicionais --- por exemplo, simetria do perfil de ingresso/egresso, profundidade relativa de quedas secundárias e ajuste a modelos de difração --- além de um \textit{dataset} curado com rótulos para cada categoria, possivelmente com apoio de curvas sintéticas geradas por simuladores que incluam esses fenômenos.
+
+	\item \textbf{Extração automática de parâmetros físicos:} utilizar os modelos de ML não apenas para classificar, mas para \textbf{estimar} grandezas físicas a partir da curva de luz --- como instantes de imersão e emersão, diâmetro projetado do corpo e escala de Fresnel efetiva. Essa tarefa de regressão poderia complementar a classificação, fornecendo estimativas iniciais que alimentem os modelos de ajuste do SORA e acelerem a análise de campanhas com grande volume de dados.
 \end{itemize}
