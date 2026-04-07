@@ -20,9 +20,9 @@ A metodologia está organizada em uma \textit{pipeline} em etapas, na qual a sa�
 
 \textbf{Etapa 3 — Construção do conjunto de dados:} as curvas disponíveis são reunidas; segmentos sem ocultação são recortados de curvas positivas (com revisão manual) para ampliar a classe negativa; curvas sintéticas negativas são incorporadas. Em seguida, cada curva é convertida em um vetor de características (lista de números que a descrevem), formando uma tabela em que cada linha é uma curva e cada coluna é uma dessas grandezas.
 
-\textbf{Etapa 4 — Extração de características:} para cada curva (série tempo--fluxo), são calculadas estatísticas e medidas derivadas (suavização, derivadas, comparações entre quartis, etc.), gerando a tabela de vetores da etapa 3. O Capítulo 3 já introduziu a ideia de features; aqui detalhamos quais grandezas são extraídas.
+\textbf{Etapa 4 — Extração de características:} para cada curva (série tempo--fluxo), são calculadas estatísticas e medidas derivadas (suavização, derivadas, comparações entre quartis, etc.), gerando a tabela de vetores da etapa 3. O Capítulo 3 já introduziu a ideia de \textit{features}; aqui detalhamos quais grandezas são extraídas.
 
-\textbf{Etapa 5 — Treinamento e avaliação:} o conjunto de dados final é dividido em \textbf{treino} (usado para ajustar os parâmetros dos classificadores) e \textbf{teste} (reservado para medir o desempenho). Os quatro classificadores são treinados na parte de treino; o desempenho é avaliado na parte de teste (acurácia, precisão, revocação, F1-score, AUC-ROC). Os modelos ajustados e os resultados são salvos em disco para análise posterior.
+\textbf{Etapa 5 — Treinamento e avaliação:} o conjunto de dados final é dividido em \textbf{treino} (usado para ajustar os parâmetros dos classificadores) e \textbf{teste} (reservado para medir o desempenho). Os quatro classificadores são treinados na parte de treino; o desempenho é avaliado na parte de teste (acurácia, precisão, sensibilidade, F1-score, AUC-ROC). Os modelos ajustados e os resultados são salvos em disco para análise posterior.
 
 As seções seguintes detalham cada uma dessas etapas.
 
@@ -240,7 +240,7 @@ A divisão entre treino e teste pode ser feita de duas formas:
 	\item \textbf{Seleção manual de teste:} um subconjunto de curvas é fixado como conjunto de teste (por exemplo, curvas de um objeto ou data específicos). O restante compõe o treino. Essa opção é útil para avaliar a generalização para cenários de interesse conhecido.
 \end{enumerate}
 
-As métricas de desempenho (acurácia, precisão, recall, F1-score, AUC-ROC) são calculadas no conjunto de teste e reportadas no Capítulo 5. Quando a escolha de hiperparâmetros for feita por validação cruzada, pode-se reportar também a média e o desvio padrão da métrica nas dobras de validação, para dar noção da variabilidade; no conjunto de teste, as métricas são reportadas como valor único, condicionado à divisão treino/teste adotada.
+As métricas de desempenho (acurácia, precisão, sensibilidade, F1-score, AUC-ROC) são calculadas no conjunto de teste e reportadas no Capítulo 5. Quando a escolha de hiperparâmetros for feita por validação cruzada, pode-se reportar também a média e o desvio padrão da métrica nas dobras de validação, para dar noção da variabilidade; no conjunto de teste, as métricas são reportadas como valor único, condicionado à divisão treino/teste adotada.
 
 \subsection{Modelos utilizados}
 
@@ -257,11 +257,11 @@ Os valores concretos dos hiperparâmetros utilizados nos experimentos (e eventua
 
 \subsection{Métricas de avaliação}
 
-As definições formais das métricas de classificação binária utilizadas neste trabalho --- acurácia, precisão, revocação, F1-score, $F_\beta$-score, AUC-ROC e curva precision-recall --- foram apresentadas na Seção~\ref{sec:metricas_avaliacao} (Capítulo~3). Aqui, discutem-se as escolhas específicas adotadas na \textit{pipeline} à luz do problema de detecção de ocultações.
+As definições formais das métricas de classificação binária utilizadas neste trabalho --- acurácia, precisão, sensibilidade, F1-score, $F_\beta$-score, AUC-ROC e curva precision-recall --- foram apresentadas na Seção~\ref{sec:metricas_avaliacao} (Capítulo~3). Aqui, discutem-se as escolhas específicas adotadas na \textit{pipeline} à luz do problema de detecção de ocultações.
 
-Em problemas de detecção de eventos, a matriz de confusão e as métricas dela derivadas permitem avaliar a capacidade do modelo de tomar decisões confiáveis \citep{Cazeneuve2023}. A \textbf{curva ROC} visualiza o \textit{trade-off} entre a taxa de verdadeiros positivos (revocação) e a taxa de falsos positivos à medida que o limiar de decisão varia; a \textbf{área sob a curva} (AUC-ROC) resume a capacidade de ordenação do modelo de forma independente do limiar escolhido \citep{AUC-curve}. Em problemas com classe positiva rara, a \textbf{curva precision-recall} pode ser mais informativa, pois não é inflada por verdadeiros negativos abundantes.
+Em problemas de detecção de eventos, a matriz de confusão e as métricas dela derivadas permitem avaliar a capacidade do modelo de tomar decisões confiáveis \citep{Cazeneuve2023}. A \textbf{curva ROC} visualiza o \textit{trade-off} entre a taxa de verdadeiros positivos (sensibilidade) e a taxa de falsos positivos à medida que o limiar de decisão varia; a \textbf{área sob a curva} (AUC-ROC) resume a capacidade de ordenação do modelo de forma independente do limiar escolhido \citep{AUC-curve}. Em problemas com classe positiva rara, a \textbf{curva precision-recall} pode ser mais informativa, pois não é inflada por verdadeiros negativos abundantes.
 
-No contexto desta dissertação, em que os dados são desbalanceados (muitas curvas sem ocultação), a \textbf{acurácia} sozinha pode ser enganosa, conforme ilustrado pelo exemplo numérico do Capítulo~3. Para detecção de ocultações estelares, a \textbf{revocação} tem prioridade, pois não perder eventos raros é essencial; a \textbf{precisão} evita excesso de falsos positivos que sobrecarregariam a triagem humana. O \textbf{F1-score} equilibra precisão e revocação e é adequado para comparar os quatro modelos em cenário desbalanceado. A \textbf{AUC-ROC} avalia a capacidade de separação das classes de forma global.
+No contexto desta dissertação, em que os dados são desbalanceados (muitas curvas sem ocultação), a \textbf{acurácia} sozinha pode ser enganosa, conforme ilustrado pelo exemplo numérico do Capítulo~3. Para detecção de ocultações estelares, a \textbf{sensibilidade} tem prioridade, pois não perder eventos raros é essencial; a \textbf{precisão} evita excesso de falsos positivos que sobrecarregariam a triagem humana. O \textbf{F1-score} equilibra precisão e sensibilidade e é adequado para comparar os quatro modelos em cenário desbalanceado. A \textbf{AUC-ROC} avalia a capacidade de separação das classes de forma global.
 
 \subsection{Fluxo de treinamento e persistência}
 
