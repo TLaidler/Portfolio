@@ -21,6 +21,8 @@ Os seis experimentos realizados permitiram identificar os seguintes padrões:
 	\item \textbf{O ajuste do limiar de decisão permite operar a \textit{pipeline} em regime de alta sensibilidade} (minimização de falsos negativos) sem retreinamento, explorando a separabilidade elevada entre as classes.
 \end{enumerate}
 
+Como verificação complementar, as 67 curvas do banco com $\mathrm{Occ\_SNR\_dip} < 3$ foram submetidas aos modelos treinados; todas foram corretamente classificadas como positivas pelos três \textit{ensembles} de árvores (67/67), e 66 das 67 pela Regressão Logística. Embora essas curvas tenham participado do treinamento e o teste não inclua negativos de baixo SNR, o resultado indica que os modelos não descartam sistematicamente eventos ruidosos --- condição necessária (embora não suficiente) para a aplicabilidade da \textit{pipeline} em cenários de baixa relação sinal-ruído.
+
 % -----------------------------------------------------------------------------
 \section{Resposta à hipótese de pesquisa}
 
