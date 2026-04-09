@@ -4,21 +4,56 @@
 % Este capítulo fornece o arcabouço fenomenológico e observacional das ocultações
 % estelares e das curvas de luz, em harmonia com a Introdução (contexto científico),
 % o Cap. 3 (modelos de ML) e o Cap. 4 (metodologia e pipeline).
-
-\section{Objetivos do capítulo}
-\label{sec:objetivos_cap2}
-
-Os objetivos deste capítulo são: (1) apresentar a fenomenologia das ocultações estelares e o papel da curva de luz na caracterização física dos corpos ocultantes; (2) descrever, em linhas gerais, como as observações são obtidas e armazenadas, de modo a situar a origem dos dados utilizados na \textit{pipeline} de detecção (detalhada no Capítulo 4); e (3) caracterizar as curvas de luz do ponto de vista observacional --- morfologia, detecção positiva versus negativa e fatores que afetam a forma do sinal --- sem repetir a engenharia de características nem os modelos de ML, tratados nos capítulos seguintes.
+%\section{Objetivos do capítulo}
+%\label{sec:objetivos_cap2}
+Neste capítulo será discutida a fenomenologia das ocultações estelares, o papel da curva de luz na caracterização física dos corpos ocultantes e será descrito, em linhas gerais, como as observações são obtidas e armazenadas, de modo a situar a origem dos dados utilizados na \textit{pipeline} de detecção (detalhada no Capítulo 4). Além disso, será definido as principais características das curvas de luz - morfologia, detecção positiva versus negativa e fatores que afetam a forma do sinal - sem repetir a engenharia de características nem os modelos de ML, tratados nos capítulos seguintes.
 
 % -----------------------------------------------------------------------------
-\section{Fenomenologia das ocultações estelares}
+\section{o que são ocultações estelares?}
 \label{sec:fenomenologia}
 
 Uma \textbf{ocultação estelar} ocorre quando um objeto celeste (planeta, satélite natural, asteroide ou objeto transnetuniano) passa na frente de uma estrela distante, bloqueando temporariamente parte ou toda a sua luz. O fenômeno se manifesta como uma queda característica no fluxo luminoso registrado por um observador na Terra. Por serem eventos de geometria conhecida e duração curta (tipicamente alguns segundos a poucos minutos), as ocultações estelares permitem determinar tamanho, forma projetada no plano do céu e, em casos favoráveis, atmosfera, anéis ou satélites do corpo ocultante, com precisão comparável à de sondas espaciais \citep{Sicardy2011, Knieling2024}.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\linewidth]{Tese/pngs/curva.png}
+    \caption{Ilustração da ocultação de Chariklo e seu anel. (Reprodução artística) © Lucie Maquet - 2014.}
+    \label{fig:curva1}
+\end{figure}
+
 A sombra do corpo ocultante projeta-se na superfície terrestre; devido à grande distância entre a estrela e o corpo, as dimensões e a forma projetadas refletem o limbo (silhueta) do corpo com precisão da ordem de quilômetros. Cada observador, em sua posição geográfica, registra um intervalo de tempo durante o qual a estrela é ocultada --- uma \textbf{corda} no plano do céu. A duração e o instante central da corda dependem da posição do observador em relação ao trajeto da sombra. Vários observadores em locais diferentes produzem várias cordas; a combinação dessas cordas permite reconstruir a forma e o tamanho do corpo no plano do céu com alta precisão \citep{SORA2022}. A previsão de ocultações depende criticamente da precisão das posições estelares (catálogos como o Gaia) e das efemérides do corpo; a melhoria contínua desses ingredientes tem ampliado o número de eventos previstos e observados, inserindo a técnica na era do \textit{big data} em astronomia \citep{SORA2022, Knieling2024}.
 
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_mapa.png}
+    \caption{Nesse exemplo utilizamos a ocultação de Umbriel, satélite de Urano, observada em setembro de 2020. O evento foi previsto para ser observado em grande parte do território norte americano.}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_mapa2.png}
+    \caption{Posicionamento de observadores na região de interesse.}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_outputExemplo.png}
+    \caption{Imagem de uma das observações. No caso de Umbriel, houve a necessidade de lidar com o grande brilho de Urano que dificultava a fotometria ideal do satélite.}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_outputExemplo2.png}
+    \caption{A saída do tratamento via PRAIA é a curva de luz a seguir, podendo ser visto o fluxo de luz de Umbriel normalizado e o ruído de fundo.}
+    \label{fig:placeholder}
+\end{figure}
+
 A observação é tipicamente feita por telescópios automatizados ou semiautomatizados, com detectores CCD ou câmeras de vídeo, utilizando \textbf{fotometria diferencial}: mede-se o fluxo da estrela alvo em relação a estrelas de referência no mesmo campo, de modo a cancelar efeitos sistemáticos (extinção atmosférica, variações de transparência). O resultado da fotometria, ao longo do tempo, é uma \textbf{curva de luz} --- a série temporal do fluxo (ou razão de fluxos) em função do tempo. Em uma detecção \textbf{positiva}, a curva exibe um trecho de fluxo aproximadamente constante (estrela desocultada), uma queda relativamente abrupta (ingresso da estrela atrás do corpo), um patamar baixo (ocultação total ou parcial) e uma subida (egresso). Em uma detecção \textbf{negativa}, não há queda significativa; a curva permanece estável (ou com flutuações de ruído), e essa informação é igualmente útil para delimitar a sombra e refinar modelos. A análise detalhada da curva (ajuste de modelos que incluem diâmetro aparente da estrela, difração de Fresnel e tempo de exposição) permite obter os instantes de imersão e emersão com alta precisão e, a partir deles, as dimensões e a forma do corpo \citep{SORA2022}.
+
+
 
 % -----------------------------------------------------------------------------
 \section{Da observação às curvas de luz: coleta e armazenamento}
@@ -43,8 +78,22 @@ Do ponto de vista observacional, uma curva de luz de ocultação é uma série t
 % TODO: Inserir aqui diagrama esquemático da geometria de ocultação (sombra projetada,
 % cordas, observadores na Terra, estrela, corpo ocultante). Figura esquemática a ser
 % criada pelo autor.
-% \begin{figure}[htbp]
-% \begin{center}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/Bardecker12.png}
+    \caption{Exemplo de uma curva de luz completa, tratada e modelada (caso da ocultação de Umbriel, 2020).}
+    \label{fig:curvaUmbriel}
+\end{figure}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/Anthiope.png}
+    \caption{Exemplo ilustrativo do caso da ocultação de Antiope, onde a junção de várias curvas - resultado de diversas observações em diferentes pontos de visada - revela o formato do corpo. Referência: David Dunham / International Occultation Timing Association (IOTA).}
+    \label{fig:antiope}
+\end{figure}
+
+
+
 % 	\includegraphics[width=0.85\textwidth]{pngs/diagrama_geometria_ocultacao.png}
 % \caption{Representação esquemática da geometria de uma ocultação estelar: a sombra do
 % corpo ocultante projeta-se na superfície terrestre; cada observador registra uma corda
@@ -70,6 +119,13 @@ Do ponto de vista observacional, uma curva de luz de ocultação é uma série t
 f = \sqrt{\frac{D\lambda}{2}} \approx \sqrt{\frac{6{,}0 \times 10^{12} \times 5{,}0 \times 10^{-7}}{2}} \approx 1{,}2\;\text{km}.
 \]
 Essa escala define a resolução espacial efetiva na direção perpendicular à corda: detalhes menores que $f$ são suavizados pela difração. Ainda assim, trata-se de uma resolução da ordem de quilômetros a dezenas de unidades astronômicas de distância --- superior à de qualquer telescópio óptico terrestre operando por imageamento direto. É essa capacidade de resolução que torna as ocultações estelares uma ferramenta única para a caracterização de pequenos corpos do Sistema Solar.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{Tese/pngs/ModelosSORA.png}
+    \caption{A figura mostra as componentes do modelo de curva de luz utilizado por SORA para definir com exatidão o tempo real de imersão e egressão do evento, pontos que serão necessários para a definição do formato do corpo. Uma curva de luz carrega um conjunto complexo de informações que podem contribuir ou atrapalhar a detecção de eventos.}
+    \label{fig:exemploSORA}
+\end{figure}
 
 % -----------------------------------------------------------------------------
 \section{Considerações finais do capítulo}
