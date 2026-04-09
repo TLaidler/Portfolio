@@ -14,41 +14,44 @@ Neste capítulo será discutida a fenomenologia das ocultações estelares, o pa
 
 Uma \textbf{ocultação estelar} ocorre quando um objeto celeste (planeta, satélite natural, asteroide ou objeto transnetuniano) passa na frente de uma estrela distante, bloqueando temporariamente parte ou toda a sua luz. O fenômeno se manifesta como uma queda característica no fluxo luminoso registrado por um observador na Terra. Por serem eventos de geometria conhecida e duração curta (tipicamente alguns segundos a poucos minutos), as ocultações estelares permitem determinar tamanho, forma projetada no plano do céu e, em casos favoráveis, atmosfera, anéis ou satélites do corpo ocultante, com precisão comparável à de sondas espaciais \citep{Sicardy2011, Knieling2024}.
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.6\linewidth]{Tese/pngs/curva.png}
-    \caption{Ilustração da ocultação de Chariklo e seu anel. (Reprodução artística) © Lucie Maquet - 2014.}
-    \label{fig:curva1}
+    \includegraphics[width=0.65\linewidth]{pngs/curva.png}
+    \caption{Representação artística de uma ocultação estelar pelo Centauro (10199)~Chariklo e seu sistema de anéis. A curva de luz esquemática (abaixo) mostra as quedas de fluxo correspondentes à passagem dos anéis e do corpo principal diante da estrela. Crédito: Lucie Maquet, 2014.}
+    \label{fig:ilustracao_ocultacao}
 \end{figure}
 
 A sombra do corpo ocultante projeta-se na superfície terrestre; devido à grande distância entre a estrela e o corpo, as dimensões e a forma projetadas refletem o limbo (silhueta) do corpo com precisão da ordem de quilômetros. Cada observador, em sua posição geográfica, registra um intervalo de tempo durante o qual a estrela é ocultada --- uma \textbf{corda} no plano do céu. A duração e o instante central da corda dependem da posição do observador em relação ao trajeto da sombra. Vários observadores em locais diferentes produzem várias cordas; a combinação dessas cordas permite reconstruir a forma e o tamanho do corpo no plano do céu com alta precisão \citep{SORA2022}. A previsão de ocultações depende criticamente da precisão das posições estelares (catálogos como o Gaia) e das efemérides do corpo; a melhoria contínua desses ingredientes tem ampliado o número de eventos previstos e observados, inserindo a técnica na era do \textit{big data} em astronomia \citep{SORA2022, Knieling2024}.
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_mapa.png}
-    \caption{Nesse exemplo utilizamos a ocultação de Umbriel, satélite de Urano, observada em setembro de 2020. O evento foi previsto para ser observado em grande parte do território norte americano.}
-    \label{fig:placeholder}
-\end{figure}
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pngs/OccUmbriel_mapa.png}
+        \centerline{\small (a)}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pngs/OccUmbriel_mapa2.png}
+        \centerline{\small (b)}
+    \end{minipage}
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_mapa2.png}
-    \caption{Posicionamento de observadores na região de interesse.}
-    \label{fig:placeholder}
-\end{figure}
+    \vspace{0.4cm}
 
-\begin{figure}
-    \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_outputExemplo.png}
-    \caption{Imagem de uma das observações. No caso de Umbriel, houve a necessidade de lidar com o grande brilho de Urano que dificultava a fotometria ideal do satélite.}
-    \label{fig:placeholder}
-\end{figure}
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/OccUmbriel_outputExemplo2.png}
-    \caption{A saída do tratamento via PRAIA é a curva de luz a seguir, podendo ser visto o fluxo de luz de Umbriel normalizado e o ruído de fundo.}
-    \label{fig:placeholder}
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pngs/OccUmbriel_outputExemplo.png}
+        \centerline{\small (c)}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pngs/OccUmbriel_outputExemplo2.png}
+        \centerline{\small (d)}
+    \end{minipage}
+    \caption{Exemplo completo do fluxo observacional: ocultação estelar por Umbriel (satélite de Urano), observada em 21 de setembro de 2020 \citep{Umbriel2020}. (a)~Mapa de previsão da sombra sobre a superfície terrestre. (b)~Detalhe do posicionamento dos observadores na costa leste dos EUA (Google Earth). (c)~Quadros CCD de uma das estações: antes, durante e após a ocultação; note o brilho de Urano dificultando a fotometria. (d)~Curva de luz resultante da redução via PRAIA: fluxo normalizado de Umbriel (azul) e ruído de fundo (verde), com a queda de ocultação claramente visível.}
+    \label{fig:umbriel_painel}
 \end{figure}
 
 A observação é tipicamente feita por telescópios automatizados ou semiautomatizados, com detectores CCD ou câmeras de vídeo, utilizando \textbf{fotometria diferencial}: mede-se o fluxo da estrela alvo em relação a estrelas de referência no mesmo campo, de modo a cancelar efeitos sistemáticos (extinção atmosférica, variações de transparência). O resultado da fotometria, ao longo do tempo, é uma \textbf{curva de luz} --- a série temporal do fluxo (ou razão de fluxos) em função do tempo. Em uma detecção \textbf{positiva}, a curva exibe um trecho de fluxo aproximadamente constante (estrela desocultada), uma queda relativamente abrupta (ingresso da estrela atrás do corpo), um patamar baixo (ocultação total ou parcial) e uma subida (egresso). Em uma detecção \textbf{negativa}, não há queda significativa; a curva permanece estável (ou com flutuações de ruído), e essa informação é igualmente útil para delimitar a sombra e refinar modelos. A análise detalhada da curva (ajuste de modelos que incluem diâmetro aparente da estrela, difração de Fresnel e tempo de exposição) permite obter os instantes de imersão e emersão com alta precisão e, a partir deles, as dimensões e a forma do corpo \citep{SORA2022}.
@@ -75,44 +78,25 @@ Do ponto de vista observacional, uma curva de luz de ocultação é uma série t
 
 \textbf{Relação sinal-ruído e qualidade.} A confiabilidade da detecção e da extração de parâmetros físicos depende da relação sinal-ruído (S/N) da curva. Em astronomia, muitas medições são feitas no limite da detectabilidade instrumental, onde o ruído pode produzir excursões que imitam fontes tênues; definições operacionais claras de detecção e critérios estatísticos são essenciais para interpretar os dados de forma confiável \citep{Wall2003}. S/N alto favorece a identificação clara da queda e a precisão dos instantes de imersão e emersão; curvas com S/N baixo são mais difíceis de classificar e mais suscetíveis a falsos positivos e negativos. Na \textit{pipeline} desta dissertação, as características extraídas de cada curva (estatísticas de fluxo, derivadas, métricas de forma, etc.) são escolhidas de forma a capturar padrões discriminativos entre curvas com e sem ocultação, mesmo na presença de ruído; o conjunto preciso de \textit{features} e o protocolo de treinamento são apresentados no Capítulo 4.
 
-% TODO: Inserir aqui diagrama esquemático da geometria de ocultação (sombra projetada,
-% cordas, observadores na Terra, estrela, corpo ocultante). Figura esquemática a ser
-% criada pelo autor.
-\begin{figure}
-    \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/Bardecker12.png}
-    \caption{Exemplo de uma curva de luz completa, tratada e modelada (caso da ocultação de Umbriel, 2020).}
-    \label{fig:curvaUmbriel}
-\end{figure}
-
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/Anthiope.png}
-    \caption{Exemplo ilustrativo do caso da ocultação de Antiope, onde a junção de várias curvas - resultado de diversas observações em diferentes pontos de visada - revela o formato do corpo. Referência: David Dunham / International Occultation Timing Association (IOTA).}
-    \label{fig:antiope}
+    \begin{minipage}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pngs/Bardecker12.png}
+        \centerline{\small (a)}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.38\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{pngs/Anthiope.png}
+        \centerline{\small (b)}
+    \end{minipage}
+    \caption{(a)~Curva de luz observada (preto) e modelo ajustado (vermelho) para uma das cordas da ocultação por Umbriel em 2020; os instantes de imersão e emersão, marcados por circunferências, definem a geometria da corda \citep{Umbriel2020}. (b)~Perfil do asteroide binário (90)~Antiope reconstruído a partir de múltiplas cordas obtidas por observadores em diferentes posições geográficas; cada linha diagonal corresponde a uma corda projetada no plano do céu. Crédito: D.~Dunham / IOTA.}
+    \label{fig:curvas_cordas}
 \end{figure}
 
 
 
-% 	\includegraphics[width=0.85\textwidth]{pngs/diagrama_geometria_ocultacao.png}
-% \caption{Representação esquemática da geometria de uma ocultação estelar: a sombra do
-% corpo ocultante projeta-se na superfície terrestre; cada observador registra uma corda
-% cuja duração depende da sua posição em relação ao trajeto da sombra.}
-% \label{fig:geometria_ocultacao}
-% \end{center}
-% \end{figure}
-
-% TODO: Inserir aqui exemplos de curvas de luz: (a) detecção positiva clara, (b) detecção
-% positiva ruidosa, (c) detecção negativa. Figuras a serem extraídas do banco de dados ou
-% geradas a partir de curvas reais do pipeline.
-% \begin{figure}[htbp]
-% \begin{center}
-% 	\includegraphics[width=0.85\textwidth]{pngs/exemplos_curvas_luz.png}
-% \caption{Exemplos de curvas de luz de ocultações estelares: (a)~detecção positiva com
-% alta relação S/N, (b)~detecção positiva com baixa S/N e (c)~detecção negativa.}
-% \label{fig:exemplos_curvas}
-% \end{center}
-% \end{figure}
 
 \textbf{Exemplo numérico: escala de Fresnel.} Para um objeto transnetuniano (TNO) a uma distância típica de $D = 40$\,UA $\approx 6{,}0 \times 10^{12}$\,m, observado no visível ($\lambda = 500$\,nm), a escala de Fresnel é
 \[
@@ -120,11 +104,11 @@ f = \sqrt{\frac{D\lambda}{2}} \approx \sqrt{\frac{6{,}0 \times 10^{12} \times 5{
 \]
 Essa escala define a resolução espacial efetiva na direção perpendicular à corda: detalhes menores que $f$ são suavizados pela difração. Ainda assim, trata-se de uma resolução da ordem de quilômetros a dezenas de unidades astronômicas de distância --- superior à de qualquer telescópio óptico terrestre operando por imageamento direto. É essa capacidade de resolução que torna as ocultações estelares uma ferramenta única para a caracterização de pequenos corpos do Sistema Solar.
 
-\begin{figure}
+\begin{figure}[htbp]
     \centering
-    \includegraphics[width=0.5\linewidth]{Tese/pngs/ModelosSORA.png}
-    \caption{A figura mostra as componentes do modelo de curva de luz utilizado por SORA para definir com exatidão o tempo real de imersão e egressão do evento, pontos que serão necessários para a definição do formato do corpo. Uma curva de luz carrega um conjunto complexo de informações que podem contribuir ou atrapalhar a detecção de eventos.}
-    \label{fig:exemploSORA}
+    \includegraphics[width=0.55\linewidth]{pngs/ModelosSORA.png}
+    \caption{Componentes do modelo de curva de luz utilizado pelo SORA \citep{SORA2022}: modelo geométrico (verde), difração de Fresnel (azul), tamanho angular da estrela e resposta instrumental. O ajuste simultâneo dessas componentes aos dados observados (pontos vermelhos) permite determinar com precisão os instantes de imersão e emersão, necessários para a reconstrução da forma do corpo.}
+    \label{fig:modelo_sora}
 \end{figure}
 
 % -----------------------------------------------------------------------------
