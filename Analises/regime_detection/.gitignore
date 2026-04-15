@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+
+# Data (reproducible via fetch_binance_data.py / convert_market_data.py)
+data/*.csv
+data/*.xlsx
+data/raw/
+new_data/
+
+# Model artifacts (reproducible via pipeline)
+*.joblib
+save_point*/
+relatorios/modelos/
+outputs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.venv/
+venv/

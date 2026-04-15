@@ -1,0 +1,30 @@
+T8 MOD3: RANDOM WALK NULL MODEL — ret_50
+============================================================
+
+  Configuracao: 200 random walks, drift=0, sigma=0.006288
+  Dollar bars: 36802 (~20/dia), ret_window=50
+
+  [ret_50 bruto]
+    SR real:      0.011505
+    SR null mean: -0.000190 +/- 0.004957
+    P5 / P50 / P95: -0.008764 / -0.000092 / 0.007697
+    p-value:      0.0100
+    Veredito:     GENUINO
+
+  [ret_50 SavGol(w=51)]
+    SR real:      0.113844
+    SR null mean: 0.115124 +/- 0.004027
+    P5 / P50 / P95: 0.107980 / 0.115273 / 0.121821
+    p-value:      0.6300
+    Veredito:     ARTEFATO
+
+  [ret_50 MA(51)]
+    SR real:      0.002440
+    SR null mean: -0.000255 +/- 0.005101
+    P5 / P50 / P95: -0.009149 / 0.000068 / 0.008151
+    p-value:      0.2950
+    Veredito:     ARTEFATO
+
+  CONCLUSAO:
+  ret_50 bruto e GENUINO — momentum de ~2.5 dias tem alpha real.
+  Filtros (SavGol/MA) sao opcionais (suavizacao, nao fonte de alpha).
