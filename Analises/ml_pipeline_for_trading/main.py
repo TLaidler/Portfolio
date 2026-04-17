@@ -38,7 +38,7 @@ from pipeline.cross_validation import CombinatorialPurgedCV, PurgedKFold
 from pipeline.denoising import corr_to_dist, denoise_corr, detone
 from pipeline.feature_selection import run_clustered_importance
 from pipeline.features import FeatureBuilder, FeatureConfig
-from pipeline.io import load_exogenous, load_minute_bars
+from pipeline.io import fetch_bacen_cdi, load_exogenous, load_minute_bars
 from pipeline.labeling import (
     BarrierConfig, apply_triple_barrier, build_events, daily_volatility,
     meta_label, vertical_barriers,
@@ -410,18 +410,37 @@ def run_pipeline(
               f"skew={sp_skew(ret_oos.dropna()):+.3f}  kurt={sp_kurt(ret_oos.dropna()):+.3f}")
 
     P.plot_sharpe_is_vs_oos(sharpe_is, sharpe_oos, paths.plots / "09_is_vs_oos.png")
-    P.plot_equity_curves(
-        {"IS (out-of-fold)": _equity_curve(oof_ret_is), "OOS": _equity_curve(ret_oos)},
-        paths.plots / "09_equity_curves.png",
-        title="Equity (cumulative meta-labeled returns)",
-    )
-    P.plot_cumulative_returns(
+
+    # Pull historical CDI (Bacen SGS série 12, %/dia útil) for the IS+OOS
+    # window; fall back to a flat 15% a.a. if the API is unreachable.
+    cdi_series = None
+    cdi_label = "CDI 15% a.a."
+    try:
+        cdi_start = bars_is.index.min()
+        cdi_end = bars_oos.index.max()
+        cdi_series = fetch_bacen_cdi(
+            cdi_start, cdi_end, cache_path=paths.data / "cdi_bacen.csv"
+        )
+        mean_daily = float(cdi_series.mean())
+        mean_ann = ((1.0 + mean_daily / 100.0) ** 252 - 1.0) * 100.0
+        cdi_label = f"CDI Bacen (~{mean_ann:.2f}% a.a. médio)"
+        log.write(
+            f"CDI Bacen: {len(cdi_series)} obs "
+            f"({cdi_series.index.min().date()} → {cdi_series.index.max().date()}), "
+            f"média={mean_ann:.2f}% a.a."
+        )
+    except Exception as e:
+        log.write(f"[cdi] fallback para 15% a.a. fixo ({e})")
+
+    P.plot_fund_nav(
         is_rets=oof_ret_is,
         oos_rets=ret_oos,
+        is_close=bars_is["close"],
+        oos_close=bars_oos["close"],
         out=paths.plots / "09_cumulative_returns.png",
-        is_price=bars_is["close"].loc[oof_ret_is.index.min():oof_ret_is.index.max()],
-        oos_price=bars_oos["close"].loc[ret_oos.index.min():ret_oos.index.max()],
-        title=f"Cumulative return — IS Sharpe {sharpe_is:+.3f} | OOS Sharpe {sharpe_oos:+.3f}",
+        cdi_daily_pct=cdi_series,
+        cdi_annual=0.15,
+        title=f"Cota (início = 1) — Modelo {sharpe_is:+.2f}/IS, {sharpe_oos:+.2f}/OOS  •  BTC B&H  •  {cdi_label}",
     )
 
     # Persist the final meta-model for later reuse.

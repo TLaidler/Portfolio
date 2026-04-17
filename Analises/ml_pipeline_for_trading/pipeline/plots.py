@@ -128,42 +128,96 @@ def plot_equity_curves(curves: Dict[str, pd.Series], out: Path, title: str = "Eq
     save_fig(fig, out)
 
 
-def plot_cumulative_returns(
+def plot_fund_nav(
     is_rets: pd.Series,
     oos_rets: pd.Series,
+    is_close: pd.Series,
+    oos_close: pd.Series,
     out: Path,
-    is_price: pd.Series | None = None,
-    oos_price: pd.Series | None = None,
-    title: str = "Strategy cumulative return — IS → OOS",
+    cdi_daily_pct: pd.Series | None = None,
+    cdi_annual: float = 0.15,
+    trading_days_per_year: int = 252,
+    title: str = "Cota (início = 1) — Modelo vs. Buy&Hold vs. CDI",
 ) -> None:
-    """Compound cumulative return on one timeline, IS then OOS, with a
-    boundary marker and an optional buy-and-hold benchmark.
+    """Fund-style NAV plot: cota inicial = 1, comparando
+
+    - o modelo (retornos do meta-label IS out-of-fold + OOS, encadeados),
+    - Buy & Hold do BTC (fechamentos concatenados, normalizados),
+    - CDI — se `cdi_daily_pct` for dado (série diária Bacen série 12, %/dia),
+      compõe dia a dia com a taxa histórica; caso contrário, usa `cdi_annual`
+      constante.
+
+    As três curvas compartilham o mesmo eixo temporal; uma linha pontilhada
+    marca a fronteira IS→OOS.
     """
     set_plot_style()
     fig, ax = plt.subplots(figsize=(12, 5.5))
 
-    is_c = (1.0 + is_rets.fillna(0.0)).cumprod() - 1.0
-    oos_c = (1.0 + oos_rets.fillna(0.0)).cumprod() - 1.0
-    # Chain OOS on top of the IS end-value so the line is continuous.
-    oos_chained = (1.0 + is_c.iloc[-1]) * (1.0 + oos_c) - 1.0 if len(is_c) else oos_c
+    # --- Buy&Hold NAV (cota=1 no primeiro close IS) ---
+    close = pd.concat([is_close, oos_close]).sort_index()
+    close = close[~close.index.duplicated(keep="first")].dropna()
+    bh_nav = close / close.iloc[0]
+    start, end = bh_nav.index.min(), bh_nav.index.max()
+    tz = bh_nav.index.tz
 
-    ax.plot(is_c.index, is_c.values * 100, color="C0", label="IS (out-of-fold)")
-    ax.plot(oos_chained.index, oos_chained.values * 100, color="C3", label="OOS")
+    # --- Strategy NAV ---
+    # Os retornos vêm por *evento* do triple-barrier, com horizonte ~20 barras
+    # e sobreposição alta. Compor todos em série trataria cada bet como se
+    # usasse 100% do capital sequencialmente, o que inflaria a cota
+    # artificialmente. Para refletir o que um fundo veria (alocação
+    # equal-weight entre bets concorrentes), reamostramos para retorno *médio
+    # diário* sobre os eventos que fecharam naquele dia, e compomos dia a dia.
+    strat_rets = pd.concat([is_rets.fillna(0.0), oos_rets.fillna(0.0)]).sort_index()
+    strat_rets = strat_rets[~strat_rets.index.duplicated(keep="first")]
+    strat_daily = strat_rets.resample("1D").mean().fillna(0.0)
+    if len(strat_daily) == 0 or strat_daily.index.min() > start:
+        strat_daily = pd.concat([pd.Series([0.0], index=[start.normalize()]), strat_daily])
+    if strat_daily.index.max() < end:
+        strat_daily = pd.concat([strat_daily, pd.Series([0.0], index=[end.normalize()])])
+    strat_daily = strat_daily.sort_index()
+    strat_nav = (1.0 + strat_daily).cumprod()
 
-    if is_price is not None and oos_price is not None:
-        bh_is = (is_price / is_price.iloc[0] - 1.0) * 100
-        bh_oos = (oos_price / is_price.iloc[0] - 1.0) * 100
-        ax.plot(bh_is.index, bh_is.values, color="grey", ls="--", alpha=0.6, label="Buy&Hold (BTC)")
-        ax.plot(bh_oos.index, bh_oos.values, color="grey", ls="--", alpha=0.6)
+    # --- CDI NAV: compõe no dia útil ---
+    if cdi_daily_pct is not None and len(cdi_daily_pct):
+        cdi = cdi_daily_pct.copy()
+        if cdi.index.tz is None:
+            cdi.index = cdi.index.tz_localize("UTC")
+        elif tz is not None:
+            cdi.index = cdi.index.tz_convert(tz)
+        cdi = cdi.sort_index()
+        cdi = cdi[(cdi.index >= start) & (cdi.index <= end)]
+        daily_factors = 1.0 + cdi / 100.0
+        cdi_nav = daily_factors.cumprod()
+        cdi_nav = cdi_nav / cdi_nav.iloc[0]
+        mean_daily = float(cdi.mean())
+        mean_ann = ((1.0 + mean_daily / 100.0) ** trading_days_per_year - 1.0) * 100.0
+        cdi_label = f"CDI Bacen (~{mean_ann:.2f}% a.a. médio)"
+    else:
+        daily_rate = (1 + cdi_annual) ** (1.0 / trading_days_per_year) - 1.0
+        bps = daily_rate * 10_000
+        bday_idx = pd.date_range(start.normalize(), end.normalize(), freq="B", tz=tz)
+        cdi_nav = pd.Series(
+            (1 + daily_rate) ** np.arange(len(bday_idx)),
+            index=bday_idx,
+        )
+        cdi_label = f"CDI {cdi_annual*100:.0f}% a.a. (~{bps:.1f} bps/dia útil)"
 
-    if len(is_c):
-        ax.axvline(is_c.index[-1], color="k", lw=0.8, ls=":", alpha=0.7)
-        ax.text(is_c.index[-1], ax.get_ylim()[1] * 0.95, " IS→OOS",
-                fontsize=9, va="top", ha="left", alpha=0.7)
+    # --- Plot ---
+    ax.plot(bh_nav.index, bh_nav.values, color="grey", lw=1.1, alpha=0.75, label="Buy & Hold BTC")
+    ax.plot(cdi_nav.index, cdi_nav.values, color="C2", lw=1.3, ls="--",
+            label=cdi_label)
+    ax.plot(strat_nav.index, strat_nav.values, color="C0", lw=1.8, label="Modelo (meta-labelled)")
 
-    ax.axhline(0, color="k", lw=0.5)
+    # Fronteira IS → OOS (último evento IS)
+    if len(is_rets):
+        boundary = is_rets.index.max()
+        ax.axvline(boundary, color="k", lw=0.8, ls=":", alpha=0.6)
+        ymax = ax.get_ylim()[1]
+        ax.text(boundary, ymax * 0.97, "  IS → OOS", fontsize=9, va="top", ha="left", alpha=0.7)
+
+    ax.axhline(1.0, color="k", lw=0.5, alpha=0.5)
+    ax.set_ylabel("Cota (início = 1)")
+    ax.set_xlabel("Data")
     ax.set_title(title)
-    ax.set_ylabel("Cumulative return (%)")
-    ax.set_xlabel("Event close time")
     ax.legend(loc="best")
     save_fig(fig, out)

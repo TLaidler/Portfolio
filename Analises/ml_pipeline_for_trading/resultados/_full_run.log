@@ -62,3 +62,94 @@ OOS features shape: (18776, 10)
 [04_weights] ============================================================
 [04_weights] Stage 4 — Sample weights from overlapping labels
 [04_weights] ============================================================
+[04_weights] IS concurrency: mean=11.191 max=21
+[04_weights] IS weights mean=1.000 std=1.354
+[04_weights] Sequential bootstrap drew 5000 samples (average uniqueness = 0.957).
+[05_denoising] ============================================================
+[05_denoising] Stage 5 — Marcenko-Pastur denoising + detoning
+[05_denoising] ============================================================
+[05_denoising] q = T/N = 8096.20
+[05_denoising] Eigenvalue summary (raw / denoised / detoned):
+[05_denoising]        raw  denoised   detoned
+0 2.942073  2.455101  1.623737
+1 1.372849  1.445193  1.324798
+2 1.217733  1.259014  1.266402
+3 1.007482  0.987912  1.251406
+4 0.999166  0.934275  1.236882
+5 0.734470  0.674223  0.990757
+6 0.647124  0.644163  0.940088
+7 0.613862  0.569822  0.685922
+8 0.297300  0.531436  0.680007
+9 0.167940  0.498860 -0.000000
+[06_feature_importance] ============================================================
+[06_feature_importance] Stage 6 — Clustered MDI / MDA (ONC clustering)
+[06_feature_importance] ============================================================
+[06_feature_importance] Clusters:
+[06_feature_importance]   cluster_0: ['volatility_20', 'vix_chg']
+[06_feature_importance]   cluster_1: ['sg_velocity_51', 'tstat_10', 'tstat_20', 'tstat_50']
+[06_feature_importance]   cluster_2: ['sg_acceleration_5', 'ffd_close', 'btc_dxy_spread', 'fear_greed_zscore_5']
+[06_feature_importance] 
+Clustered MDI:
+[06_feature_importance]                MDI
+cluster_0 0.336318
+cluster_2 0.333045
+cluster_1 0.330637
+[06_feature_importance] 
+Clustered MDA:
+[06_feature_importance]                 MDA
+cluster_1  0.000335
+cluster_0 -0.001676
+cluster_2 -0.003606
+[07_purged_kfold] ============================================================
+[07_purged_kfold] Stage 7 — Purged K-Fold CV of meta-labels
+[07_purged_kfold] ============================================================
+[07_purged_kfold] fold 0: acc=0.5127  f1=0.4993  logloss=0.6955
+[07_purged_kfold] fold 1: acc=0.4910  f1=0.5377  logloss=0.6973
+[07_purged_kfold] fold 2: acc=0.4969  f1=0.4688  logloss=0.6949
+[07_purged_kfold] fold 3: acc=0.5013  f1=0.4482  logloss=0.6961
+[07_purged_kfold] fold 4: acc=0.4945  f1=0.4150  logloss=0.6952
+[07_purged_kfold] 
+Fold summary:
+[07_purged_kfold]    fold  accuracy       f1  log_loss
+0     0  0.512691 0.499270  0.695541
+1     1  0.491015 0.537694  0.697277
+2     2  0.496912 0.468762  0.694943
+3     3  0.501297 0.448165  0.696139
+4     4  0.494503 0.414981  0.695202
+[07_purged_kfold] Mean accuracy=0.4993  mean F1=0.4738  mean logloss=0.6958
+[08_cpcv_backtest] ============================================================
+[08_cpcv_backtest] Stage 8 — CPCV, Random-Walk null, DSR / PSR
+[08_cpcv_backtest] ============================================================
+[08_cpcv_backtest] CPCV splits: 15  (groups=6, test_groups=2)
+[08_cpcv_backtest] Per-split Sharpe: mean=+0.2342  std=0.2448  min=-0.2034  max=+0.5919
+[08_cpcv_backtest] Reconstructed 5 full-time paths
+[08_cpcv_backtest] Path Sharpe: mean=+0.2266  std=0.1133
+[08_cpcv_backtest] 
+IS out-of-fold Sharpe: +0.2498
+[08_cpcv_backtest] RW null SR mean=+0.0127  std=0.1776  p(strategy>=null)=0.0820
+[08_cpcv_backtest] PSR (benchmark=0): 1.0000
+[08_cpcv_backtest] DSR (trials=5, V=0.0161): 0.9616
+[09_oos_evaluation] ============================================================
+[09_oos_evaluation] Stage 9 — OOS (new_data) evaluation
+[09_oos_evaluation] ============================================================
+[09_oos_evaluation] OOS accuracy=0.5001  f1=0.4592  logloss=0.6952
+[09_oos_evaluation] OOS Sharpe=-0.0984
+[09_oos_evaluation] OOS ret mean=-0.000044  std=0.007151  skew=+0.068  kurt=+4.130
+[09_oos_evaluation] 
+Model saved to C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\model\meta_model.joblib
+[09_oos_evaluation] Config saved to C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\model\model_config.json
+[10_final_report] ============================================================
+[10_final_report] Stage 10 — Final report card
+[10_final_report] ============================================================
+[10_final_report] Sharpe (IS)         : +0.2498
+Sharpe (OOS)        : -0.0984
+Probabilistic SR    : 1.0000
+Deflated SR         : 0.9616
+RW-null SR mean/std : +0.0127 / 0.1776
+RW-null p-value     : 0.0820
+N trials            : 5
+
+[10_final_report] 
+Total runtime: 7.6 min
+
+Report written to C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\RELATORIO_MARCOS_FEYNMAN.md
