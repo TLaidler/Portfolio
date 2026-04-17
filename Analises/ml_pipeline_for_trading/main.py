@@ -17,9 +17,11 @@ import pickle
 import sys
 import time
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
+import joblib
 import numpy as np
 import pandas as pd
 from scipy.stats import skew as sp_skew, kurtosis as sp_kurt
@@ -413,6 +415,37 @@ def run_pipeline(
         paths.plots / "09_equity_curves.png",
         title="Equity (cumulative meta-labeled returns)",
     )
+    P.plot_cumulative_returns(
+        is_rets=oof_ret_is,
+        oos_rets=ret_oos,
+        out=paths.plots / "09_cumulative_returns.png",
+        is_price=bars_is["close"].loc[oof_ret_is.index.min():oof_ret_is.index.max()],
+        oos_price=bars_oos["close"].loc[ret_oos.index.min():ret_oos.index.max()],
+        title=f"Cumulative return — IS Sharpe {sharpe_is:+.3f} | OOS Sharpe {sharpe_oos:+.3f}",
+    )
+
+    # Persist the final meta-model for later reuse.
+    model_cfg = {
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "random_state": random_state,
+        "rf": {
+            "n_estimators": rf_trees, "max_depth": 6, "min_samples_leaf": 50,
+            "class_weight": "balanced_subsample",
+        },
+        "features": list(X_np.columns),
+        "primary_signal": {"source": "tstat_50", "threshold": tstat_threshold},
+        "triple_barrier": {"pt_sl": list(pt_sl), "horizon_bars": horizon_bars},
+        "bars": {"bars_per_day": bars_per_day, "dollar_threshold": float(bars_is.attrs["threshold"])},
+        "cpcv": {"n_groups": cpcv_groups, "n_test_groups": cpcv_test_groups, "embargo_pct": 0.01},
+        "training_range": {"start": str(X_np.index.min()), "end": str(X_np.index.max()), "n_events": int(len(X_np))},
+        "meta_threshold": 0.5,
+    }
+    joblib.dump(rf, paths.model / "meta_model.joblib")
+    (paths.model / "model_config.json").write_text(
+        json.dumps(model_cfg, indent=2), encoding="utf-8"
+    )
+    log.write(f"\nModel saved to {paths.model / 'meta_model.joblib'}")
+    log.write(f"Config saved to {paths.model / 'model_config.json'}")
 
     # ------------------------------------------------------------------
     # 10. Final report card

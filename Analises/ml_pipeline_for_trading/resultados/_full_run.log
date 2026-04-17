@@ -8,142 +8,57 @@
 [01_bars] 
 IS dollar-bar summary:
 [01_bars] {
-  "n_bars": 68454,
-  "threshold_dollars": 356207370.58229536,
-  "bars_per_day_mean": 43.02576995600251,
-  "ret_mean": 2.2541141758849955e-05,
-  "ret_std": 0.004892284518156035,
-  "ret_skew": 0.08332143742339278,
-  "ret_kurt": 7.178320840617638,
-  "start": "2021-03-24 17:31:00+00:00",
+  "n_bars": 135233,
+  "threshold_dollars": 178103685.29114768,
+  "bars_per_day_mean": 84.99874292897549,
+  "ret_mean": 1.1526439321260676e-05,
+  "ret_std": 0.003503841822881525,
+  "ret_skew": 0.09933636126576442,
+  "ret_kurt": 11.31472031668789,
+  "start": "2021-03-24 17:15:00+00:00",
   "end": "2025-07-31 23:57:00+00:00"
 }
 [01_bars] 
 OOS dollar-bar summary:
 [01_bars] {
-  "n_bars": 9490,
-  "threshold_dollars": 356207370.58229536,
-  "bars_per_day_mean": 40.38297872340426,
-  "ret_mean": -4.332468447646142e-05,
-  "ret_std": 0.003911168996645948,
-  "ret_skew": -0.09376761399443581,
-  "ret_kurt": 3.9950957367969075,
-  "start": "2025-08-01 00:14:00+00:00",
-  "end": "2026-03-23 18:38:00+00:00"
+  "n_bars": 18776,
+  "threshold_dollars": 178103685.29114768,
+  "bars_per_day_mean": 79.89787234042554,
+  "ret_mean": -2.1925209049565894e-05,
+  "ret_std": 0.0027946310185745127,
+  "ret_skew": -0.20628133143583863,
+  "ret_kurt": 7.8554555359459695,
+  "start": "2025-08-01 00:11:00+00:00",
+  "end": "2026-03-23 19:06:00+00:00"
 }
 [02_features] ============================================================
 [02_features] Stage 2 — Features (SavGol causal, FFD, tstat, macro)
 [02_features] ============================================================
 [02_features] Exogenous series loaded: ['vix', 'dxy', 'fear_greed', 'funding_rate', 'etf_volume']
-[02_features] IS features shape: (68454, 10)
+[02_features] IS features shape: (135233, 10)
 [02_features] IS features columns: ['sg_velocity_51', 'sg_acceleration_5', 'tstat_10', 'tstat_20', 'tstat_50', 'volatility_20', 'ffd_close', 'vix_chg', 'btc_dxy_spread', 'fear_greed_zscore_5']
 [02_features] IS describe:
-[02_features]                            count        mean         std          min         25%         50%         75%          max
-sg_velocity_51      68355.000000   -0.016452    1.147222    -5.129069   -0.848877   -0.023274    0.817921     4.942540
-sg_acceleration_5   68450.000000    0.000000    0.010131    -0.115035   -0.005736   -0.000020    0.005735     0.129907
-tstat_10            68444.000000    0.030845    1.116883   -12.694449   -0.657280    0.024251    0.714379    12.297313
-tstat_20            68434.000000    0.043846    1.025537    -5.809810   -0.635602    0.029003    0.721423     4.745332
-tstat_50            68404.000000    0.070224    0.985635    -3.625400   -0.613821    0.047912    0.731055     4.633229
-volatility_20       68414.000000    0.003118    0.001446     0.000596    0.002206    0.002813    0.003660     0.020686
-ffd_close           68173.000000 3817.687572 1962.337512 -1810.858378 2149.852999 3411.101002 5000.537706 10561.030867
-vix_chg             68454.000000    0.003932    0.093473    -0.357539   -0.042564   -0.008980    0.036857     0.740391
-btc_dxy_spread      67255.000000   -0.017550    1.175452    -4.281619   -0.726536   -0.036561    0.619420     3.790041
-fear_greed_zscore_5 68454.000000   -0.002361    0.996324    -1.780926   -0.878310    0.000000    0.849934     1.788854
+[02_features]                             count        mean         std          min         25%         50%         75%          max
+sg_velocity_51      135134.000000    0.000692    1.153214    -5.585462   -0.810391    0.012202    0.827722     4.957942
+sg_acceleration_5   135229.000000   -0.000000    0.007252    -0.114900   -0.004063   -0.000014    0.004064     0.153202
+tstat_10            135223.000000    0.021452    1.106949   -10.035508   -0.668929    0.020634    0.712012     9.944633
+tstat_20            135213.000000    0.030645    1.020969    -4.741831   -0.640069    0.023294    0.701757     4.707368
+tstat_50            135183.000000    0.049265    0.978572    -4.150993   -0.623688    0.034518    0.705426     3.838811
+volatility_20       135193.000000    0.002219    0.001094     0.000377    0.001556    0.001996    0.002586     0.024205
+ffd_close           134952.000000 3809.331582 1928.118179 -1636.259170 2164.413792 3388.522994 4918.249619 10446.578058
+vix_chg             135233.000000    0.004161    0.090128    -0.357539   -0.041802   -0.008980    0.037037     0.740391
+btc_dxy_spread      132691.000000   -0.005342    1.095435    -4.227288   -0.659251   -0.042903    0.588424     3.873101
+fear_greed_zscore_5 135233.000000    0.008280    0.982870    -1.780926   -0.845489    0.000000    0.841368     1.788854
 [02_features] 
-OOS features shape: (9490, 10)
+OOS features shape: (18776, 10)
 [03_labeling] ============================================================
 [03_labeling] Stage 3 — Triple-Barrier labeling and Meta-Labels
 [03_labeling] ============================================================
-[03_labeling] IS side distribution: {0: 26506, 1: 22216, -1: 19732}
-[03_labeling] IS events after side filter: 41,946
-[03_labeling] IS touch counts: {'vertical': 27446, 'pt': 7538, 'sl': 6962}
-[03_labeling] IS meta-label positive share: 0.495
-[03_labeling] OOS events: 5,252  positive share: 0.505
+[03_labeling] IS side distribution: {0: 52714, 1: 43012, -1: 39507}
+[03_labeling] IS events after side filter: 82,439
+[03_labeling] IS touch counts: {'vertical': 58966, 'pt': 12413, 'sl': 11060}
+[03_labeling] IS meta-label positive share: 0.503
+[03_labeling] OOS events: 10,504  positive share: 0.500
 [04_weights] ============================================================
 [04_weights] Stage 4 — Sample weights from overlapping labels
 [04_weights] ============================================================
-[04_weights] IS concurrency: mean=10.929 max=21
-[04_weights] IS weights mean=1.000 std=1.335
-[04_weights] Sequential bootstrap drew 5000 samples (average uniqueness = 0.913).
-[05_denoising] ============================================================
-[05_denoising] Stage 5 — Marcenko-Pastur denoising + detoning
-[05_denoising] ============================================================
-[05_denoising] q = T/N = 4127.80
-[05_denoising] Eigenvalue summary (raw / denoised / detoned):
-[05_denoising]        raw  denoised   detoned
-0 3.043495  2.708222  1.623489
-1 1.317488  1.339506  1.376389
-2 1.105408  1.155562  1.182382
-3 1.001287  0.998299  1.154038
-4 0.999555  0.790777  1.119425
-5 0.820124  0.698508  1.044822
-6 0.652595  0.649923  0.998524
-7 0.548914  0.584014  0.800970
-8 0.350705  0.550861  0.699963
-9 0.160429  0.524328 -0.000000
-[06_feature_importance] ============================================================
-[06_feature_importance] Stage 6 — Clustered MDI / MDA (ONC clustering)
-[06_feature_importance] ============================================================
-[06_feature_importance] Clusters:
-[06_feature_importance]   cluster_0: ['tstat_10', 'tstat_20', 'tstat_50', 'ffd_close', 'btc_dxy_spread', 'fear_greed_zscore_5']
-[06_feature_importance]   cluster_1: ['sg_velocity_51', 'sg_acceleration_5', 'volatility_20', 'vix_chg']
-[06_feature_importance] 
-Clustered MDI:
-[06_feature_importance]                MDI
-cluster_0 0.516973
-cluster_1 0.483027
-[06_feature_importance] 
-Clustered MDA:
-[06_feature_importance]                MDA
-cluster_0 0.126307
-cluster_1 0.006806
-[07_purged_kfold] ============================================================
-[07_purged_kfold] Stage 7 — Purged K-Fold CV of meta-labels
-[07_purged_kfold] ============================================================
-[07_purged_kfold] fold 0: acc=0.6460  f1=0.6385  logloss=0.6360
-[07_purged_kfold] fold 1: acc=0.6560  f1=0.6100  logloss=0.6324
-[07_purged_kfold] fold 2: acc=0.6589  f1=0.6283  logloss=0.6270
-[07_purged_kfold] fold 3: acc=0.6521  f1=0.6471  logloss=0.6332
-[07_purged_kfold] fold 4: acc=0.6148  f1=0.5840  logloss=0.6538
-[07_purged_kfold] 
-Fold summary:
-[07_purged_kfold]    fold  accuracy       f1  log_loss
-0     0  0.645954 0.638466  0.635991
-1     1  0.656008 0.609997  0.632387
-2     2  0.658915 0.628300  0.627006
-3     3  0.652090 0.647088  0.633203
-4     4  0.614779 0.583987  0.653811
-[07_purged_kfold] Mean accuracy=0.6455  mean F1=0.6216  mean logloss=0.6365
-[08_cpcv_backtest] ============================================================
-[08_cpcv_backtest] Stage 8 — CPCV, Random-Walk null, DSR / PSR
-[08_cpcv_backtest] ============================================================
-[08_cpcv_backtest] CPCV splits: 15  (groups=6, test_groups=2)
-[08_cpcv_backtest] Per-split Sharpe: mean=+0.4946  std=0.5312  min=-0.4288  max=+1.1780
-[08_cpcv_backtest] Reconstructed 5 full-time paths
-[08_cpcv_backtest] Path Sharpe: mean=+0.4821  std=0.2717
-[08_cpcv_backtest] 
-IS out-of-fold Sharpe: +0.4899
-[08_cpcv_backtest] RW null SR mean=+0.0105  std=0.2479  p(strategy>=null)=0.0250
-[08_cpcv_backtest] PSR (benchmark=0): 1.0000
-[08_cpcv_backtest] DSR (trials=5, V=0.0923): 0.9484
-[09_oos_evaluation] ============================================================
-[09_oos_evaluation] Stage 9 — OOS (new_data) evaluation
-[09_oos_evaluation] ============================================================
-[09_oos_evaluation] OOS accuracy=0.6658  f1=0.6637  logloss=0.6289
-[09_oos_evaluation] OOS Sharpe=-0.9958
-[09_oos_evaluation] OOS ret mean=-0.000728  std=0.011602  skew=-0.099  kurt=+2.265
-[10_final_report] ============================================================
-[10_final_report] Stage 10 — Final report card
-[10_final_report] ============================================================
-[10_final_report] Sharpe (IS)         : +0.4899
-Sharpe (OOS)        : -0.9958
-Probabilistic SR    : 1.0000
-Deflated SR         : 0.9484
-RW-null SR mean/std : +0.0105 / 0.2479
-RW-null p-value     : 0.0250
-N trials            : 5
-
-[10_final_report] 
-Total runtime: 4.5 min
-
-Report written to C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\RELATORIO_MARCOS_FEYNMAN.md
