@@ -1,9 +1,9 @@
 ============================================================
 Stage 9 — OOS (new_data) evaluation
 ============================================================
-OOS accuracy=0.5020  f1=0.4642  logloss=0.6949
-OOS Sharpe=-0.0937
-OOS ret mean=-0.000043  std=0.007217  skew=+0.068  kurt=+3.939
+OOS accuracy=0.5009  f1=0.1278  logloss=0.6949
+OOS Sharpe=-0.0680
+OOS ret mean=-0.000013  std=0.003096  skew=+0.047  kurt=+43.243
 CDI Bacen: 1256 obs (2021-03-24 → 2026-03-23), média=11.57% a.a.
 
 Model saved to C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\model\meta_model.joblib

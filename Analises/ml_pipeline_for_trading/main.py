@@ -84,6 +84,7 @@ def run_pipeline(
     rw_sims: int = 500,
     rf_trees: int = 300,
     random_state: int = 42,
+    meta_threshold: float = 0.5,
 ):
     t_start = time.time()
     paths = ProjectPaths.discover()
@@ -286,7 +287,7 @@ def run_pipeline(
     for k, (tr, te) in enumerate(pkf.split(X_np, y_np)):
         rf.fit(X_np.iloc[tr], y_np.iloc[tr], sample_weight=w_is.iloc[tr].to_numpy())
         proba = rf.predict_proba(X_np.iloc[te])[:, 1]
-        pred = (proba >= 0.5).astype(int)
+        pred = (proba >= meta_threshold).astype(int)
         oof_proba.iloc[te] = proba
         acc = accuracy_score(y_np.iloc[te], pred)
         f1 = f1_score(y_np.iloc[te], pred, zero_division=0)
@@ -348,14 +349,15 @@ def run_pipeline(
     log.write(f"Reconstructed {len(paths_is)} full-time paths")
     path_sharpes = []
     for p in paths_is:
-        ret = side_is.loc[p.index] * (p >= 0.5).astype(float) * labels_is["ret"].loc[p.index]
+        ret = side_is.loc[p.index] * (p >= meta_threshold).astype(float) * labels_is["ret"].loc[p.index]
         path_sharpes.append(sharpe_ratio(ret.to_numpy()))
     log.write(f"Path Sharpe: mean={np.mean(path_sharpes):+.4f}  std={np.std(path_sharpes):.4f}")
     P.plot_cpcv_path_sharpes(path_sharpes, paths.plots / "08_cpcv_paths.png")
 
     # In-sample (all folds) Sharpe
     oof_ret_is = strategy_returns(
-        side_is.loc[X_np.index], oof_proba.fillna(0.0), labels_is["ret"].loc[X_np.index]
+        side_is.loc[X_np.index], oof_proba.fillna(0.0),
+        labels_is["ret"].loc[X_np.index], threshold=meta_threshold,
     )
     sharpe_is = sharpe_ratio(oof_ret_is.to_numpy())
     log.write(f"\nIS out-of-fold Sharpe: {sharpe_is:+.4f}")
@@ -392,7 +394,7 @@ def run_pipeline(
     rf.fit(X_np, y_np, sample_weight=w_is.to_numpy())
     X_oos_np = X_oos_ev.fillna(0.0)
     proba_oos = rf.predict_proba(X_oos_np)[:, 1]
-    pred_oos = (proba_oos >= 0.5).astype(int)
+    pred_oos = (proba_oos >= meta_threshold).astype(int)
 
     acc_oos = accuracy_score(y_oos_meta, pred_oos)
     f1_oos = f1_score(y_oos_meta, pred_oos, zero_division=0)
@@ -401,6 +403,7 @@ def run_pipeline(
         side_oos.loc[X_oos_np.index],
         pd.Series(proba_oos, index=X_oos_np.index),
         labels_oos["ret"].loc[X_oos_np.index],
+        threshold=meta_threshold,
     )
     sharpe_oos = sharpe_ratio(ret_oos.to_numpy())
 
@@ -457,7 +460,7 @@ def run_pipeline(
         "bars": {"bars_per_day": bars_per_day, "dollar_threshold": float(bars_is.attrs["threshold"])},
         "cpcv": {"n_groups": cpcv_groups, "n_test_groups": cpcv_test_groups, "embargo_pct": 0.01},
         "training_range": {"start": str(X_np.index.min()), "end": str(X_np.index.max()), "n_events": int(len(X_np))},
-        "meta_threshold": 0.5,
+        "meta_threshold": meta_threshold,
     }
     joblib.dump(rf, paths.model / "meta_model.joblib")
     (paths.model / "model_config.json").write_text(
@@ -794,6 +797,8 @@ def main():
     parser.add_argument("--rw-sims", type=int, default=500)
     parser.add_argument("--rf-trees", type=int, default=300)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--meta-threshold", type=float, default=0.5,
+                        help="Probability cutoff for the meta-label bet (default 0.5).")
     parser.add_argument("--regen-report-only", action="store_true",
                         help="Skip pipeline; regen markdown from resultados/_run.pkl")
     args = parser.parse_args()
@@ -822,6 +827,7 @@ def main():
         rw_sims=args.rw_sims,
         rf_trees=args.rf_trees,
         random_state=args.seed,
+        meta_threshold=args.meta_threshold,
     )
     with pkl.open("wb") as f:
         pickle.dump(_pickle_payload(result), f)
