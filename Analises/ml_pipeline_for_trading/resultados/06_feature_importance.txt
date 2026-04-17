@@ -1,0 +1,16 @@
+============================================================
+Stage 6 — Clustered MDI / MDA (ONC clustering)
+============================================================
+Clusters:
+  cluster_0: ['tstat_10', 'tstat_20', 'tstat_50', 'ffd_close', 'btc_dxy_spread', 'fear_greed_zscore_5']
+  cluster_1: ['sg_velocity_51', 'sg_acceleration_5', 'volatility_20', 'vix_chg']
+
+Clustered MDI:
+               MDI
+cluster_0 0.516973
+cluster_1 0.483027
+
+Clustered MDA:
+               MDA
+cluster_0 0.126307
+cluster_1 0.006806

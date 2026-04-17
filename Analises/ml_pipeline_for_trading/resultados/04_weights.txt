@@ -1,0 +1,6 @@
+============================================================
+Stage 4 — Sample weights from overlapping labels
+============================================================
+IS concurrency: mean=10.929 max=21
+IS weights mean=1.000 std=1.335
+Sequential bootstrap drew 5000 samples (average uniqueness = 0.913).
