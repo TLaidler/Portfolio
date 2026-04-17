@@ -115,6 +115,13 @@ def run_pipeline(
     summary_oos = summarize_bars(bars_oos)
     log.write(json.dumps(summary_oos, indent=2))
 
+    # Leakage guard: OOS bars must begin strictly after the last IS bar.
+    if bars_oos.index.min() <= bars_is.index.max():
+        raise ValueError(
+            f"OOS bars overlap IS bars: IS ends {bars_is.index.max()} "
+            f"but OOS starts {bars_oos.index.min()}. Check data/ vs new_data/."
+        )
+
     P.plot_bar_returns_hist(
         bars_is["close"].pct_change(),
         paths.plots / "01_bar_returns_is.png",

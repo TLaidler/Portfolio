@@ -34,7 +34,10 @@ def savgol_causal(series: pd.Series, window: int, polyorder: int, deriv: int = 0
     """
     if window % 2 == 0:
         window += 1
-    coeffs = savgol_coeffs(window, polyorder, deriv=deriv, pos=window - 1, use="conv")
+    # use="dot" so coefficients are in filter order for np.dot(coeffs, window).
+    # With use="conv" the coeffs come back reversed (for np.convolve), which
+    # silently mirrored the deriv=1/2 kernels when applied via dot.
+    coeffs = savgol_coeffs(window, polyorder, deriv=deriv, pos=window - 1, use="dot")
     arr = series.to_numpy(dtype=float)
     out = np.full_like(arr, np.nan)
     for i in range(window - 1, len(arr)):
@@ -110,14 +113,26 @@ def zscore(series: pd.Series, window: int) -> pd.Series:
 # Exogenous joins (macro / sentiment)
 # --------------------------------------------------------------------------
 
-def asof_join_daily(bars_index: pd.DatetimeIndex, daily_series: pd.Series, column: str) -> pd.Series:
+def asof_join_daily(
+    bars_index: pd.DatetimeIndex,
+    daily_series: pd.Series,
+    column: str,
+    lag_days: int = 1,
+) -> pd.Series:
     """Forward-fill a daily series onto an irregular bar index, as-of the bar.
 
-    Uses `merge_asof` so each bar sees only the most recent daily value at
-    bar time — no look-ahead.
+    A daily observation indexed at day-D 00:00 UTC typically represents the
+    *close* of day D (e.g. VIX close ~21:00 UTC, Fear&Greed published at
+    end-of-day). Without a lag, a backward as-of join would let an intraday
+    bar at day-D 05:00 UTC see that day's close — a look-ahead. We shift
+    the daily timestamps forward by `lag_days` before the join so each bar
+    only ever sees values that were strictly knowable before it.
     """
+    daily = daily_series.copy()
+    if lag_days:
+        daily.index = daily.index + pd.Timedelta(days=lag_days)
     left = pd.DataFrame({"ts": bars_index}).sort_values("ts")
-    right = daily_series.sort_index().rename(column).to_frame().reset_index()
+    right = daily.sort_index().rename(column).to_frame().reset_index()
     right.columns = ["ts", column]
     merged = pd.merge_asof(left, right, on="ts", direction="backward")
     return merged.set_index("ts")[column].reindex(bars_index)
