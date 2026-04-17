@@ -10,4 +10,4 @@ RW-null p-value     : 0.0820
 N trials            : 5
 
 
-Total runtime: 10.4 min
+Total runtime: 8.0 min

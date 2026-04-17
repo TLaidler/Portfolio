@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-04-17T20:28:07.186182+00:00",
+  "random_state": 42,
+  "rf": {
+    "n_estimators": 300,
+    "max_depth": 6,
+    "min_samples_leaf": 50,
+    "class_weight": "balanced_subsample"
+  },
+  "features": [
+    "sg_velocity_51",
+    "sg_acceleration_5",
+    "tstat_10",
+    "tstat_20",
+    "tstat_50",
+    "volatility_20",
+    "ffd_close",
+    "vix_chg",
+    "btc_dxy_spread",
+    "fear_greed_zscore_5"
+  ],
+  "primary_signal": {
+    "source": "tstat_50",
+    "threshold": 0.5
+  },
+  "triple_barrier": {
+    "pt_sl": [
+      1.0,
+      1.0
+    ],
+    "horizon_bars": 20
+  },
+  "bars": {
+    "bars_per_day": 100,
+    "dollar_threshold": 178103685.29114768
+  },
+  "cpcv": {
+    "n_groups": 6,
+    "n_test_groups": 2,
+    "embargo_pct": 0.01
+  },
+  "training_range": {
+    "start": "2021-04-24 00:02:00+00:00",
+    "end": "2025-07-31 20:17:00+00:00",
+    "n_events": 80962
+  },
+  "meta_threshold": 0.5
+}
