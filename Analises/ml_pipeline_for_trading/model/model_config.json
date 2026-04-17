@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-04-17T22:00:56.930158+00:00",
+  "created_at": "2026-04-17T22:14:07.484462+00:00",
   "random_state": 42,
   "rf": {
     "n_estimators": 300,
@@ -44,5 +44,5 @@
     "end": "2025-07-31 20:17:00+00:00",
     "n_events": 80962
   },
-  "meta_threshold": 0.5
+  "meta_threshold": 0.56
 }

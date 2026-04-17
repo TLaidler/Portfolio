@@ -11,17 +11,17 @@
 
 | Statistic | Value |
 |---|---|
-| Sharpe (IS, out-of-fold) | **+0.2119** |
-| Sharpe (OOS, new_data/) | **-0.0937** |
-| Probabilistic SR | 0.9999 |
-| Deflated SR (N trials = 5) | **0.7902** |
+| Sharpe (IS, out-of-fold) | **+0.0787** |
+| Sharpe (OOS, new_data/) | **-0.0680** |
+| Probabilistic SR | 0.9208 |
+| Deflated SR (N trials = 5) | **0.4718** |
 | Random-Walk null SR | +0.0127 ± 0.1776 |
-| p(strategy ≥ null) | **0.1280** |
-| OOS accuracy / F1 / log-loss | 0.502 / 0.464 / 0.695 |
+| p(strategy ≥ null) | **0.3640** |
+| OOS accuracy / F1 / log-loss | 0.501 / 0.128 / 0.695 |
 
-Regime detected from the IS/OOS pair: **overfit**.
+Regime detected from the IS/OOS pair: **null**.
 
-IS +0.21 vs OOS -0.09 — the canonical signature of backtest overfitting. The feature set plausibly over-fits the particular 2021-2025 regime and fails to generalise when the macro context flips. This is **exactly** the result the DSR/CPCV scaffolding was designed to expose — it is a success of the *methodology*, even though it is a failure of the *strategy*.
+Both IS and OOS Sharpes are within a standard error of zero. The signals we extracted are statistically real but too small to be exploitable after frictions. File under 'publishable negative result'.
 
 Clusters selected by ONC: **3**. Top-MDA cluster:
 **cluster_0** (MDA = +0.0001), containing features
@@ -31,18 +31,18 @@ Clusters selected by ONC: **3**. Top-MDA cluster:
 
 ### Act I — "Is there a signal at all?"
 
-**Feynman.** — Marcos, the IS Sharpe is +0.212; OOS is
--0.094. Before you reach for the DSR, tell me plainly:
+**Feynman.** — Marcos, the IS Sharpe is +0.079; OOS is
+-0.068. Before you reach for the DSR, tell me plainly:
 did we find an effect, or did we find a confidence interval that
 happens to lean one way?
 
 **Marcos.** — The honest answer is in the **gap**. PSR says the IS
-Sharpe is plausibly above zero with probability 1.000. That is
+Sharpe is plausibly above zero with probability 0.921. That is
 an *in-sample* statement. The DSR, now corrected for the
-5 trials we actually ran, is 0.790 — an inference about
+5 trials we actually ran, is 0.472 — an inference about
 the *true* Sharpe after we punish ourselves for the number of paths
 we walked. And the OOS Sharpe is the final referee. The spread
-between IS and OOS is **+0.31** Sharpe units, which is
+between IS and OOS is **+0.15** Sharpe units, which is
 the single most diagnostic number in this report.
 
 **Feynman.** — A gap of that magnitude tells me a physics story: if
@@ -99,8 +99,8 @@ matter). That distinction deserves its own name in the literature.
 ### Act IV — "The Random-Walk null was the right adversary"
 
 **Marcos.** — Observe: the RW null Sharpe is +0.0127 ±
-0.1776; the IS Sharpe is +0.212. The p-value of
-0.1280 measures how often a block-bootstrapped, sign-flipped
+0.1776; the IS Sharpe is +0.079. The p-value of
+0.3640 measures how often a block-bootstrapped, sign-flipped
 version of our own returns outperforms our strategy.
 
 **Feynman.** — The block-bootstrap preserves the autocorrelation
@@ -128,8 +128,8 @@ we have is:
 3. A look-ahead-safe implementation (causal SavGol, fixed-width
    FFD, purged CV, embargo, CPCV).
 
-Given our numbers — DSR = 0.790, IS/OOS gap = +0.31 —
-the honest conclusion is: this is **not alpha** — it is a textbook backtest over-fit. The right action is to shrink the feature set, or accept the signal is regime-dependent and trade only in the matching regime.
+Given our numbers — DSR = 0.472, IS/OOS gap = +0.15 —
+the honest conclusion is: this is a clean **null result**. Publish it as a negative finding and move on — the pipeline has not been wasted, because a believable null is as scientifically valuable as a believable positive.
 
 **Feynman.** — The virtue of this pipeline is not that it finds
 alpha. It is that it is **pathologically conservative** about
