@@ -23,7 +23,13 @@ import pandas as pd
 # --------------------------------------------------------------------------
 
 def daily_volatility(close: pd.Series, span: int = 100) -> pd.Series:
-    """EWMA std of ~1-day returns, aligned to bar times (AFML 3.1)."""
+    """EWMA std of ~1-day returns, aligned to bar times (AFML 3.1).
+
+    No back-fill: the earliest observations (before we have a lookback of
+    1 day) remain NaN so they cannot silently inherit future variance —
+    `build_events` treats NaN `trgt` as "no event" via the `vol > min_ret`
+    mask.
+    """
     pos = close.index.searchsorted(close.index - pd.Timedelta(days=1))
     valid = pos > 0
     ret = pd.Series(np.nan, index=close.index)
@@ -31,7 +37,7 @@ def daily_volatility(close: pd.Series, span: int = 100) -> pd.Series:
         close.iloc[np.where(valid)[0]].values
         / close.iloc[pos[valid] - 1].values - 1.0
     )
-    return ret.ewm(span=span).std().bfill()
+    return ret.ewm(span=span).std()
 
 
 # --------------------------------------------------------------------------
