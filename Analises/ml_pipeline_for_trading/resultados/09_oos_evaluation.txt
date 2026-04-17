@@ -1,6 +1,6 @@
 ============================================================
 Stage 9 — OOS (new_data) evaluation
 ============================================================
-OOS accuracy=0.6658  f1=0.6637  logloss=0.6289
-OOS Sharpe=-0.9958
-OOS ret mean=-0.000728  std=0.011602  skew=-0.099  kurt=+2.265
+OOS accuracy=0.5001  f1=0.4592  logloss=0.6952
+OOS Sharpe=-0.0984
+OOS ret mean=-0.000044  std=0.007151  skew=+0.068  kurt=+4.130

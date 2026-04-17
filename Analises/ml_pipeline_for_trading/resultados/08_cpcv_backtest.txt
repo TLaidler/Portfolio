@@ -2,11 +2,11 @@
 Stage 8 — CPCV, Random-Walk null, DSR / PSR
 ============================================================
 CPCV splits: 15  (groups=6, test_groups=2)
-Per-split Sharpe: mean=+0.4946  std=0.5312  min=-0.4288  max=+1.1780
+Per-split Sharpe: mean=+0.2342  std=0.2448  min=-0.2034  max=+0.5919
 Reconstructed 5 full-time paths
-Path Sharpe: mean=+0.4821  std=0.2717
+Path Sharpe: mean=+0.2266  std=0.1133
 
-IS out-of-fold Sharpe: +0.4899
-RW null SR mean=+0.0105  std=0.2479  p(strategy>=null)=0.0250
+IS out-of-fold Sharpe: +0.2498
+RW null SR mean=+0.0127  std=0.1776  p(strategy>=null)=0.0820
 PSR (benchmark=0): 1.0000
-DSR (trials=5, V=0.0923): 0.9484
+DSR (trials=5, V=0.0161): 0.9616

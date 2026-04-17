@@ -27,6 +27,7 @@ class ProjectPaths:
     new_data: Path
     plots: Path
     resultados: Path
+    model: Path
 
     @classmethod
     def discover(cls, start: Path | None = None) -> "ProjectPaths":
@@ -37,9 +38,11 @@ class ProjectPaths:
             new_data=root / "new_data",
             plots=root / "plots",
             resultados=root / "resultados",
+            model=root / "model",
         )
         paths.plots.mkdir(exist_ok=True)
         paths.resultados.mkdir(exist_ok=True)
+        paths.model.mkdir(exist_ok=True)
         return paths
 
 

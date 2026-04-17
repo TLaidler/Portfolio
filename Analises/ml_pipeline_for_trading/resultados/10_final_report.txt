@@ -1,13 +1,13 @@
 ============================================================
 Stage 10 — Final report card
 ============================================================
-Sharpe (IS)         : +0.4899
-Sharpe (OOS)        : -0.9958
+Sharpe (IS)         : +0.2498
+Sharpe (OOS)        : -0.0984
 Probabilistic SR    : 1.0000
-Deflated SR         : 0.9484
-RW-null SR mean/std : +0.0105 / 0.2479
-RW-null p-value     : 0.0250
+Deflated SR         : 0.9616
+RW-null SR mean/std : +0.0127 / 0.1776
+RW-null p-value     : 0.0820
 N trials            : 5
 
 
-Total runtime: 5.0 min
+Total runtime: 10.4 min

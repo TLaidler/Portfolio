@@ -1,8 +1,8 @@
 ============================================================
 Stage 3 — Triple-Barrier labeling and Meta-Labels
 ============================================================
-IS side distribution: {0: 26506, 1: 22216, -1: 19732}
-IS events after side filter: 41,946
-IS touch counts: {'vertical': 27446, 'pt': 7538, 'sl': 6962}
-IS meta-label positive share: 0.495
-OOS events: 5,252  positive share: 0.505
+IS side distribution: {0: 52714, 1: 43012, -1: 39507}
+IS events after side filter: 82,439
+IS touch counts: {'vertical': 58966, 'pt': 12413, 'sl': 11060}
+IS meta-label positive share: 0.503
+OOS events: 10,504  positive share: 0.500
