@@ -11,38 +11,38 @@
 
 | Statistic | Value |
 |---|---|
-| Sharpe (IS, out-of-fold) | **+0.2498** |
-| Sharpe (OOS, new_data/) | **-0.0984** |
-| Probabilistic SR | 1.0000 |
-| Deflated SR (N trials = 5) | **0.9616** |
+| Sharpe (IS, out-of-fold) | **+0.2119** |
+| Sharpe (OOS, new_data/) | **-0.0937** |
+| Probabilistic SR | 0.9999 |
+| Deflated SR (N trials = 5) | **0.7902** |
 | Random-Walk null SR | +0.0127 ± 0.1776 |
-| p(strategy ≥ null) | **0.0820** |
-| OOS accuracy / F1 / log-loss | 0.500 / 0.459 / 0.695 |
+| p(strategy ≥ null) | **0.1280** |
+| OOS accuracy / F1 / log-loss | 0.502 / 0.464 / 0.695 |
 
 Regime detected from the IS/OOS pair: **overfit**.
 
-IS +0.25 vs OOS -0.10 — the canonical signature of backtest overfitting. The feature set plausibly over-fits the particular 2021-2025 regime and fails to generalise when the macro context flips. This is **exactly** the result the DSR/CPCV scaffolding was designed to expose — it is a success of the *methodology*, even though it is a failure of the *strategy*.
+IS +0.21 vs OOS -0.09 — the canonical signature of backtest overfitting. The feature set plausibly over-fits the particular 2021-2025 regime and fails to generalise when the macro context flips. This is **exactly** the result the DSR/CPCV scaffolding was designed to expose — it is a success of the *methodology*, even though it is a failure of the *strategy*.
 
 Clusters selected by ONC: **3**. Top-MDA cluster:
-**cluster_1** (MDA = +0.0003), containing features
+**cluster_0** (MDA = +0.0001), containing features
 `sg_velocity_51, tstat_10, tstat_20, tstat_50`.
 
 ---
 
 ### Act I — "Is there a signal at all?"
 
-**Feynman.** — Marcos, the IS Sharpe is +0.250; OOS is
--0.098. Before you reach for the DSR, tell me plainly:
+**Feynman.** — Marcos, the IS Sharpe is +0.212; OOS is
+-0.094. Before you reach for the DSR, tell me plainly:
 did we find an effect, or did we find a confidence interval that
 happens to lean one way?
 
 **Marcos.** — The honest answer is in the **gap**. PSR says the IS
 Sharpe is plausibly above zero with probability 1.000. That is
 an *in-sample* statement. The DSR, now corrected for the
-5 trials we actually ran, is 0.962 — an inference about
+5 trials we actually ran, is 0.790 — an inference about
 the *true* Sharpe after we punish ourselves for the number of paths
 we walked. And the OOS Sharpe is the final referee. The spread
-between IS and OOS is **+0.35** Sharpe units, which is
+between IS and OOS is **+0.31** Sharpe units, which is
 the single most diagnostic number in this report.
 
 **Feynman.** — A gap of that magnitude tells me a physics story: if
@@ -75,7 +75,7 @@ second question, not the first.
 
 ### Act III — "What did the clustered importance tell us?"
 
-**Feynman.** — The clustered MDA put cluster `cluster_1`
+**Feynman.** — The clustered MDA put cluster `cluster_0`
 at the top, containing `sg_velocity_51, tstat_10, tstat_20, tstat_50`. My univariate MDA on
 the earlier run had put `sg_velocity_51`, `tstat_50`, `vix_chg`,
 `tstat_20` on top. The rank is broadly consistent, and — crucially
@@ -99,8 +99,8 @@ matter). That distinction deserves its own name in the literature.
 ### Act IV — "The Random-Walk null was the right adversary"
 
 **Marcos.** — Observe: the RW null Sharpe is +0.0127 ±
-0.1776; the IS Sharpe is +0.250. The p-value of
-0.0820 measures how often a block-bootstrapped, sign-flipped
+0.1776; the IS Sharpe is +0.212. The p-value of
+0.1280 measures how often a block-bootstrapped, sign-flipped
 version of our own returns outperforms our strategy.
 
 **Feynman.** — The block-bootstrap preserves the autocorrelation
@@ -128,7 +128,7 @@ we have is:
 3. A look-ahead-safe implementation (causal SavGol, fixed-width
    FFD, purged CV, embargo, CPCV).
 
-Given our numbers — DSR = 0.962, IS/OOS gap = +0.35 —
+Given our numbers — DSR = 0.790, IS/OOS gap = +0.31 —
 the honest conclusion is: this is **not alpha** — it is a textbook backtest over-fit. The right action is to shrink the feature set, or accept the signal is regime-dependent and trade only in the matching regime.
 
 **Feynman.** — The virtue of this pipeline is not that it finds

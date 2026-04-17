@@ -149,7 +149,9 @@ class FeatureConfig:
     sg_acceleration_window: int = 5
     vol_savgol_w: int = 21
     vol_window: int = 20
-    ffd_d: float = 0.4
+    ffd_d: float = 0.3
+    ffd_presmooth_window: int = 101   # SavGol smoother before FFD (0 = off)
+    ffd_presmooth_poly: int = 3
     fear_greed_z_window: int = 5
     dxy_spread_window: int = 30
 
@@ -191,7 +193,19 @@ class FeatureBuilder:
         )
 
         # --- stationary memory-preserving price (FFD) ---
-        feats["ffd_close"] = fixed_width_frac_diff(close, d=self.cfg.ffd_d)
+        # Pre-smooth with causal SavGol before applying FFD: denoising the
+        # input *before* the long-memory operator Pareto-improves both ADF
+        # and corr(log_close) vs raw-close FFD (see experiments/ffd_vs_savgol).
+        if self.cfg.ffd_presmooth_window and self.cfg.ffd_presmooth_window > 1:
+            ffd_input = savgol_causal(
+                close,
+                window=self.cfg.ffd_presmooth_window,
+                polyorder=self.cfg.ffd_presmooth_poly,
+                deriv=0,
+            )
+        else:
+            ffd_input = close
+        feats["ffd_close"] = fixed_width_frac_diff(ffd_input, d=self.cfg.ffd_d)
 
         # --- Exogenous context ---
         if "vix" in exog:
