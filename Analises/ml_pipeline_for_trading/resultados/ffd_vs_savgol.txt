@@ -1,0 +1,31 @@
+============================================================
+Bench — FFD vs SavGol fractional derivative (RL & Caputo)
+============================================================
+n_obs = 100000  range = [2025-05-23 13:20:00+00:00, 2025-07-31 23:59:00+00:00]
+SavGol window W = 101, polyorder = 3
+
+ADF(raw log_close) = -1.178   (non-stationary baseline)
+ADF 5% critical value ≈ -2.86
+
+ADF statistic (more negative = more stationary)
+method     M1_FFD  M2a_SG_RL  M2b_SG_Caputo  M3_SG_then_FFD
+d                                                          
+0.2     -2.832073  -2.768052     -32.703824       -3.830068
+0.3     -4.131822  -3.841115     -36.481400       -5.730995
+0.4     -5.883010  -5.514566     -41.262152       -8.237672
+0.5     -8.150962  -8.125901     -46.501627      -11.346407
+0.6    -11.128761 -12.453056     -51.816715      -15.183772
+0.7    -15.251410 -20.016716     -61.005782      -20.089374
+
+Correlation with log_close (memory preservation)
+method   M1_FFD  M2a_SG_RL  M2b_SG_Caputo  M3_SG_then_FFD
+d                                                        
+0.2    0.997162   0.998687       0.043458        0.996272
+0.3    0.992039   0.996737       0.041146        0.990818
+0.4    0.981826   0.992196       0.037900        0.981792
+0.5    0.960510   0.981433       0.033765        0.967418
+0.6    0.915128   0.954749       0.029211        0.944756
+0.7    0.821409   0.885450       0.024535        0.907350
+
+CSV: C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\resultados\ffd_vs_savgol.csv
+PNG: C:\Users\thiago.cunha\OneDrive - Transfero\Documents\GitHub\Portfolio\Analises\ml_pipeline_for_trading\plots\bench_ffd_vs_savgol.png
