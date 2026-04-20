@@ -49,6 +49,26 @@ CURVE_FILES = [
 TIME_COL = 4   # tempo em segundos UTC do dia
 FLUX_COL = 9   # fluxo normalizado (valores proximos a 1.0)
 
+# -----------------------------------------------------------------------------
+# RECORTE DE CURVAS (opcional, util para isolar a ocultacao principal).
+#
+# Cada curva pode ter um intervalo (t_inicio, t_fim) em segundos UTC. Pontos
+# fora do intervalo sao descartados ANTES do plot e da predicao.
+# Use None para manter a curva inteira.
+#
+# Formas de usar:
+#   (a) Edite o dict abaixo e rode o script.
+#   (b) Coloque um breakpoint na secao [1.5] e, no Debug Console, faca:
+#           CUT_RANGES['CFHT_Wircam_Ks_cor-time'] = (23680, 23750)
+#       ou chame diretamente:
+#           time_arr, flux_arr = cut_curve(time_arr, flux_arr, 23680, 23750)
+# -----------------------------------------------------------------------------
+CUT_RANGES = {
+    # 'CFHT_Wircam_Ks_cor-time':  (23680, 23750),
+    # 'Gemini-Alopeke_Blue-r':    (23620, 23700),
+     'Gemini-Alopeke_Red-z':     (23620, 23700),
+}
+
 
 # =============================================================================
 # 2) IMPORTA O PIPELINE DE FEATURES DO MODEL_TRAINING
@@ -91,6 +111,28 @@ def read_curve(filepath, time_col=TIME_COL, flux_col=FLUX_COL,
 
 
 # =============================================================================
+# 3.1) FUNCAO PARA RECORTAR UMA CURVA POR JANELA DE TEMPO
+# =============================================================================
+def cut_curve(time_arr, flux_arr, t_start=None, t_end=None):
+    """Mantem apenas os pontos com t_start <= tempo <= t_end.
+
+    Use None em qualquer extremo para nao limitar aquele lado. Ex.:
+        cut_curve(t, f, 23680, 23750)   # janela fechada
+        cut_curve(t, f, 23680, None)    # so limita o inicio
+        cut_curve(t, f, None, 23750)    # so limita o fim
+
+    Funciona tambem como ferramenta interativa no Debug Console do VS Code
+    enquanto o script esta pausado num breakpoint.
+    """
+    mask = np.ones_like(time_arr, dtype=bool)
+    if t_start is not None:
+        mask &= time_arr >= t_start
+    if t_end is not None:
+        mask &= time_arr <= t_end
+    return time_arr[mask], flux_arr[mask]
+
+
+# =============================================================================
 # 4) LER AS TRES CURVAS DE QUAOAR
 # =============================================================================
 print("=" * 70)
@@ -109,6 +151,30 @@ for filename in CURVE_FILES:
     curves[curve_name] = (time_arr, flux_arr)
 
     print(f"  - {curve_name}: {len(time_arr)} pontos")
+
+
+# =============================================================================
+# 4.5) RECORTAR CURVAS (ponto ideal para breakpoint)
+# =============================================================================
+# Coloque um breakpoint na linha abaixo para:
+#   - inspecionar/modificar CUT_RANGES no Debug Console
+#   - ou chamar cut_curve(time, flux, t_ini, t_fim) manualmente
+# Depois retome a execucao (F5) e o restante do script usa as curvas recortadas.
+print("\n[1.5] Aplicando recortes de curvas (se configurados)...")
+
+for curve_name in list(curves.keys()):
+    time_arr, flux_arr = curves[curve_name]
+    cut = CUT_RANGES.get(curve_name)
+
+    if cut is not None:
+        t_start, t_end = cut
+        n_before = len(time_arr)
+        time_arr, flux_arr = cut_curve(time_arr, flux_arr, t_start, t_end)
+        curves[curve_name] = (time_arr, flux_arr)
+        print(f"  - {curve_name}: {n_before} -> {len(time_arr)} pontos "
+              f"(janela {t_start}..{t_end})")
+    else:
+        print(f"  - {curve_name}: sem recorte ({len(time_arr)} pontos)")
 
 
 # =============================================================================
