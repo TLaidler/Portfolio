@@ -60,7 +60,7 @@ As limitações deste trabalho devem ser explicitadas para contextualizar adequa
 
 	\item \textbf{\textit{Split} único por experimento:} cada experimento utiliza uma única partição treino/teste. A implementação de validação cruzada estratificada (Seção~5.\ref{sec:cross_validation}) mitiga parcialmente essa limitação; uma validação cruzada repetida com múltiplas sementes fortaleceria as conclusões.
 
-	\item \textbf{Ausência de validação em catálogos externos:} os dados provêm do catálogo do Grupo do Rio (VizieR); a generalização para outros catálogos, condições de observação ou classes de objetos ocultantes não foi avaliada sistematicamente.
+	\item \textbf{Ausência de validação em catálogos externos:} as curvas reais utilizadas neste trabalho provêm de duas fontes distintas: o catálogo \texttt{B/occ/asteroid} do VizieR - agregador público que reúne campanhas independentes envolvendo múltiplos observadores, telescópios e corpos - e o banco do Grupo do Rio (campanhas específicas de Umbriel e Chiron). Embora a heterogeneidade interna do VizieR já garanta diversidade observacional considerável, a generalização da \textit{pipeline} para curvas oriundas de outros agregadores ou de levantamentos específicos não foi avaliada sistematicamente. Apesar disso, o script utilizado para popular o banco SQL com dados do Grupo do Rio serve para qualquer tipo de curvas de luz, contanto que estejam em formato \texttt{.dat}.
 
 	\item \textbf{Hiperparâmetros fixos:} os hiperparâmetros dos modelos foram definidos manualmente com base em valores recomendados pela literatura; não foi realizada busca em grade ou otimização bayesiana.
 
