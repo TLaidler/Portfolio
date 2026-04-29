@@ -1,0 +1,62 @@
+:root {
+  --bg-base: #F8FAFC;
+  --bg-card: #FFFFFF;
+}
+.dark {
+  --bg-base: #0B1220;
+  --bg-card: #111827;
+}
+
+.num-tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #F1F5F9 0%, #F8FAFC 50%, #F1F5F9 100%);
+  background-size: 1000px 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+.dark .shimmer {
+  background: linear-gradient(90deg, #1F2937 0%, #111827 50%, #1F2937 100%);
+  background-size: 1000px 100%;
+}
+
+.kpi-figure {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #0E9F6E;
+  outline-offset: 2px;
+}
+
+.scroll-snap-row {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-snap-row > * {
+  scroll-snap-align: start;
+}
+
+table.amort tbody tr:nth-child(even) {
+  background-color: rgba(241, 245, 249, 0.4);
+}
+.dark table.amort tbody tr:nth-child(even) {
+  background-color: rgba(31, 41, 55, 0.3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
