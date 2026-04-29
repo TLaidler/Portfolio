@@ -6,6 +6,15 @@ Simulador Flask de financiamento imobiliário (SAC e PRICE) com integração BAC
 
 ## Setup
 
+### Início rápido (1 clique)
+
+- **Windows:** dê duplo-clique em `start.bat`.
+- **Linux / macOS:** `./start.sh` no terminal.
+
+Os scripts criam o `.venv`, instalam dependências, copiam `.env.example` → `.env`, sobem o Flask e abrem o navegador em `http://127.0.0.1:5000/`.
+
+### Setup manual
+
 ```bash
 python -m venv .venv
 .venv\Scripts\activate          # Windows
@@ -17,8 +26,6 @@ copy .env.example .env          # Windows
 
 python run.py
 ```
-
-App disponível em `http://127.0.0.1:5000/`.
 
 ## Páginas
 
