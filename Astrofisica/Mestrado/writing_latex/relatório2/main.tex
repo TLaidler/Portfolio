@@ -225,15 +225,15 @@ A metodologia consolidou-se em uma \textit{pipeline} de cinco etapas sucessivas,
 
 \begin{table}[!h]
 \centering
-\caption{Composição do \textit{dataset} utilizado nos experimentos.}
+\caption{Composição do \textit{dataset} utilizado nos experimentos. Apenas as linhas marcadas com $\dagger$ correspondem a curvas fisicamente armazenadas no banco SQL; as demais são geradas pela \textit{pipeline} em memória, no momento da montagem do conjunto de treino/teste.}
 \label{tab:dataset_fonte}
 \begin{tabular}{lc}
 \toprule
 \textbf{Fonte} & \textbf{Quantidade} \\
 \midrule
-Curvas positivas do banco (VizieR + Grupo do Rio) & 802 \\
+Curvas positivas do banco (VizieR + Grupo do Rio)$^\dagger$ & 802 \\
+Curvas negativas do banco$^\dagger$ & 3 \\
 Negativos artificiais (recorte manual de positivas) & 186 \\
-Curvas negativas do banco & 3 \\
 Curvas sintéticas negativas (simulador físico) & 702 \\
 \midrule
 \textbf{Total} & \textbf{1693} \\
@@ -346,11 +346,9 @@ Como verificação complementar, as 67 curvas do banco com $\mathrm{Occ\_SNR\_di
 
 \subsection{Dificuldades encontradas e suas soluções}
 
-\textbf{Desbalanceamento residual e validade do simulador.} O \textit{dataset} final equilibra as classes (802 positivas vs.\ 891 negativas), mas a maioria das negativas é sintética ou obtida por recorte. O Experimento 7, no qual o teste é restrito a curvas exclusivamente reais, mostra queda apenas marginal de desempenho (F1 cai de 0,9906 para 0,9821), sugerindo que o simulador físico produz curvas suficientemente fiéis para treinamento. Ainda assim, a generalização para um cenário puramente observacional permanece como limitação reconhecida.
+\textbf{Desbalanceamento dos dados disponíveis.} A principal dificuldade enfrentada no período foi o forte desbalanceamento das fontes de curvas reais: o catálogo \texttt{B/occ/asteroid} do VizieR e o banco do Grupo do Rio reúnem majoritariamente eventos positivos (curvas com ocultação detectada), com apenas 3 negativas reais disponíveis. Esse desequilíbrio inviabilizaria o treinamento direto dos modelos, pois um classificador poderia atingir alta acurácia simplesmente predizendo sempre a classe majoritária. A solução adotada foi uma estratégia combinada de \textit{data augmentation}: (i)~recorte manual de segmentos sem ocultação a partir das próprias curvas positivas (com revisão humana e exclusão da positiva original do conjunto de treino, evitando vazamento), gerando 186 negativos artificiais; e (ii)~incorporação de 702 curvas sintéticas negativas geradas pelo simulador físico de \cite{Simulator}, que reproduz ruído fotométrico, cintilação atmosférica e geometria observacional. O Experimento 7, no qual o teste é restrito a curvas exclusivamente reais, mostra queda apenas marginal de desempenho (F1 de 0,9906 para 0,9821), sugerindo que o simulador produz curvas suficientemente fiéis para treinamento. Ainda assim, a validação em um cenário puramente observacional, com negativas reais em volume comparável às positivas, permanece como limitação reconhecida.
 
 \textbf{Predominância de curvas com ocultações bem definidas.} O elevado desempenho dos modelos reflete, em parte, o fato de que a maioria das curvas no \textit{dataset} apresenta ocultações com alto SNR e queda pronunciada. Para curvas marginais (baixo SNR, eventos rasantes), a tarefa é substancialmente mais difícil e o desempenho real ainda não foi avaliado sistematicamente. A construção de um subconjunto de teste exclusivamente difícil é uma das principais direções de trabalho futuro.
-
-\textbf{Necessidade de coronagrafia digital em alguns casos.} Durante a inserção das curvas do Grupo do Rio, observou-se que a fotometria de Umbriel exigia tratamento especial devido ao brilho intenso de Urano, motivando a aplicação de coronagrafia digital previamente à fotometria diferencial \citep{Assafin2023}. Esse procedimento foi feito no nível da redução fotométrica, anterior à \textit{pipeline} aqui apresentada.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   PRÓXIMAS ETAPAS   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
