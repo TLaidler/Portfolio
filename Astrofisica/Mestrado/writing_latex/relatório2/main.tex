@@ -140,7 +140,7 @@ Os objetivos principais do projeto, conforme estabelecidos no primeiro relatóri
     \item Desenvolver uma ferramenta automatizada de classificação, capaz de identificar quais curvas apresentam ocultações reais, auxiliando astrônomos na triagem e análise dos dados.
 \end{itemize}
 
-Ambos os objetivos foram atingidos. O banco de dados relacional em SQLite contém atualmente 1693 curvas de luz catalogadas, das quais 802 são positivas reais (provenientes do catálogo \texttt{B/occ/asteroid} do VizieR e do banco do Grupo do Rio), 186 são negativos artificiais obtidos por recorte manual de segmentos sem ocultação a partir de curvas positivas, 3 são negativas reais e 702 são curvas sintéticas geradas pelo simulador físico de \cite{Simulator}. A \textit{pipeline} de classificação foi implementada em Python e está documentada para reprodução.
+Ambos os objetivos foram atingidos. O banco de dados relacional em SQLite armazena as curvas de luz \textbf{originais} obtidas das fontes externas (catálogo \texttt{B/occ/asteroid} do VizieR e banco do Grupo do Rio), totalizando 802 curvas positivas e 3 negativas reais. A partir dessas curvas, o \textit{dataset} de treino/teste é montado em memória pela \textit{pipeline}, incorporando 186 negativos artificiais (recortados manualmente de segmentos sem ocultação das próprias positivas) e 702 curvas sintéticas negativas geradas pelo simulador físico de \cite{Simulator}. O conjunto final usado nos experimentos contém, portanto, 1693 amostras. A \textit{pipeline} de classificação foi implementada em Python e está documentada para reprodução.
 
 \subsection{Resumo dos Resultados}
 
@@ -169,8 +169,8 @@ Ano/Semestre & Disciplina & Conceito & Créditos \\
 \subsection{Atividades}
 
 \begin{itemize}
-    \item Coautoria no artigo \cite{Umbriel2020}, referente à campanha de ocultação de Umbriel observada em 2020.
     \item Continuidade do desenvolvimento da \textit{pipeline} em Python, com versionamento em repositório Git e documentação completa para reprodução.
+    \item Escrita da tese.
 \end{itemize}
 
 \subsection{Exame de Proficiência}
@@ -221,7 +221,7 @@ A metodologia consolidou-se em uma \textit{pipeline} de cinco etapas sucessivas,
 
 \textbf{Etapa 2 -- Acesso e normalização.} Um módulo dedicado consulta o banco, filtra curvas por critérios (objeto, data, tipo) e aplica a normalização do fluxo. A estratégia adotada divide a série temporal em quatro segmentos contíguos (quartis temporais), seleciona as duas médias mais altas como representativas do nível fora da ocultação e usa sua média como \textit{baseline}. O fluxo é então dividido por esse \textit{baseline}, fazendo com que curvas sem evento permaneçam próximas de 1 e curvas com evento exibam quedas abaixo de 1.
 
-\textbf{Etapa 3 -- Construção do conjunto de dados.} As curvas disponíveis são reunidas; segmentos sem ocultação são recortados manualmente de curvas positivas (com revisão humana e exclusão da positiva original do conjunto de treino para evitar vazamento); curvas sintéticas negativas geradas pelo simulador físico de \cite{Simulator} são incorporadas. O \textit{dataset} final reúne 1693 amostras (Tabela~\ref{tab:dataset_fonte}).
+\textbf{Etapa 3 -- Construção do conjunto de dados.} As curvas armazenadas no banco são lidas e o \textit{dataset} de treino/teste é montado \textbf{em memória}, fora do banco SQL: segmentos sem ocultação são recortados manualmente de curvas positivas (com revisão humana e exclusão da positiva original do conjunto de treino para evitar vazamento); em seguida, curvas sintéticas negativas geradas pelo simulador físico de \cite{Simulator} são incorporadas. O \textit{dataset} final reúne 1693 amostras (Tabela~\ref{tab:dataset_fonte}).
 
 \begin{table}[!h]
 \centering
