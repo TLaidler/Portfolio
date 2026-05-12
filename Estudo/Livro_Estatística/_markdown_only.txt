@@ -515,11 +515,52 @@ $P = \frac{N! p^n (1-p)^{N-n}}{n!(N - n)!}$
 
 Probabilidade de um evento ocorrer n vezes em N tentativas
 --- MD CELL 64 ---
-    (3) Modelo Poisson: basicamente o modelo binomial no limite em que N vezes vai ao infinito e a probabilidade de cada vez vai à zero, de forma que a média P*N vira uma constate.
-
+(3) Modelo Poisson: basicamente o modelo binomial no limite em que N vezes vai ao infinito e a probabilidade de cada vez vai à zero, de forma que a média P*N vira uma constate.
 N $\longrightarrow  \infty $ e $P*N \longrightarrow \lambda$ tal que $\lambda$ é uma constante.  
 
-Irei manipular o P da binomial rapidamente, multiplicando tudo por (N/N) tal que:
+Esse modelo nasceu em 1837, quando o matemático francês Siméon Denis Poisson publicou um livro sobre julgamentos criminais. Ele estava tentando entender uma pergunta aparentemente prosaica: dado que eventos raros acontecem aleatoriamente ao longo do tempo — condenações injustas, mortes por acidente, decaimentos radioativos que ainda nem haviam sido descobertos — qual a probabilidade de observarmos exatamente $k$ deles num dado intervalo?
+
+O resultado dele ficou esquecido por décadas. Foi resgatado em 1898 pelo estatístico russo-alemão Ladislaus Bortkiewicz, que aplicou a fórmula a um dos conjuntos de dados mais bizarros já estudados: o número de soldados prussianos mortos por coices de cavalo por ano, por corpo de exército, ao longo de 20 anos. A distribuição de Poisson previu os dados com precisão assustadora. Desde então, ela aparece em todo lugar — de chamadas telefônicas a mutações genéticas, de partículas radioativas a goleiros levando frango.
+
+> Esquece a fórmula por um segundo. A distribuição de Poisson responde a uma pergunta muito específica:
+>
+> *Se eventos acontecem de forma aleatória e independente ao longo do tempo (ou do espaço), a uma taxa média conhecida, quantos eventos vou observar num intervalo fixo?*
+
+Note os três ingredientes:
+
+1. **Eventos discretos** — você conta eventos inteiros (0, 1, 2, 3, ...). Não faz sentido "2,3 chamadas telefônicas".
+2. **Independência** — um evento ocorrer não afeta a probabilidade do próximo. Ligações no *call center* não conspiram entre si.
+3. **Taxa constante** — em média, a frequência é estável no intervalo considerado. Chamamos isso de $\lambda$ (lambda), a taxa.
+
+> Se esses três ingredientes valem, Poisson é a *única* resposta possível. Não é uma escolha de modelagem — é uma consequência matemática inevitável. É como o Teorema Central do Limite para soma de variáveis: dadas as condições, o resultado emerge.
+
+##### A fórmula
+
+Se $X$ é o número de eventos num intervalo, com taxa média $\lambda$, então:
+
+$$P(X = k) = \dfrac{\lambda^{k}\, e^{-\lambda}}{k!}, \quad k = 0, 1, 2, \ldots$$
+
+##### Propriedades notáveis
+
+| Propriedade | Valor |
+| --- | --- |
+| Média $E[X]$ | $\lambda$ |
+| Variância $\text{Var}(X)$ | $\lambda$ |
+| Suporte | $\{0, 1, 2, \ldots\}$ |
+
+> Repare numa coisa estranhíssima (e... bonita, vai): a **média é igual à variância**. Isso é uma *assinatura única* da Poisson. Se você medir um processo no mundo real e encontrar média $\approx$ variância, é um sinal forte de que Poisson está em jogo. Se a variância é muito maior que a média, você tem **overdispersion** — sintoma de que algum dos três ingredientes acima foi violado (tipicamente a independência ou a taxa constante), e nesse caso modelos como a binomial negativa costumam encaixar melhor.
+
+##### De onde ela vem? (a derivação física)
+
+Imagine um intervalo de tempo $[0, T]$. Divida-o em $N$ subintervalos minúsculos de tamanho $T/N$. Em cada subintervalo, ou acontece um evento (com probabilidade $p$) ou não — exatamente o experimento de Bernoulli que vimos antes. Então o número total de eventos no intervalo é uma **Binomial**$(N, p)$, com taxa esperada $\lambda = Np$.
+
+A sacada é fazer $N \to \infty$ e $p \to 0$ *mantendo* $\lambda = Np$ fixo. O limite da Binomial, nessa configuração, é exatamente a Poisson:
+
+$$\lim_{N \to \infty} \binom{N}{k} p^{k}(1-p)^{N-k} = \dfrac{\lambda^{k}\, e^{-\lambda}}{k!}$$
+
+A seguir, vamos fazer essa conta passo a passo. Manterei a notação do material — $N$ para o número de tentativas, $n$ para o número de sucessos observados ($k$ na fórmula acima) e $P$ para a probabilidade individual:
+
+Se $N \longrightarrow \infty$ e $P \cdot N \longrightarrow \lambda$ tal que $\lambda$ é uma constante, podemos manipular o P da binomial rapidamente, multiplicando tudo por (N/N) tal que:
 
 $P = \frac{N!}{n!(N-n)!} * p^n (\frac{N}{N})^n *(1-\frac{N}{N}p)^{N-n}$
 
@@ -541,6 +582,8 @@ $P = [1(1-1/N)...(1-(n+1)/N)]\frac{1}{n!} \lambda^{n} (1 - \lambda/N)^{N-n}$
 $P \longrightarrow 1*\frac{1}{n!}\lambda^{n}e^{-\lambda}$.
 
 Sendo esta a equação que define a distribuição de Poisson.
+
+> É por isso que Poisson é chamada de "**lei dos eventos raros**". Ela é o limite de muitas tentativas independentes, cada uma com probabilidade minúscula de sucesso, com taxa total estável — o lugar onde o "discreto" e o "raro" se encontram. E é também por isso que a aparição da Poisson em domínios tão diversos (decaimento radioativo, chamadas telefônicas, mutações por base de DNA por replicação, coices de cavalo no exército prussiano) não é coincidência: todos esses processos satisfazem aproximadamente os três ingredientes que listamos no início — discretos, independentes, taxa estável — e, portanto, *têm* que cair na mesma distribuição.
 --- MD CELL 71 ---
  - E se fizermos uma distribuição randômica?
 --- MD CELL 73 ---
