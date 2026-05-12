@@ -4,14 +4,15 @@
 
 _Thiago Laidler Vidal Cunha_
 --- MD CELL 2 ---
-## Planejamento 
+## Planejamento
 
-    1 - Métodos científico 
-    2 - Cuidado com estatística descritiva e descrições enganosas 
-    3 - Probabilidade Básica + Bayes + problemas com probabilidade 
+    1 - Métodos científico
+    2 - Cuidado com estatística descritiva e descrições enganosas
+    3 - Probabilidade Básica + Bayes + problemas com probabilidade
     4 - Distribuições + teorema do limite central
     5 - Correlações + Métodos
     6 - Como modelar dados e estimar parâmetros. (Regressão linear, Chi quadrado e Monte Carlo)
+    7 - Teoria de Filas — uma introdução (porta de entrada para um próximo material)
 --- MD CELL 3 ---
 # 1)
 ## O método científico 
@@ -1191,6 +1192,133 @@ A solução se faz em simular 10.000 cenários da carteira com 5 ações nos pr�
 Iremos assumir que a distribuição de retornos é uma distribuição normal multivariada. Basicamente iremos pegar a média de retorno de cada ação e somar valores aleatórios com base no quanto flutuou no ultimo ano. No entanto, cada vetor_retorno de cada ação é correlacionado uma com as outras. Isso significa que nossos valores aleatórios precisam respeitar essa correlação, para que a previsão faça sentido (por isso utilizamos a matriz **L**).
 --- MD CELL 206 ---
 A partir dessas métricas, é possível calcular VAR da carteira para diferentes intervalos de confiança e medir se o risco que iremos correr é compatível com o que aguentamos perder. Esta é só uma das utilidades do Monte Carlo.
+--- MD CELL 210 ---
+# 7)
+## Teoria de Filas — uma introdução
+
+Até aqui usamos estatística para *descrever* dados, *inferir* parâmetros e *modelar* relações. Há, no entanto, um quarto uso bastante importante e menos explorado em livros introdutórios: usá-la para *operar* sistemas que envolvem espera. Filas estão em todo lugar — call centers, prontos-socorros, caixas de banco, servidores web, controle de tráfego aéreo, e até em mesas de operações de mercado. A teoria que as descreve nasceu, mais uma vez, de um problema prático e barulhento.
+
+> Esta seção é uma **porta de entrada**, não um tratamento completo. Pretendo escrever um material complementar dedicado à teoria de filas — aqui ficam os fundamentos suficientes para que o leitor reconheça o esqueleto da teoria, conecte com tudo que já vimos sobre Poisson, e saiba diagnosticar (ainda que de longe) por que sistemas reais falham onde falham.
+--- MD CELL 211 ---
+### Erlang e o problema da Copenhagen Telephone Company
+
+No início do século XX, a Copenhagen Telephone Company tinha um problema concreto e caro: quantas linhas instalar para atender os clientes? Linhas demais desperdiçavam capital em equipamento ocioso; linhas de menos derrubavam ligações.
+
+Em 1909, um engenheiro dinamarquês chamado **Agner Krarup Erlang** publicou um artigo modesto intitulado *"A Teoria das Probabilidades e Conversas Telefônicas"*. Ele percebeu duas coisas:
+
+1. Chamadas chegavam **aleatoriamente, independentemente, a uma taxa estável** — um processo de Poisson (exatamente o que estudamos no Cap. 4).
+2. A duração das chamadas era **memoryless** — exponencial.
+
+Dessas duas observações simples, ele construiu toda a teoria das filas. Hoje, a unidade de tráfego telefônico se chama *Erlang* em sua homenagem; a linguagem de programação Erlang (criada pela Ericsson nos anos 80 para telecomunicações) leva o nome dele; e toda vez que você espera numa requisição HTTP, num caixa de banco ou num pronto-socorro, está dentro do modelo que ele inventou para uma companhia telefônica há mais de um século.
+--- MD CELL 212 ---
+### Fechando o loop: Poisson $\Leftrightarrow$ Exponencial
+
+Vamos amarrar um ponto que ficou em aberto no Cap. 4. Mostramos lá que a **Poisson** conta o *número de eventos* num intervalo. Mas, e o *tempo entre eventos* — em que distribuição ele cai?
+
+Se eventos chegam a uma taxa $\lambda$ por unidade de tempo, então o tempo $T$ até o próximo evento satisfaz:
+
+$$P(T > t) = P(\text{nenhum evento em } [0, t]) = P(N(t) = 0) = \dfrac{(\lambda t)^0 e^{-\lambda t}}{0!} = e^{-\lambda t}$$
+
+Logo $P(T \leq t) = 1 - e^{-\lambda t}$, que é exatamente a CDF da **distribuição exponencial** com taxa $\lambda$ (e média $1/\lambda$). Em palavras:
+
+> **Contar eventos pela Poisson é o mesmo que cronometrar intervalos pela exponencial.** São duas faces do mesmo processo, olhadas de dois ângulos.
+
+E a exponencial carrega uma propriedade quase chocante, chamada **memoryless**:
+
+$$P(T > s + t \mid T > s) = P(T > t)$$
+
+Tradução: se você está esperando o próximo evento e já esperou $s$ minutos, a distribuição do tempo *adicional* que vai esperar é exatamente igual à de quando começou. O sistema **não tem memória** do quanto você já esperou.
+
+> Pense num átomo de urânio. Cada um que sobreviveu até hoje tem a *mesma* expectativa de vida que tinha quando o planeta se formou — o átomo não "envelheceu". O mesmo vale para chamadas chegando num call center não-saturado: o relógio efetivamente reinicia a cada instante.
+
+E aqui está um fato que vale gravar: **a exponencial é a única distribuição contínua com a propriedade memoryless**. Se você quer um processo em que os tempos entre eventos sejam i.i.d. e sem memória, você é matematicamente *forçado* a usar exponencial. Não tem escolha.
+--- MD CELL 213 ---
+### A fila mais simples — M/M/1
+
+Filas se classificam por uma notação compacta chamada **notação de Kendall**: $A/S/c$, onde $A$ é a distribuição dos tempos entre chegadas, $S$ é a distribuição dos tempos de serviço, e $c$ é o número de servidores. A letra **M** significa "Markoviano" (i.e., exponencial — sem memória); **D** é determinístico; **G** é geral.
+
+A fila canônica é a **M/M/1**:
+
+- Chegadas Poisson a taxa $\lambda$
+- Serviço exponencial a taxa $\mu$
+- 1 servidor, ordem FIFO, capacidade infinita
+
+Define-se a **utilização** $\rho = \lambda/\mu$ — a fração do tempo que o servidor está ocupado. A fila só é *estável* se $\rho < 1$. Se $\lambda \geq \mu$, chega mais do que sai, e a fila cresce sem limite (faz sentido intuitivo).
+
+No regime estacionário ($\rho < 1$), o número médio de clientes no sistema (na fila + em serviço) é:
+
+$$L = \dfrac{\rho}{1 - \rho}$$
+
+E aqui está o resultado mais importante de todo o capítulo:
+
+| $\rho$ (utilização) | $L$ (clientes médios no sistema) |
+|---|---|
+| 0,50 | 1 |
+| 0,80 | 4 |
+| 0,90 | 9 |
+| 0,95 | 19 |
+| 0,99 | 99 |
+
+> **Olhe essa tabela com calma.** Conforme empurramos a utilização para perto de 100%, a fila *explode não-linearmente*. É por isso que call centers, hospitais e servidores web **não devem operar perto da capacidade nominal**. A intuição ingênua diz: "se o servidor atende 100 por segundo e chegam 99, está ótimo". A teoria das filas grita **NÃO** — você acabou de criar uma fila enorme.
+
+A razão profunda é **variabilidade**. Mesmo com taxas equilibradas, as flutuações aleatórias do processo de Poisson criam acúmulo. Quando $\rho$ é alto, o sistema não tem folga para se recuperar das flutuações, e a espera dispara.
+--- MD CELL 214 ---
+#### Exemplo concreto — dimensionando um servidor web
+
+Suponha que seu servidor processe em média 100 requisições por segundo ($\mu = 100$). O tempo médio total no sistema (espera na fila + atendimento) numa M/M/1 é $W = 1/(\mu - \lambda)$:
+
+| Carga $\lambda$ (req/s) | $\rho$ | $W$ (tempo de resposta médio) |
+|---|---|---|
+| 50 | 0,50 | 20 ms |
+| 80 | 0,80 | 50 ms |
+| 95 | 0,95 | 200 ms |
+| 99 | 0,99 | 1.000 ms |
+
+Note o salto: subir a utilização de 80% para 99% ganha apenas 19% adicionais de *throughput*, mas o tempo de resposta vai de 50 ms para 1 segundo — vinte vezes pior. É essa não-linearidade que mata SLAs em produção e derruba sistemas que pareciam "ter capacidade sobrando".
+--- MD CELL 215 ---
+### Lei de Little — o resultado mais universal
+
+Existe um teorema tão geral, tão simples e tão poderoso que parece truque mágico. É a **Lei de Little**, provada formalmente por John Little em 1961:
+
+$$\boxed{\,L = \lambda \cdot W\,}$$
+
+Em palavras: o número médio de clientes no sistema é igual à taxa de chegada multiplicada pelo tempo médio que cada cliente passa no sistema.
+
+O que torna isso espantoso é a **generalidade**: vale para *qualquer* fila estável, sob suposições mínimas. Não depende da distribuição das chegadas, nem do serviço, nem da disciplina (FIFO, LIFO, prioridades). É uma identidade quase contábil — uma lei de conservação.
+
+> **Implicação prática:** se você consegue medir duas das três quantidades, sabe a terceira *sem precisar de modelo*. É a $F = ma$ da teoria de filas: simples, universal, e te diz coisas que parecem milagre.
+
+Exemplo cotidiano: seu app tem em média 50 usuários conectados ($L$), e chegam 10 por minuto ($\lambda$). Então cada usuário fica em média $W = 50/10 = 5$ minutos. Acabou — não precisou de Poisson, não precisou de exponencial, não precisou de modelo nenhum.
+--- MD CELL 216 ---
+### As armadilhas
+
+Toda essa teoria é linda — e perigosa quando aplicada sem cuidado. Os erros mais comuns:
+
+1. **Chegadas não são Poisson na realidade.** Hora de pico em call center tem *clustering* (eventos correlacionados, campanhas de marketing). A solução é usar Poisson não-homogêneo (taxa variável no tempo) ou simulação.
+2. **Serviço não é exponencial.** Atendimento humano tem tempos mais concentrados em torno da média — não é memoryless. Modelos M/G/1 ou simulação capturam isso melhor.
+3. **Variabilidade do serviço é o assassino silencioso.** Pela fórmula de **Pollaczek-Khinchine** (caso M/G/1), dobrar a *variância* do serviço dobra a fila — independente da média. Por isso filas únicas (banco moderno) batem filas paralelas (supermercado): elas diluem variabilidade.
+4. **Abandono e impaciência.** Clientes reais saem da fila se esperam demais. Modelos com *reneging* mudam significativamente os resultados.
+5. **Confundir média com cauda.** $W$ é a espera *média*. O percentil 99 pode ser dez vezes pior. Em SLAs de produção e em UTI, você quer controlar a cauda, não a média.
+--- MD CELL 217 ---
+### Resumindo
+
+- **Processo de Poisson e exponencial** são duas faces do mesmo objeto: contagem de eventos vs. intervalos entre eles.
+- **Memoryless** é uma propriedade *única* da exponencial entre as contínuas — e é o que torna a M/M/1 matematicamente tratável.
+- **Fila M/M/1**: estável se $\rho < 1$. O número médio explode como $\rho/(1-\rho)$, não linearmente. **Nunca opere perto da capacidade nominal.**
+- **Lei de Little** ($L = \lambda W$): universal, não depende de modelo.
+- **Variabilidade é tão importante quanto capacidade.** Reduzir a variância do serviço pode ser mais eficiente do que adicionar servidores.
+--- MD CELL 218 ---
+### Para se aprofundar
+
+Esta introdução cobriu apenas a porta de entrada — o suficiente para conectar a Poisson do Cap. 4 com aplicações operacionais e diagnosticar problemas óbvios. Num próximo material complementar, pretendo explorar:
+
+- **Variantes de fila**: M/M/c (vários servidores), M/M/c/K (capacidade limitada com perdas — modelo original de Erlang!), M/G/1 com a fórmula de Pollaczek-Khinchine, G/G/1 e aproximações.
+- **Redes de filas** (*Jackson networks*): clientes que saem de uma fila e entram em outra — modelo padrão para arquiteturas de microsserviços, linhas de produção e fluxos hospitalares.
+- **Processos de Poisson não-homogêneos** e **compostos** — quando a taxa varia ao longo do dia, ou quando cada evento traz um "tamanho" (sinistros em seguradoras, ordens em mesa de mercado).
+- **Simulação de eventos discretos** como ferramenta quando a matemática fechada acaba.
+- **Aplicações específicas**: dimensionamento de *thread pools*, *autoscaling* em cloud, modelagem de UTI e ondas hospitalares, controle de tráfego aéreo, e — meu interesse particular — execução de ordens e *market making* em mesa.
+
+A intuição que Erlang teve em 1909 é redescoberta toda vez que um sistema entra em colapso a 95% de utilização e ninguém entende por quê. A matemática estava lá o tempo todo — quem conhece teoria de filas sabe **onde o sistema vai quebrar antes mesmo de medir**.
 --- MD CELL 207 ---
 ## Final
 
