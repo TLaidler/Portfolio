@@ -839,6 +839,20 @@ Se a estatística observada não cai na região crítica, *falhamos em rejeitar*
 --- MD CELL 112 ---
 O que chamamos de *p-value* é a probabilidade específica de obter um resultado no mínimo tão extremo quanto o observado caso **H0** fosse verdadeira. Repetindo, no risco de soar pedante: é $P(\text{dados extremos} \mid H_0)$, não $P(H_0 \mid \text{dados})$.
 
+##### Intervalos de Confiança — o irmão pragmático do teste de hipótese
+
+Antes de continuarmos com os testes, vale apresentar uma ferramenta intimamente relacionada e, em muitos casos, mais informativa: o **intervalo de confiança** (IC). Em vez de respondermos "rejeito H0 ou não?" — uma decisão binária —, o intervalo de confiança nos entrega um *range* plausível para o parâmetro que estamos estimando.
+
+A forma mais comum, para a média de uma variável normal com variância conhecida, é:
+
+$IC_{95\%}(\mu) = \bar{X} \pm 1{,}96 \cdot \dfrac{\sigma}{\sqrt{n}}$
+
+(O 1,96 vem do fato de que 95% da massa da Normal padrão fica entre $-1{,}96$ e $+1{,}96$.) Para amostras pequenas e $\sigma$ desconhecido, troca-se a Normal pela t de Student e o $\sigma$ pelo desvio amostral $s$.
+
+> **Cuidado interpretativo (de novo).** A frase correta é "*construímos um procedimento tal que, se repetíssemos o experimento muitas vezes, 95% dos intervalos construídos dessa forma conteriam o parâmetro verdadeiro*". A frase **errada** (e tentadora) é "*há 95% de chance do parâmetro estar neste intervalo*" — essa interpretação só seria válida em estatística bayesiana, com um *prior* explícito (e nesse caso o objeto se chamaria *intervalo de credibilidade*, não de confiança). A diferença é sutil mas importante: o parâmetro é fixo (embora desconhecido); o intervalo é a variável aleatória.
+
+**Por que isso costuma ser mais informativo que um teste?** Porque um IC carrega simultaneamente: (i) o ponto estimado, (ii) a precisão da estimativa (largura do intervalo) e (iii) o teste de hipóteses correspondente — se o valor sob H0 (digamos, zero) não está dentro do IC de 95%, então rejeitamos H0 ao nível 5%. Você ganha três coisas pelo preço de uma.
+
 No nosso caso, a probabilidade das estrelas A e B da primeira observação não fazerem parte da mesma distribuição será:
 --- MD CELL 114 ---
  - Fazendo para os dados coletados na segunda observação (se são, de fato, as mesmas estrelas, teremos uma correlação fraca entre elas também).
@@ -925,7 +939,7 @@ $D = \frac{\sum_{j=1}^{N} (A_j - \bar A)^2}{N}$
 Tal desvio é o que chamamos de *variância* anteriormente. Na regressão iremos querer minimizar este valor. 
 Perceba que em alguns livros teremos a variância abaixo:
 
-$var(x) = \frac{\sum_{i = 1}^{n} (x_{i} - \tilde{x})^{2}}{n-1}$
+$\text{var}(x) = \dfrac{\sum_{i=1}^{n} (x_{i} - \bar{x})^{2}}{n-1}$
 
 Quando estamos tratando de dados, é preciso diferenciar o que seriam os parâmetros da nossa população e quais os parâmetros medidos da nossa amostra. Uma população terá média e variância tais que a média é $\bar A = \frac{A_{total}}{N}$ e variância $V = \frac{\sum_{j=1}^{N} (A_j - \bar A)^2}{N}$. No entanto, quando se trata das amostras, é necessário levar em conta que algumas podem estar enviesadas de forma que suas médias se afastem muito da média da população. Devido a esse comportamento, é preferível, em larga escala, calcular o desvio dividindo por um numero ligeiramente menor do que o tamanho da amostra, no caso a variância fica dividindo por $(n-1)$ (sendo **N** a quantidade de elementos da população e **n** a quantidade de elementos da amostra). Isso pois a variância, no fim, acaba ficando maior e, portanto, mais segura.
 
@@ -945,15 +959,33 @@ Em vez disso, os pesquisadores britânicos coletaram detalhados dados longitudin
 
 A **análise de regressão** é a ferramenta estatística que nos ajuda a lidar com esse desafio. Especificamente, a análise de regressão nos permite quantificar a relação entre uma variável específica e um resultado que nos interessa enquanto *controlamos outros fatores*. Ou seja, podemos isolar o efeito de uma variável, como ter certo tipo de emprego, enquanto mantemos os efeitos das outras variáveis constantes. Os estudos WhiteHall usaram análise de regressão para medir os impactos sobre a saúde que o baixo controle no emprego tem entre pessoas que são similares em outros aspectos, como fumar. 
 
-A maioria dos estudos os quais você lê nos jornais é baseada em análise de regressão. E agora veremos como ela funciona e quais os métodos mais utilizados. Quando *feita adequadamente*, a análise de regressão pode nos *ajudar a estimar* algum efeito que afete nossos dados separadamente de outros efeitos. 
+A maioria dos estudos os quais você lê nos jornais é baseada em análise de regressão. E agora veremos como ela funciona e quais os métodos mais utilizados. Quando *feita adequadamente*, a análise de regressão pode nos *ajudar a estimar* algum efeito que afete nossos dados separadamente de outros efeitos.
 > *Atenção às palavras destacadas*.
+
+> **Aviso importante: correlação $\neq$ causalidade.** O estudo Whitehall é justamente um exemplo *observacional* — não experimental. Por mais sofisticado que seja o modelo, ele só consegue medir *associações* (ajustadas por covariáveis observadas). Causalidade exige algo mais: ou um experimento randomizado, ou suposições explícitas sobre o mecanismo gerador dos dados (variáveis instrumentais, regressão descontínua, *difference-in-differences*, modelos causais à la Pearl). Sem isso, três armadilhas espreitam qualquer regressão:
+>
+> 1. **Confundidores não-observados** — alguma variável que afeta tanto a explicativa quanto a resposta, e que você não mediu. Exemplo: nível de educação afeta tanto tipo de emprego quanto saúde, e se você não controla por isso, o "efeito do controle no emprego" capta também o efeito da educação.
+> 2. **Causalidade reversa** — talvez não seja o trabalho de baixo controle que cause estresse, mas pessoas estressadas (por outros motivos) que acabem em trabalhos de baixo controle.
+> 3. **Viés de seleção** — quem entra na amostra não é representativo da população alvo.
+>
+> Pearl, em *The Book of Why* (2018), e Imbens & Rubin, em *Causal Inference for Statistics, Social and Biomedical Sciences* (2015), são duas referências essenciais para quem quer ir além de "encontrei um $p < 0{,}05$, logo X causa Y".
 --- MD CELL 139 ---
 Em essência, a análise de regressão busca encontrar o 'melhor encaixe' para uma relação linear entre duas variáveis. Por exemplo, se pudermos plotar a relação altura e peso de uma amostra da população brasileira, veriamos que pessoas mais altas tenderiam a pesar mais - embora, obviamente, não seja sempre o caso. O padrão descrito *aproximadamente* no plot seria o de uma linha reta. 
 --- MD CELL 142 ---
 Muitas retas são possíveis e amplamente consistentes com os dados. Mas como sabermos qual a melhor reta para esses dados? 
 A análise de regressão usa tipicamente uma metodologia chamada **mínimos quadrados ordinários** (MQO). Esse método encaixa a reta que minimiza a soma dos residuais elevados ao quadrado. Cada observação nos nossos dados de altura e peso tem um residual, que é a distância vertical a partir da reta de regressão, exceto para aquelas observações que se situam diretamente em cima da reta, para as quais o residual vale zero. Quanto maior a soma geral dos residuais, pior é o encaixe da reta. 
 --- MD CELL 146 ---
-Essa reta é conhecida como equação de regressão e assume a seguinte forma: y = ax + b, onde y é o peso em quilos e **b** é a intersecção da reta no eixo y (x = 0) e **a** é a inclinação da reta (descreve a melhor relação linear entre altura e peso nessa amostra). 
+Essa reta é conhecida como equação de regressão e assume a seguinte forma: y = ax + b, onde y é o peso em quilos e **b** é a intersecção da reta no eixo y (x = 0) e **a** é a inclinação da reta (descreve a melhor relação linear entre altura e peso nessa amostra).
+
+> **Pressupostos do MQO (Gauss-Markov), que costumam ser deixados na entrelinha:** o estimador de MQO é o "melhor" (de menor variância dentre os lineares e não-viesados) apenas se uma série de condições for satisfeita. São elas:
+>
+> 1. **Linearidade** — a relação entre $x$ e $y$ é, de fato, linear nos parâmetros. Se for, por exemplo, exponencial, o ajuste linear será viesado por construção.
+> 2. **Exogeneidade** — $E[\epsilon \mid X] = 0$. Os resíduos não devem carregar informação sobre $X$. Se carregarem (caso típico de variável omitida), o estimador é viesado.
+> 3. **Homocedasticidade** — a variância dos resíduos é constante ao longo de $X$. Se a variância cresce com $X$ (heterocedasticidade), o estimador continua não-viesado, mas a inferência sobre seus erros-padrão fica errada.
+> 4. **Independência dos resíduos** — sem autocorrelação. Particularmente problemático em séries temporais.
+> 5. **Em regressão múltipla: não-multicolinearidade severa** — variáveis explicativas não podem ser combinações lineares quase-perfeitas umas das outras (senão a matriz de design fica quase singular e os coeficientes ficam instáveis).
+>
+> Quando se acrescenta a hipótese de que $\epsilon \sim \mathcal{N}(0, \sigma^2)$, ganhamos as distribuições nominais dos coeficientes (t de Student) — necessárias para construir IC e testes. O cuidado a desenvolver é o de sempre olhar o **gráfico de resíduos** (resíduos vs. $\hat{y}$, e Q-Q plot) antes de confiar em um $p$-valor de coeficiente. Eu não conheço nenhum estatístico sério que pule essa etapa.
 --- MD CELL 148 ---
 >Perceba que o plot dos resíduos não parece fazer muito sentido. No entanto, ela ganha formas mais específicas quando nosso ajuste é piorado. Vejamos o exemplo de uma função seno abaixo.
 --- MD CELL 153 ---
@@ -1082,7 +1114,15 @@ O método Monte Carlo é amplamente utilizado em simulações numéricas, cálcu
 --- MD CELL 191 ---
 Lembremos formas diferentes de conseguirmos uma distribuição aleatória usando programação:
 --- MD CELL 194 ---
-Perceba que estamos sorteando numeros aleatórios que estão 'presos' em dado limite (nos casos, casosda distribuição segue uma função diferente). A partir desses dados, podemos comparar o que esperamos de uma distribuição, por exemplo, exponencial e comparar com nossos dados (digamos que temos algo que se assemelhe com uma exponencial, gostariamos de saber o quão diferente ela está de dados aleatorios que sigam a mesma distribuição). Um bom exemplo do quanto este método pode ser útil é **agulha de Buffon**, um método desenvolvido no século XVIII para o cálculo do *pi* a partir de numeros aleatórios. O método de Monte Carlo torna o exercicio trivial.
+Perceba que estamos sorteando numeros aleatórios que estão 'presos' em dado limite (nos casos, cada distribuição segue uma função diferente). A partir desses dados, podemos comparar o que esperamos de uma distribuição, por exemplo, exponencial e comparar com nossos dados (digamos que temos algo que se assemelhe com uma exponencial, gostaríamos de saber o quão diferente ela está de dados aleatórios que sigam a mesma distribuição).
+
+Um bom exemplo do quanto este método pode ser útil é a **agulha de Buffon**, um método desenvolvido no século XVIII para o cálculo do *pi* a partir de números aleatórios. O método de Monte Carlo torna o exercício trivial — e vale a pena fazer o "hello world" do método antes de irmos para o exemplo financeiro:
+
+> **Estimando $\pi$ por Monte Carlo (versão geométrica, mais simples que a agulha original):** Inscreva um círculo de raio 1 num quadrado de lado 2 (vai do $-1$ ao $+1$ nos dois eixos). A área do círculo é $\pi$; a área do quadrado é 4. Logo, a razão entre as áreas é $\pi / 4$.
+>
+> Sorteie $N$ pontos uniformemente dentro do quadrado. Conte quantos caem dentro do círculo (aqueles com $x^2 + y^2 \leq 1$). A fração de pontos dentro do círculo, para $N$ grande, converge para $\pi/4$ — então $\hat{\pi} = 4 \cdot N_{\text{dentro}} / N_{\text{total}}$.
+>
+> Esse é o esqueleto de qualquer aplicação de Monte Carlo: substituir uma quantidade analítica difícil (uma integral, uma esperança, um valor em risco) por uma média sobre amostras aleatórias. O erro decresce como $1/\sqrt{N}$ — devagar, mas independente da dimensão do problema, o que é a grande sacada do método (e o que o torna competitivo em integrais multidimensionais que métodos determinísticos não conseguem atacar).
 --- MD CELL 195 ---
 Não é surpresa perceber que o método Monte Carlo é muito útil para analisar dados do passado e predizer o futuro. Ela é usada para estimar os possíveis resultados de um evento incerto. Sendo o **acaso** o principal elemento da abordagem deste tipo de modelagem. 
 
