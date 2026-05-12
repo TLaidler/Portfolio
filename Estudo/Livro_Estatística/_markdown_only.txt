@@ -132,8 +132,24 @@ Contudo, nesse caso, **a mediana nos engana**! Se muitos pacientes não reagem a
 > Portanto, a má conduta estatística tem muito pouco a ver com a matemática malfeita. O mais importante é temos boa capacidade de julgamento e integridade.
 --- MD CELL 21 ---
 - Assimetrias e Curtose:
+
+Já discutimos a média (1° momento) e a variância (2° momento central). Faltam dois personagens importantes: o terceiro e o quarto momentos centrais — **assimetria** (*skewness*) e **curtose** (*kurtosis*) — que descrevem, respectivamente, o quanto a distribuição é torta para um lado e o quanto ela tem caudas pesadas.
+
+A **assimetria** é definida (na sua forma padronizada) como:
+
+$\text{Skew} = E\!\left[\left(\frac{X - \mu}{\sigma}\right)^3\right]$
+
+Quando ela é zero, a distribuição é simétrica (caso da Normal). Quando positiva, a cauda direita é mais longa — pense na distribuição de renda, em que poucos super-ricos puxam a cauda longe da mediana. Quando negativa, a cauda esquerda domina.
+
+A **curtose** mede o quanto há "massa nas caudas" em relação ao corpo da distribuição:
+
+$\text{Kurt} = E\!\left[\left(\frac{X - \mu}{\sigma}\right)^4\right]$
+
+A Normal tem curtose 3 (por isso é costume reportar o *excesso de curtose*, $\text{Kurt} - 3$). Distribuições com curtose maior que 3 são chamadas **leptocúrticas**: têm pico mais alto e caudas mais grossas — eventos extremos são menos raros do que uma Normal sugeriria. Isso é absolutamente central em finanças: retornos diários de ações apresentam curtose tipicamente entre 5 e 10, e essa "gordura na cauda" é, em boa parte, o que faz crises financeiras serem subestimadas por modelos que assumem normalidade (lembre-se do que falamos sobre os modelos de risco em 2008).
+
+Distribuições com curtose menor que 3 são **platicúrticas**: caudas finas, eventos extremos raros — o exemplo canônico é a distribuição uniforme.
 --- MD CELL 22 ---
-Perceba o que ocorre com a média, mediana e moda da distribuição normal dependendo da sua assimetria.
+Perceba o que ocorre com a média, mediana e moda da distribuição normal dependendo da sua assimetria: numa distribuição com assimetria positiva, a média é puxada para a direita pelos valores extremos, ficando *à direita* da mediana, que por sua vez fica à direita da moda. Numa assimetria negativa, a ordem se inverte. Numa distribuição perfeitamente simétrica, as três coincidem. É uma forma rápida de "diagnosticar" assimetria sem nem calcular o terceiro momento: basta comparar média e mediana.
 --- MD CELL 24 ---
 # 3)
 ## Probabilidade básica e Teorema de Bayes
@@ -226,11 +242,15 @@ Ora, isso faz sentido. Dado que A ocorreu, todo o espaço amostral será compost
 
 Perceba que caso A esteja contido em B, (A e B) = A, (A ou B) = B, então $P(A|B) = P(A)/P(B)$. $P(B|A) = 1$.
 
-Pela definição de probabilidade condicional temos:
+Pela definição de probabilidade condicional temos a chamada **regra do produto**:
 
-$P(A e B) = P(A|B)\times P(B) = P(B|A)\times P(A)$
+$P(A \text{ e } B) = P(A|B)\times P(B) = P(B|A)\times P(A)$
 
-Também chamado de **Teorema de Bayes**.
+Igualando as duas expressões à direita e dividindo por $P(B)$, chegamos à forma clássica do **Teorema de Bayes**:
+
+$P(A|B) = \frac{P(B|A) \times P(A)}{P(B)}$
+
+> Atenção a uma distinção importante: a *definição de probabilidade condicional* (a regra do produto acima) é uma coisa. O *Teorema de Bayes* (a inversão dos condicionamentos) é outra. O segundo é uma consequência elementar do primeiro, mas são objetos conceitualmente distintos — Bayes é um *método de atualização de crenças* a partir de evidência, e essa é a fonte do seu poder.
 --- MD CELL 36 ---
 Analisando com atenção o Teorema, vemos que o fato de sabermos que o evento B ocorreu de fato pode alterar nossas expecitativas sobre A e, quando se trata de probabilidades condicionais, ele nos permite inverter a ordem dos condicionamentos. 
 
@@ -390,7 +410,7 @@ O triângulo de Pascal é útil sempre que quisermos saber o número de maneiras
 
 Para isso, podemos descer pelos números na esquerda em azul até chegar na linha 100. O triângulo na figura não chega tão longe, mas, por agora, vamos fingir que chega. O primeira número da linha 100 nos diz o número de maneiras distintas pelas quais podemos selecionar 0 convidados de um grupo de 100 (naturalmente só há uma maneira, selecionando ninguém). Isso é verdadeiro independente do número total de convidados, perceba que todas as linhas começam com 1. O segundo número da linha 100 nos mostra o número de maneiras pelas quais podemos selecionar 1 convidados dentre 100 (naturalmente, há 100 formas diferentes de fazer isso). O terceiro número de cada linha representa número de grupos diferentes de 2 pessoas que podemos formar, e assim por diante. Perceba que se trata do mesmo cálculo que vimos acima (combinação)! 
 
-O número buscado no casamento, portanto, seria o décimo primeiro número da linha 100 (escolher 10 de 100). De fato, quando algum convidado inevitalmente se queixar de seu lugar na mesa, poderemos lembrá-lo do tempo que seria necessário para considerar todas as possibilidades: presumindo que passasse apenas um segundo considerando cada uma delas, precisaríamos de algo em torno de 10 trilhões de anos. 
+O número buscado no casamento, portanto, seria o décimo primeiro número da linha 100 (escolher 10 de 100). De fato, quando algum convidado inevitavelmente se queixar de seu lugar na mesa, poderemos lembrá-lo do tempo que seria necessário para considerar todas as possibilidades: são aproximadamente $1{,}73 \times 10^{13}$ combinações possíveis (cerca de 17 trilhões). Presumindo que passássemos apenas um segundo avaliando cada uma, precisaríamos de mais de **meio milhão de anos** (são pouco mais de 31 milhões de segundos em um ano).
 --- MD CELL 47 ---
 Uma vez aprendido o método de Pascal, surgem aplicações por toda parte. Digamos que um colega trabalha em uma _start-up_ de jogos de computador. Ele muitas vezes conta que, embora a diretora de marketing aceitasse a ideia de que pequenos grupos de trabalho devessem chegar somente a "conclusões qualitativas", ainda assim citava decisões apoiadas pela "ampla maioria" (de 4 contra 2, ou 5 contra 1) dos membros de um grupo, como se fosse um resultado significativo. 
 
@@ -404,7 +424,7 @@ Com esses números, vemos que há 20 maneiras pelas quais os integrantes do grup
  
 Se você leu até aqui, está bem ciente de como o calculo da probabilidade funciona. Isso significa que algumas imprecisões ficam mais claras de serem compreendidas. Por exemplo, vimos que para esmagadora maioria dos nossos cálculos (se não todos) partiram do princípio de que os **eventos são independentes**. Imagine que estamos trabalhando no gerenciamento de risco de uma companhia aérea. Se a probabilidade de um motor falhar por qualquer motivo é 1/100.000 (não aceitável num universo de milhares de vôos diários), podemos acoplar um segundo motor em cada aeronave. No entanto, seria um erro considerar que o risco agora será de 1/10bi, pois as falhas nos motores não são independentes. Caso a falha ocorra pois um grupo de gansos entrou no caminho e foi puxado, o segundo motor terá probabilidade similar ao primeiro de falhar, e o mesmo vale para qualquer outro fator possível. Ou seja, dado que um motor falhe, a probabilidade do segundo falhar é significativamente maior que a probabilidade deles falharem individualmente. 
 
-Além do erro em **não reconhecer quando eventos não são independentes**, há o de **não reconhecer quando são**. E isso ocorre muito em cassinos e jogos de azar no geral. Apesar da probabilidade da bolinha da roleta cair no preto seja de **16/38** (e **6/38** de cair branco e 16/38 de cair vermelho), caso a bolinha tenha caído no vermelho cinco vezes seguidas, é comum jogadores pensarem "*então a probabilidade de cair preto agora é maior, chegou a hora*". No entanto, a probabilidade de cair no preto permanece inalterada (16/38). O mesmo ocorre no caso da moeda, que vimos ao longo desse material. Se estamos jogando uma moeda de forma frequente, e acabamos vendo 5 caras seguidas, a chance de dar cara na proxima jogada permanece 1/2. O que torna isso pouco intuitivo é o raciocinio das contagens que acabamos de ver (de fato, vimos que se jogarmos uma moeda 5 vezes e contarmos o resultado, a probabilidade de contarmos 2~3 caras será maior do que a de contarmos 5 caras seguidas; mas isso nada tem a ver com o problema "*dado que houve 5 caras seguidas, qual a probabilidade de cair coroa na proxima*". Quando fazemos essa pergunta, estamos tratando de um universo de 6 jogadas, mas estamos jogando fora, automaticamente, todas as possibilidades que não englobem 5 caras seguidas e, no fim, restam apenas duas possibilidades que são igualmente possíveis, 5 caras seguidas e 1 coroa ou 6 caras seguidas).
+Além do erro em **não reconhecer quando eventos não são independentes**, há o de **não reconhecer quando são**. E isso ocorre muito em cassinos e jogos de azar no geral. Apesar da probabilidade da bolinha numa roleta americana cair no preto ser de **18/38** (e **18/38** de cair no vermelho, com os **2/38** restantes correspondendo às casas verdes do 0 e do 00), caso a bolinha tenha caído no vermelho cinco vezes seguidas, é comum jogadores pensarem "*então a probabilidade de cair preto agora é maior, chegou a hora*". No entanto, a probabilidade de cair no preto permanece inalterada (18/38). (Na roleta europeia, com apenas uma casa verde, os números são 18/37 e 18/37.) O mesmo ocorre no caso da moeda, que vimos ao longo desse material. Se estamos jogando uma moeda de forma frequente, e acabamos vendo 5 caras seguidas, a chance de dar cara na proxima jogada permanece 1/2. O que torna isso pouco intuitivo é o raciocinio das contagens que acabamos de ver (de fato, vimos que se jogarmos uma moeda 5 vezes e contarmos o resultado, a probabilidade de contarmos 2~3 caras será maior do que a de contarmos 5 caras seguidas; mas isso nada tem a ver com o problema "*dado que houve 5 caras seguidas, qual a probabilidade de cair coroa na proxima*". Quando fazemos essa pergunta, estamos tratando de um universo de 6 jogadas, mas estamos jogando fora, automaticamente, todas as possibilidades que não englobem 5 caras seguidas e, no fim, restam apenas duas possibilidades que são igualmente possíveis, 5 caras seguidas e 1 coroa ou 6 caras seguidas).
 
 Portanto, o recado de fica é: **se atente a independencia dos eventos!**
 --- MD CELL 49 ---
