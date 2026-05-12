@@ -1210,6 +1210,7 @@ Em 1909, um engenheiro dinamarquês chamado **Agner Krarup Erlang** publicou um 
 2. A duração das chamadas era **memoryless** — exponencial.
 
 Dessas duas observações simples, ele construiu toda a teoria das filas. Hoje, a unidade de tráfego telefônico se chama *Erlang* em sua homenagem; a linguagem de programação Erlang (criada pela Ericsson nos anos 80 para telecomunicações) leva o nome dele; e toda vez que você espera numa requisição HTTP, num caixa de banco ou num pronto-socorro, está dentro do modelo que ele inventou para uma companhia telefônica há mais de um século.
+
 --- MD CELL 212 ---
 ### Fechando o loop: Poisson $\Leftrightarrow$ Exponencial
 
@@ -1275,6 +1276,8 @@ Suponha que seu servidor processe em média 100 requisições por segundo ($\mu 
 | 99 | 0,99 | 1.000 ms |
 
 Note o salto: subir a utilização de 80% para 99% ganha apenas 19% adicionais de *throughput*, mas o tempo de resposta vai de 50 ms para 1 segundo — vinte vezes pior. É essa não-linearidade que mata SLAs em produção e derruba sistemas que pareciam "ter capacidade sobrando".
+
+> O mesmo cálculo descreve o *pool* de conexões de um sistema de trading consumindo um *gateway* de exchange, o *risk engine* validando ordens antes do envio, ou qualquer microsserviço entre eles. Em mesa, "20× pior" significa perder o preço cotado — e em estratégias sensíveis a latência, perder dinheiro real. Por isso operações de baixa latência tipicamente rodam com utilização nominal baixa (na faixa de 20–40%) — o oposto do que a intuição financeira de "maximizar uso do recurso" sugere.
 --- MD CELL 215 ---
 ### Lei de Little — o resultado mais universal
 
@@ -1294,7 +1297,7 @@ Exemplo cotidiano: seu app tem em média 50 usuários conectados ($L$), e chegam
 
 Toda essa teoria é linda — e perigosa quando aplicada sem cuidado. Os erros mais comuns:
 
-1. **Chegadas não são Poisson na realidade.** Hora de pico em call center tem *clustering* (eventos correlacionados, campanhas de marketing). A solução é usar Poisson não-homogêneo (taxa variável no tempo) ou simulação.
+1. **Chegadas não são Poisson na realidade.** O exemplo paradigmático em finanças é o **cluster de volatilidade**: dias agitados se seguem a dias agitados, e calmaria gera calmaria. Essa autocorrelação é, ponto por ponto, a violação da hipótese de independência da Poisson — e foi exatamente o que motivou Robert Engle a desenvolver os modelos **ARCH/GARCH** nos anos 80 (rendeu-lhe o Nobel em 2003). Em momentos como setembro de 2008 ou março de 2020, ninguém modelaria a chegada de ordens numa mesa como um processo com taxa $\lambda$ constante; a taxa é regime-dependente e correlacionada com o próprio histórico recente. O remédio mínimo é Poisson não-homogêneo, $\lambda(t)$; o remédio mais sofisticado, *processos de Hawkes* (ver adiante).
 2. **Serviço não é exponencial.** Atendimento humano tem tempos mais concentrados em torno da média — não é memoryless. Modelos M/G/1 ou simulação capturam isso melhor.
 3. **Variabilidade do serviço é o assassino silencioso.** Pela fórmula de **Pollaczek-Khinchine** (caso M/G/1), dobrar a *variância* do serviço dobra a fila — independente da média. Por isso filas únicas (banco moderno) batem filas paralelas (supermercado): elas diluem variabilidade.
 4. **Abandono e impaciência.** Clientes reais saem da fila se esperam demais. Modelos com *reneging* mudam significativamente os resultados.
@@ -1315,8 +1318,9 @@ Esta introdução cobriu apenas a porta de entrada — o suficiente para conecta
 - **Variantes de fila**: M/M/c (vários servidores), M/M/c/K (capacidade limitada com perdas — modelo original de Erlang!), M/G/1 com a fórmula de Pollaczek-Khinchine, G/G/1 e aproximações.
 - **Redes de filas** (*Jackson networks*): clientes que saem de uma fila e entram em outra — modelo padrão para arquiteturas de microsserviços, linhas de produção e fluxos hospitalares.
 - **Processos de Poisson não-homogêneos** e **compostos** — quando a taxa varia ao longo do dia, ou quando cada evento traz um "tamanho" (sinistros em seguradoras, ordens em mesa de mercado).
+- **Processos de Hawkes** (auto-excitação) — a generalização correta quando há cluster de volatilidade, contágio de inadimplência, réplicas de terremotos ou *retweets* virais. A intensidade $\lambda(t)$ aumenta a cada evento e decai entre eles — um modelo onde a Poisson recupera memória.
 - **Simulação de eventos discretos** como ferramenta quando a matemática fechada acaba.
-- **Aplicações específicas**: dimensionamento de *thread pools*, *autoscaling* em cloud, modelagem de UTI e ondas hospitalares, controle de tráfego aéreo, e — meu interesse particular — execução de ordens e *market making* em mesa.
+- **Aplicações específicas**: dimensionamento de *thread pools*, *autoscaling* em cloud, modelagem de UTI e ondas hospitalares, controle de tráfego aéreo, e — meu interesse particular — execução de ordens, *market making* e modelagem de *order flow* em mesa.
 
 A intuição que Erlang teve em 1909 é redescoberta toda vez que um sistema entra em colapso a 95% de utilização e ninguém entende por quê. A matemática estava lá o tempo todo — quem conhece teoria de filas sabe **onde o sistema vai quebrar antes mesmo de medir**.
 --- MD CELL 207 ---
