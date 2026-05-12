@@ -41,9 +41,9 @@ Por exemplo, (1) Qual a situação da saúde econômica da classe média hoje?; 
     
 Podemos tentar demonstrar que Cristiano Ronaldo é um grande jogador de futebol ao descrever cada passe em cada jogo da Liga dos Campeões da UEFA que ele jogou (dados brutos muito dificeis de se analisar, tendo em vista que Cristiano Ronaldo jogou por aproximadamente vinte anos), ou podemos calcular que ao final da temporada de 2015, Ronaldo teve uma média de passes na carreira de 0,313. Essa é uma estatística descritiva.
 
-Acontece que a **média** de passes é uma simplificação grosseira das várias temporadas de Ronaldo. Os especialistas em futebol possuem um bando de estatísticas descritivas que consideram mais valiosas do que a média de passes. Ainda assim, idealmente, gostaríamos de achar o equivalente econômico da média de passes, ou algo ainda melhor, para explicar a saúde econômica de uma parcela considerável do país. Queremos uma _medida simples e precisa_ de como o bem-estar econômico do trabalhador típico tem mudado nos últimos anos. Uma tentativa razoável seria calcular a mudança na renda per capita no decorrer de uma geração, (aproximadamente trinta anos). A renda per capita é uma média simples: renda total dividida pelo tamanho da população. Por essa medida, a renda média no Brasil subiu de 3.100 dolares em 1990 para 6.796,84 dolares em 2020.
-    
-    Há um problema. O cálculo está tecnicamente correto, mas totalmente errado em termos da nossa interpretação. Além da não correção pela inflação (3.100 dolares em 1990 equivalem a 6.324,54 dolares em 2020), a renda média do Brasil não é igual a renda do brasileiro médio!
+Acontece que a **média** de passes é uma simplificação grosseira das várias temporadas de Ronaldo. Os especialistas em futebol possuem um bando de estatísticas descritivas que consideram mais valiosas do que a média de passes. Ainda assim, idealmente, gostaríamos de achar o equivalente econômico da média de passes, ou algo ainda melhor, para explicar a saúde econômica de uma parcela considerável do país. Queremos uma _medida simples e precisa_ de como o bem-estar econômico do trabalhador típico tem mudado nos últimos anos. Uma tentativa razoável seria calcular a mudança na renda per capita no decorrer de uma geração, (aproximadamente trinta anos). A renda per capita é uma média simples: renda total dividida pelo tamanho da população. Por essa medida, a renda per capita brasileira passou de algo em torno de US$ 3 mil em 1990 para a faixa de US$ 7–9 mil em 2020 (o valor exato depende da fonte — Banco Mundial, FMI, IBGE — e da metodologia — nominal, ajustada por inflação ou PPP).
+
+    Há um problema. O cálculo está tecnicamente correto, mas totalmente errado em termos da nossa interpretação. Além das complicações de correção pela inflação (um dólar em 1990 vale aproximadamente o dobro de um dólar em 2020), a renda média do Brasil não é igual a renda do brasileiro médio!
 
 A renda per capita pega meramente toda a renda ganha no país e a divide pelo número de pessoas, o que não nos informa muita coisa. Um crescimento explosivo na renda do top 1% da pirâmide social pode aumentar significativamente a renda per capita sem que nenhum centavo a mais entre no bolso do restante da população. 
     
@@ -71,7 +71,15 @@ A mediana tem alguns correspondentes úteis, podemos dividir a distribuição pe
 Outra estatísitca que pode nos ajudar a descrever o que de outro modo poderia ser apenas um juntamento de números é o **desvio padrão** (medida de como os dados se dispersam em relação à média). 
 > O quanto elas estão espalhadas?
 --- MD CELL 9 ---
-$DP^{2} = \sum_{i=1}^{N} \frac{(x_{i} - \tilde{x})^2}{n}$
+A *variância* — quadrado do desvio padrão — é a forma matematicamente mais conveniente de medir essa dispersão:
+
+$\sigma^{2} = \text{Var}(X) = \sum_{i=1}^{N} \frac{(x_{i} - \bar{x})^2}{N}$
+
+E o **desvio padrão** propriamente dito é a raiz quadrada disso: $\sigma = \sqrt{\text{Var}(X)}$, que tem a vantagem de estar na mesma unidade dos dados originais.
+
+> Por que dividir por $N$ e não por $N-1$? Boa pergunta — vamos resolver isso com cuidado mais adiante (na seção sobre regressão), quando ficar claro que existe uma distinção entre o desvio padrão **populacional** (divide por $N$) e o **amostral** (divide por $n-1$). Por ora, fique com a intuição.
+
+> **Notação:** vou usar $\bar{x}$ para média amostral, $\mu$ para média populacional, $\sigma^2$ para variância e $\sigma$ para desvio padrão. Em algumas referências aparece $\tilde{x}$, mas reservarei esse símbolo para a *mediana*, conforme convenção mais comum.
 --- MD CELL 10 ---
  Suponhamos que coletassemos dados sobre o peso de 250 pessoas num avião com destino a São Paulo e também levantasse o peso de uma amostra de 250 qualificados para a Maratona de Niterói. 
  
