@@ -1211,6 +1211,7 @@ Em 1909, um engenheiro dinamarquês chamado **Agner Krarup Erlang** publicou um 
 
 Dessas duas observações simples, ele construiu toda a teoria das filas. Hoje, a unidade de tráfego telefônico se chama *Erlang* em sua homenagem; a linguagem de programação Erlang (criada pela Ericsson nos anos 80 para telecomunicações) leva o nome dele; e toda vez que você espera numa requisição HTTP, num caixa de banco ou num pronto-socorro, está dentro do modelo que ele inventou para uma companhia telefônica há mais de um século.
 
+> **Um paralelo que me interessa particularmente:** mesas de operações modernas enfrentam o mesmo dilema fundamental de Erlang. Ordens chegam aleatoriamente (mais ou menos), os recursos — latência da infraestrutura, capital disponível, atenção do *trader*, capacidade do *risk engine* — são finitos, e dimensionar mal custa caro nas duas pontas (oportunidade perdida ou *risk overflow*). O parentesco entre o problema da Copenhagen Telephone Co. e os problemas de execução em mesa não é metáfora — é literal: a mesma matemática descreve os dois.
 --- MD CELL 212 ---
 ### Fechando o loop: Poisson $\Leftrightarrow$ Exponencial
 
