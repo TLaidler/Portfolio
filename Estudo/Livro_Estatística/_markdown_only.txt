@@ -808,22 +808,36 @@ Geralmente queremos provar a *Hipótese alternativa* **H1**, enquanto batemos na
 
 > Nem sempre provamos a H0, podendo significar apenas que H1 está equivocada ou que as hipóteses não servem para o grupo de dados escolhidos. Em todo caso, é mais seguro afirmar apenas que, *com base nos dados coletados, meramente falhamos em rejeitar H0*.
 --- MD CELL 110 ---
-Geralmente usamos o valor de 5% como limiar mais comum utilizado nas inferências estatísticas. Essa probabilidade é conhecida como *nível de significância* e representa o limite superior para a probabilidade de observação de algum padrão de dados se a hipótese nula fosse verdadeira. Ou seja, podemos rejeitar **H0** no nivel 0.05 se houver uma chance menor do que 5% de obter um resultado no mínimo tão extremo quanto o que observamos se a hipótese nula fosse verdadeira. 
+Geralmente usamos o valor de 5% como limiar mais comum utilizado nas inferências estatísticas. Essa probabilidade é conhecida como *nível de significância* ($\alpha$) e representa o limite superior para a probabilidade de observação de algum padrão de dados *se a hipótese nula fosse verdadeira*. Ou seja, podemos rejeitar **H0** no nível $\alpha = 0{,}05$ se houver uma chance menor do que 5% de obter um resultado no mínimo tão extremo quanto o que observamos *caso* a hipótese nula fosse verdadeira.
 
-Em outras palavras, se a chance de **H0** ser verdadeira, seguindo os dados coletados, for de 5% ou menos, rejeitaremos ela e aceitaremos **H1**.
+> **Atenção semântica fundamental:** $\alpha$ **não** é a probabilidade de **H0** ser verdadeira dados os nossos dados. Isso seria $P(H_0 \mid \text{dados})$ — uma quantidade *a posteriori* bayesiana que só pode ser calculada com um *prior* explícito. O que $\alpha$ controla é $P(\text{dados ao menos tão extremos} \mid H_0)$ — na direção oposta da implicação. Trocar uma pela outra é provavelmente o erro mais difundido em estatística aplicada, e foi tão crônico nas ciências empíricas que a *American Statistical Association* publicou em 2016 um *statement* inteiro dedicado a corrigi-lo. Vou repetir e sublinhar: **p-valor não é a probabilidade de H0 ser verdadeira.**
+
+##### Erros tipo I, tipo II e poder
+
+Um teste de hipóteses pode errar de duas formas distintas:
+
+| | **H0 é verdadeira** | **H0 é falsa** |
+|---|---|---|
+| **Rejeitamos H0** | Erro tipo I (probabilidade $\alpha$) | Acerto |
+| **Não rejeitamos H0** | Acerto | Erro tipo II (probabilidade $\beta$) |
+
+O nível $\alpha$ (geralmente 5%) é o quanto estamos dispostos a errar na direção de rejeitar H0 quando ela era verdadeira — um *falso positivo*. Já $\beta$ é a probabilidade de **não** rejeitar H0 quando ela era falsa — um *falso negativo*. A quantidade $1 - \beta$ é o que chamamos de **poder do teste**: a probabilidade de detectar um efeito que realmente existe.
+
+Há uma assimetria proposital aqui: $\alpha$ costuma ser fixado pelo pesquisador (5%, 1%, etc.) *antes* da análise. $\beta$ depende do tamanho da amostra $n$, da magnitude real do efeito (que tipicamente não conhecemos a priori) e da variabilidade dos dados. Amostras pequenas levam a poder baixo — e poder baixo significa que "não rejeitar" pode estar simplesmente refletindo nossa cegueira, não a ausência de efeito.
+
+> **Implicação prática:** "falhei em rejeitar H0" **não é** "provei H0". É "com os dados que tenho, não consegui descartá-la". A diferença não é semântica — é o que separa um cientista cauteloso de um que comete erros tipo II sistematicamente.
 --- MD CELL 111 ---
 - Quanto a comparação da estrela A e B da mesma observação, diremos que:
 
 **H0** : pertencem a mesma distribuição.
 **H1** : são objetos totalmente distintos.
 
-Queremos 5% seja a probabilidade dos nossos dados serem referentes ao **H0** caso ela seja verdadeira, importante definir isso previamente para que não haja viés.
+Definimos $\alpha = 5\%$ *previamente* à coleta dos dados, para que essa decisão não fique contaminada pelo que observarmos (esse é o ponto de evitar *p-hacking*). Esse $\alpha$ controla a taxa de erro tipo I: rejeitar **H0** incorretamente.
 
-Se não chegarmos nesse valor, não poderemos afirmar que **H0** é mentira (lembre do que discutimos antes). 
-Ou seja, se os dados se referem a **H0** em apenas 5% ou menos das vezes, ja assumimos que **H1** estará correto. Se as hipóteses foram bem construídas (ou é uma, ou é outra), nossa decisão estará correta em 95% das vezes.
+Se a estatística observada não cai na região crítica, *falhamos em rejeitar* **H0** — e essa formulação importa: não estamos *provando* **H0**, apenas dizendo que os dados disponíveis não foram suficientes para descartá-la no nível $\alpha$ escolhido. Pode ser que **H0** seja falsa e o nosso teste simplesmente tenha pouco poder.
 
 --- MD CELL 112 ---
-O que chamamos de *p_value* é a probabilidade específica de obter um resultado no mínimo tão extremo quanto o observado caso **H0** fosse verdadeira.
+O que chamamos de *p-value* é a probabilidade específica de obter um resultado no mínimo tão extremo quanto o observado caso **H0** fosse verdadeira. Repetindo, no risco de soar pedante: é $P(\text{dados extremos} \mid H_0)$, não $P(H_0 \mid \text{dados})$.
 
 No nosso caso, a probabilidade das estrelas A e B da primeira observação não fazerem parte da mesma distribuição será:
 --- MD CELL 114 ---
@@ -869,8 +883,8 @@ Agora iremos fazer o teste F para levarmos em consideração a variancia dos nos
 --- MD CELL 133 ---
  - E afinal, qual a probabilidade destes dois conjuntos de dados serem equivalentes (tenham como origem a mesma distribuição)? 
 --- MD CELL 134 ---
-Sabemos que os dados coletados estão dentro do universo **H0**. Ou seja, partindo que **H0** é verdadeiro (as estrelas observadas fazem parte da mesma distribuição), nossos dados concordam com a maioria das outras amostras que viriam da mesma distribuicao. Portanto, podemos afirmar com **95% de certeza** que os dados coletados *vem da mesma distribuição*.
-> *Perceba que nesse caso as hipóteses foram escolhidas tal que 'ou elas pertencem ou não pertencem', e, seguindo as amostras coletadas, há 95% de chance dos dados terem vindo de duas estrelas da mesma dsitribuição*.
+Os dados coletados são compatíveis com **H0** ao nível $\alpha = 5\%$. Ou seja, partindo que **H0** é verdadeiro (as estrelas observadas fazem parte da mesma distribuição), nossos dados concordam com a maioria das amostras que viriam dessa mesma distribuição. Portanto, **falhamos em rejeitar H0** no nível adotado.
+> *Cuidado semântico (estamos de pleno acordo aqui com tudo que discutimos antes):* isso **não** significa "95% de chance dos dados virem da mesma distribuição". Significa apenas que, com o teste e o tamanho de amostra que temos, não conseguimos descartar a hipótese de que vêm. Ausência de evidência contra **H0** não é evidência a favor de **H0** — pode ser apenas falta de poder estatístico (amostra pequena, ruído alto, ou efeito real pequeno). Para *afirmar* que os dados vêm da mesma distribuição precisaríamos de outro arcabouço (testes de equivalência, ou uma análise bayesiana com prior explícito).
 --- MD CELL 135 ---
 Perceba que nesses cálculos (em que usamos a função stats), **H0** muda de significado. Agora, ela é dada como sendo as médias equivalentes, pois é mais conveniente essa escolha de hipótese (ora, se sei que elas possuem alta probabilidade de terem correlação, então exijo mais provas para mudar de ideia e escolho como hipótese nula aquela mais forte). No cálculo do coeficiente de correlação, **H0** era referente à ausencia de correlação. Em outras palavras, **H0** significou 'estrelas **não pertencem** à mesma distribuição' e passou a significar 'estrelas **pertencem** à mesma distribuição'. Então, cuidado!
 --- MD CELL 136 ---
