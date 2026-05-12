@@ -444,8 +444,17 @@ Em cada caso, não é possível prever com exatidão qual valor será assumido p
 
 >Uma variável aleatória (v.a.) é, portanto, uma função que associa cada elemento de um espaço amostral a um número real.
 --- MD CELL 50 ---
- Não é difícil perceber que há um problema quando se trata de trabalhar com tal tipo de variável. Apesar de entendermos que a variável aleatória serve apenas para mapear o espaço amostral (e, portanto, nos permite trabalhar com probabilidades de forma mais simples), tais definições ainda são muito abstratas. Perceba que quando falamos de uma variável aleatória do tipo "vida útil de uma lâmpada", não se envolve uma fórmula direta que nos permita calcula-la. Ou seja, não podemos performar uma análise quantitativa sobre isso. Por isso, trabalhar com espaços é útil, por exemplo, podemos ir atrás da probabilidade de uma lâmpada durar até 1 ano, e isso é possível obter modelando os dados. 
- > Cuidado, probabilidade e densidade de probabilidade são coisas diferentes!
+ Não é difícil perceber que há um problema quando se trata de trabalhar com tal tipo de variável. Apesar de entendermos que a variável aleatória serve apenas para mapear o espaço amostral (e, portanto, nos permite trabalhar com probabilidades de forma mais simples), tais definições ainda são muito abstratas. Perceba que quando falamos de uma variável aleatória do tipo "vida útil de uma lâmpada", não se envolve uma fórmula direta que nos permita calculá-la. Ou seja, não podemos performar uma análise quantitativa sobre isso. Por isso, trabalhar com espaços é útil, por exemplo, podemos ir atrás da probabilidade de uma lâmpada durar até 1 ano, e isso é possível obter modelando os dados.
+
+> **Atenção fundamental: probabilidade e densidade de probabilidade são coisas diferentes!**
+>
+> Para uma variável **discreta**, faz sentido perguntar "*qual a probabilidade de $X = 5$?*". A resposta é um número entre 0 e 1, e a soma dessas probabilidades sobre todos os valores possíveis de $X$ dá exatamente 1. A função que associa cada valor a sua probabilidade é a **função massa de probabilidade** (PMF), $P(X=x)$.
+>
+> Para uma variável **contínua**, essa pergunta não faz sentido — a probabilidade de $X$ assumir *exatamente* um valor real específico é sempre zero. (Pense bem: existem infinitos valores reais entre 1,70 m e 1,71 m de altura. A probabilidade de alguém medir exatamente $1{,}703827\ldots$ m é zero — sempre haverá algum dígito a mais.) O objeto que faz sentido é a **função densidade de probabilidade** (PDF), $f(x)$, e probabilidades só emergem quando *integramos* essa densidade em um intervalo:
+>
+> $P(a \leq X \leq b) = \int_a^b f(x)\,dx$
+>
+> A densidade $f(x)$ pode ser maior que 1 em valores específicos — não há nada que a impeça disso. O que precisa valer é $\int_{-\infty}^{\infty} f(x)\,dx = 1$. Confundir densidade com probabilidade é um erro recorrente, principalmente quando se lê um valor alto de $f(x)$ num gráfico e se interpreta como "probabilidade alta de $X = x$" — não é.
 --- MD CELL 51 ---
 A variável aleatória irá carregar os mesmos conceitos vistos anteriormente, tendo uma **média** (ou *esperança*), uma **variância** (média ponderada dos quadrados das diferenças... ou simplesmente o desvio padrão ao quadrado), e um **desvio-padrão**, já visto anteriormente.
 
@@ -494,11 +503,11 @@ Ou resulta em p, ou (1-p).
 
 $E(x) = p$;
 
-$Var(x) = p(1-p)$;
+$\text{Var}(x) = p(1-p)$;
 
-$DP = \sqrt{p(1-p}$;
+$DP = \sqrt{p(1-p)}$;
 
-$CV = \frac{1-p}{p}$;
+$CV = \dfrac{DP}{E(x)} = \dfrac{\sqrt{p(1-p)}}{p} = \sqrt{\dfrac{1-p}{p}}$;
 
     (2) Modelo binomial: basicamente o modelo bernoulli replicado várias vezes. 
     
@@ -514,9 +523,9 @@ Irei manipular o P da binomial rapidamente, multiplicando tudo por (N/N) tal que
 
 $P = \frac{N!}{n!(N-n)!} * p^n (\frac{N}{N})^n *(1-\frac{N}{N}p)^{N-n}$
 
-Escrevendo deste modo, podemos ler $P*N$ como nossa média constante. Não só isso, podemos simplificar a combinação da seguinte maneira:
+Escrevendo deste modo, podemos ler $P*N$ como nossa média constante. Não só isso, podemos simplificar a combinação da seguinte maneira (note o cuidado com a expansão do fatorial — o produto vai de $N$ até $N-n+1$, e o que sobra é $(N-n)!$, que cancela com o denominador):
 
-$\frac{N(N-1)(N-2)...(N-n)!}{n!(N-n)!} = \frac{N(N-1)...(N-n+1)!}{n!}$
+$\dfrac{N!}{n!(N-n)!} = \dfrac{N(N-1)(N-2)\cdots(N-n+1)\cdot(N-n)!}{n!\,(N-n)!} = \dfrac{N(N-1)\cdots(N-n+1)}{n!}$
 
 tornando $P = \frac{N(N-1)...(N-n+1)}{n!} \frac{1}{N^n} (PN)^{n} (1 - NP/N)^{N-n}$
 
@@ -565,10 +574,22 @@ Essa lógica que nos possibilitou concluir que não se tratava do onibus perdido
 --- MD CELL 87 ---
 O teorema central do limite nos possibilita fazer as seguintes inferências:
 
-    - Se tivermos informações detalhadas sobre alguma população, então podemos fazer inferências poderosas sobre qualquer amostra adequadamente extraída dela. 
+    - Se tivermos informações detalhadas sobre alguma população, então podemos fazer inferências poderosas sobre qualquer amostra adequadamente extraída dela.
     - Se tivermos informações detalhas sobre uma amostra extraída de modo adequado (média e desvio padrão), podemos fazer inferências surpreendentemente acuradas sobre a população.
-    - Se tivermos dados que descrevem uma amostra particular, e dados sobre uma população particular, podemos inferir se a amostra é consistente ou não com uma amostra com probabilidade de ter sido tirada dessa população. 
-    - Por fim, se soubermos as características subjacentes de duas amostras, podemos inferir se ambas foram provavelmente tiradas ou não da mesma população. 
+    - Se tivermos dados que descrevem uma amostra particular, e dados sobre uma população particular, podemos inferir se a amostra é consistente ou não com uma amostra com probabilidade de ter sido tirada dessa população.
+    - Por fim, se soubermos as características subjacentes de duas amostras, podemos inferir se ambas foram provavelmente tiradas ou não da mesma população.
+
+> **Enunciado formal (para registro):** Sejam $X_1, X_2, \ldots, X_n$ variáveis aleatórias **independentes e identicamente distribuídas** (i.i.d.), com média $\mu$ e variância $\sigma^2$ *finita*. Então, conforme $n \to \infty$:
+>
+> $\sqrt{n}\,\dfrac{\bar{X}_n - \mu}{\sigma} \xrightarrow{d} \mathcal{N}(0,\,1)$
+>
+> Ou seja, a média amostral $\bar{X}_n$ se distribui aproximadamente como uma Normal de média $\mu$ e variância $\sigma^2/n$ — independentemente da forma da distribuição original (desde que a variância seja finita).
+>
+> Três pontos que costumam passar batido e merecem atenção:
+>
+> 1. **Variância finita é hipótese necessária.** Existem distribuições com cauda tão pesada que a variância diverge — o exemplo canônico é a distribuição de Cauchy. Para essas, o TCL **não vale**: por mais que você faça médias de mais e mais amostras, a média amostral *não* converge para uma Normal.
+> 2. **i.i.d. é hipótese forte.** Em dados reais com correlação temporal (séries financeiras, por exemplo), o TCL clássico falha — existem versões para sequências dependentes, mas com cuidados extras.
+> 3. **Velocidade de convergência depende da assimetria.** Distribuições muito assimétricas exigem $n$ muito maior para que a aproximação Normal seja boa (o teorema de Berry-Esseen dá um limite quantitativo para isso).
 --- MD CELL 88 ---
  - Vejamos o que ocorre quando coletamos qualquer tipo de dados:
 --- MD CELL 89 ---
@@ -770,6 +791,8 @@ Este coeficiente se trata de um número único que varia de -1 a +1. Uma correla
 > **Kendall**: Não paramétrico! Tende mais rapidamente para uma distribuição t para N intermediários (preferível). Uma vantagem de tau sobre o coeficiente de Spearman é a possibilidade de ser generalizado para um coeficiente de correlação parcial.
 --- MD CELL 105 ---
 > **OBS:** Uma característica atraente do coeficiente de correlação é que ele não está ligado a nenhuma unidade. Podemos calcular a correlação entre altura e peso - mesmo que a altura seja medida em centímetros e o peso em quilogramas.
+
+> **OBS 2 — uma armadilha sutil: independência $\neq$ não-correlacionado.** Duas variáveis aleatórias são *independentes* quando o valor de uma não carrega *nenhuma* informação sobre o valor da outra ($P(X,Y) = P(X) \cdot P(Y)$). Duas variáveis têm *correlação zero* quando não existe relação **linear** entre elas — mas pode existir uma relação não-linear forte. O exemplo clássico: tome $X \sim \mathcal{N}(0,1)$ e $Y = X^2$. Aqui $\text{Cov}(X, Y) = 0$ (a correlação de Pearson é zero), mas $Y$ é uma função *determinística* de $X$ — ou seja, são tão dependentes quanto se pode ser. O coeficiente de Pearson não detectaria essa relação; coeficientes não-paramétricos como Spearman ou Kendall capturam relações monotônicas (cobrindo mais casos), mas mesmo eles falham com relações simétricas como a parábola. **Moral:** correlação $= 0$ não autoriza concluir independência. Sempre olhe o gráfico de dispersão antes de tirar conclusões.
 --- MD CELL 108 ---
 >>**OBS**: Atenção. O p_value calculado na função stats utiliza como base o 'null hypothesis is an absence of association'. Ou seja, o calculo é considerando **H0** = **não há correlação**. Isso significa que p_value será a probabilidade de **não** haver correlação. O tau estar baixo significa que a correlação é fraca, mas isso não quer dizer que a probabilidade também seja. Nesse caso, identificamos uma correlação, mas ela é fraca. 
 --- MD CELL 109 ---
