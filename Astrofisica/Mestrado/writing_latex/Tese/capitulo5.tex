@@ -28,7 +28,7 @@ Foram realizados \textbf{sete experimentos}, organizados em dois blocos e um tes
 
 Em todos os experimentos, o mesmo protocolo foi aplicado: divisão treino/teste estratificada, preenchimento de valores faltantes pela mediana calculada no treino, e padronização das características (média zero, desvio unitário) apenas para a Regressão Logística, conforme detalhado no Capítulo~4.
 
-Além dos seis experimentos acima, este capítulo apresenta uma análise de \textbf{ajuste do limiar de decisão} (Seção~\ref{sec:threshold_tuning}), que investiga como reduzir o limiar de classificação para minimizar falsos negativos --- uma demanda natural em cenários de triagem científica, onde perder uma ocultação real é mais custoso do que revisar um falso alarme.
+Além dos seis experimentos acima, este capítulo apresenta uma análise de \textbf{ajuste do limiar de decisão} (Seção~\ref{sec:threshold_tuning}), que investiga como reduzir o limiar de classificação para minimizar falsos negativos --- uma demanda natural em cenários de triagem científica, onde perder uma ocultação real é mais custoso do que revisar um falso alarme. Por fim, um \textbf{estudo de caso} (Seção~\ref{sec:estudo_caso_quaoar}) aplica a \textit{pipeline} a três curvas reais de uma ocultação estelar pelo objeto transnetuniano (50000) Quaoar~\citep{Quaoar2023} --- dados externos ao banco de treino e morfologicamente complexos (corpo principal e estruturas de anel) --- como teste de generalização operacional.
 
 % -----------------------------------------------------------------------------
 \section{Descrição das \textit{features} e análise de redundância}
@@ -637,6 +637,99 @@ O ajuste de limiar é uma operação de \textbf{pós-processamento}: não requer
 \end{itemize}
 
 A escolha do limiar pode, inclusive, ser adaptada por campanha observacional: em campanhas com poucas curvas (dezenas), um limiar mais baixo é aceitável porque o custo de revisar falsos positivos é pequeno; em campanhas com milhares de curvas, pode-se optar por um limiar intermediário que limite o volume de falsos alarmes a um nível gerenciável pela equipe de análise.
+
+% -----------------------------------------------------------------------------
+\section{Estudo de caso: aplicação a uma curva real de Quaoar}
+\label{sec:estudo_caso_quaoar}
+
+\subsection{Motivação}
+
+Os sete experimentos descritos nas seções anteriores avaliam a \textit{pipeline} sobre curvas oriundas do banco de dados de treinamento (catálogo \texttt{B/occ/asteroid} do VizieR e Grupo do Rio), respeitando a partição treino/teste. Para complementar essa avaliação, apresenta-se nesta seção um \textbf{estudo de caso} no qual a \textit{pipeline} é aplicada a um conjunto de curvas \textbf{externas ao banco}: registros de uma ocultação estelar pelo objeto transnetuniano \textbf{(50000) Quaoar}, que não estavam armazenadas no VizieR nem no \textit{drive} do Grupo do Rio. O evento é especialmente interessante porque, além da queda profunda associada ao corpo principal, apresenta assinaturas adicionais atribuídas aos dois anéis recentemente descobertos em torno de Quaoar~\citep{Quaoar2023}, configurando uma curva complexa com múltiplas \textit{features} físicas (anel, corpo, possível atmosfera) em uma única série temporal.
+
+Este estudo de caso tem três objetivos:
+\begin{enumerate}
+	\item Verificar se o modelo treinado generaliza para curvas reais \textbf{nunca vistas} --- isto é, fora do conjunto de teste e fora da distribuição dos catálogos de origem.
+	\item Avaliar o comportamento da \textit{pipeline} em uma curva \textbf{morfologicamente complexa}, com componentes não típicos da maioria das curvas de treino (anéis e estruturas secundárias).
+	\item Demonstrar o uso da \textit{pipeline} como ferramenta de \textbf{recorte interativo}, permitindo isolar segmentos específicos da curva (anel, atmosfera, corpo ocultante) e reaplicar o classificador a cada janela.
+\end{enumerate}
+
+\subsection{Dados utilizados}
+
+Foram utilizadas três curvas de luz fotométricas da mesma ocultação estelar por Quaoar, obtidas em telescópios e bandas distintos e reduzidas com o pacote \texttt{PRAIA}~\citep{AssafinPRAIA}:
+
+\begin{itemize}
+	\item \textbf{CFHT/WIRCam --- banda $K_s$:} infravermelho próximo, 4797 pontos válidos após limpeza.
+	\item \textbf{Gemini-N/'Alopeke --- canal \textit{Blue} (filtro $r$):} visível, 12000 pontos.
+	\item \textbf{Gemini-N/'Alopeke --- canal \textit{Red} (filtro $z$):} visível-vermelho, 12000 pontos.
+\end{itemize}
+
+As três curvas estão originalmente em formato \texttt{.dat} do PRAIA, com colunas para tempo (segundos UTC), fluxo normalizado e diversos diagnósticos fotométricos. Nenhuma delas figura no banco SQLite usado para treinar os modelos, garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
+
+\subsection{Procedimento}
+
+A aplicação da \textit{pipeline} ao caso Quaoar foi implementada em um \textit{script} dedicado (\texttt{pipeline/model\_in\_practice/test\_quaoar.py}), escrito em estilo \textit{top-down} linear para facilitar a inspeção passo a passo --- inclusive a colocação interativa de pontos de parada no VS Code. O fluxo é:
+
+\begin{enumerate}
+	\item \textbf{Leitura das curvas:} cada arquivo \texttt{.dat} é lido com \texttt{np.genfromtxt}, extraindo apenas a coluna de tempo (segundos UTC) e a de fluxo normalizado. Pontos marcados com \textit{flag} de baixa qualidade pelo PRAIA (valores extremos como 99{,}999) são removidos por um clip físico no intervalo $[-2,\ 5]$, preservando ocultações profundas reais (fluxo $\to 0$) sem cortar o \textit{dip} verdadeiro.
+	\item \textbf{Recorte opcional por janela temporal:} um dicionário \texttt{CUT\_RANGES} permite restringir cada curva a um intervalo $(t_{\mathrm{início}},\ t_{\mathrm{fim}})$ em segundos UTC. O recorte é aplicado antes do plot e da extração de \textit{features}, permitindo isolar separadamente o \textit{dip} principal do corpo, possíveis estruturas de anel à esquerda/direita do evento principal ou eventuais assinaturas atmosféricas nas bordas do \textit{dip}.
+	\item \textbf{Extração de \textit{features}:} as mesmas funções utilizadas no treinamento (\texttt{extract\_features} e \texttt{compute\_occ\_features}, no pacote \texttt{model\_training}) são reaproveitadas, garantindo coerência exata com o pré-processamento aprendido pelos modelos.
+	\item \textbf{Inferência:} o modelo \textbf{CatBoost} treinado no Experimento~5 (11 \textit{features}, sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans\_centroid\_dist}) é carregado a partir do diretório \texttt{outputs/resultado5}; o \textit{imputer} é recuperado, com \textit{fallback} para mediana local caso ocorra incompatibilidade de versão do \texttt{scikit-learn}.
+\end{enumerate}
+
+A escolha do CatBoost-Exp.~5 é deliberada: trata-se da configuração mais enxuta da \textit{pipeline} (menor número de \textit{features}, sem o passo de K-Means), reforçando que o desempenho elevado não depende das variáveis identificadas como dispensáveis pelo estudo de ablação (Seção~\ref{sec:ablation_kmeans}).
+
+\subsection{Resultados na curva completa}
+
+A Tabela~\ref{tab:quaoar_completa} reúne a probabilidade de ocultação $\hat{p}$ atribuída pelo CatBoost a cada curva, bem como três métricas observacionais (profundidade, SNR do \textit{dip} e duração) calculadas a partir da própria curva.
+
+\begin{table}[htbp]
+\centering
+\caption{Resultados do estudo de caso de Quaoar sobre a curva completa. Probabilidade $\hat{p}$ atribuída pelo CatBoost (modelo do Exp.~5), profundidade do \textit{dip}, SNR do \textit{dip} e duração do maior \textit{run} abaixo do \textit{baseline}.}
+\label{tab:quaoar_completa}
+\footnotesize
+\begin{tabular}{lcccc}
+\hline
+\textbf{Curva} & $\hat{p}$ & \textbf{Profundidade} & \textbf{SNR\textsubscript{dip}} & \textbf{Duração (s)} \\
+\hline
+CFHT/WIRCam $K_s$               & 0{,}9953 & 1{,}02 & 74{,}9  & 48{,}35 \\
+Gemini-'Alopeke \textit{Blue}-$r$ & 0{,}9953 & 1{,}00 & 65{,}3  & 48{,}07 \\
+Gemini-'Alopeke \textit{Red}-$z$  & 0{,}9951 & 0{,}99 & 117{,}2 & 48{,}07 \\
+\hline
+\end{tabular}
+\end{table}
+
+Os três registros foram classificados como positivos com $\hat{p} > 0{,}995$ pelo CatBoost. A profundidade próxima de 1{,}0 e a duração de $\approx$48~s são coerentes entre as três bandas e compatíveis com a passagem do corpo principal de Quaoar diante da estrela. A Figura~\ref{fig:quaoar_curvas} apresenta as três séries temporais após o pré-processamento descrito, evidenciando: (i)~o \textit{baseline} próximo a 1{,}0; (ii)~o \textit{dip} central profundo associado ao corpo; e (iii)~regiões adjacentes ao \textit{dip} central onde se observam quedas secundárias mais rasas e curtas, compatíveis com cruzamento dos anéis reportados em~\citep{Quaoar2023}.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.95\linewidth]{Tese/pngs/quaoar_test.png}
+\caption{Curva de luz da ocultação estelar por Quaoar utilizada no estudo de caso, com o tempo referenciado ao instante 2022-08-09 06:34:49,26 UTC. O \textit{dip} central (anotado como ``Quaoar''), de duração $\approx 48$~s e profundidade $\approx 100\%$, corresponde à ocultação pelo corpo principal. As estruturas secundárias rasas, isoladas nos quatro \textit{insets}, são as assinaturas dos dois anéis denominados Q1R e Q2R em~\citep{Quaoar2023}, sendo Q1R observado em duas porções (parte contínua e parte densa) e Q2R em duas travessias antes e depois do corpo. A linha pontilhada indica o \textit{baseline} ($f_{\mathrm{norm}} = 1$).}
+\label{fig:quaoar_curvas}
+\end{center}
+\end{figure}
+
+\subsection{Aplicação a recortes da curva}
+
+O dicionário \texttt{CUT\_RANGES} do \textit{script} permite reexecutar a inferência sobre janelas restritas a cada componente físico do evento. Essa funcionalidade tem dois usos complementares:
+
+\begin{itemize}
+	\item \textbf{Isolamento da assinatura do corpo:} restringindo cada curva a uma janela de poucos segundos centrada no \textit{dip} principal, verifica-se que o classificador continua atribuindo $\hat{p} > 0{,}99$ --- ou seja, o sinal do corpo, por si só, é suficiente para a detecção.
+	\item \textbf{Exposição apenas das regiões adjacentes (anéis e \textit{baseline}):} cortando explicitamente fora do \textit{dip} principal e mantendo somente as regiões antes/depois, onde se concentram as estruturas secundárias associadas aos anéis, é possível avaliar se o classificador atual responde a esses eventos rasos. O modelo treinado para detectar a ocultação do corpo, naturalmente, não foi otimizado para essa classe de evento; o resultado serve, antes, como diagnóstico do que poderia ser explorado em trabalhos futuros --- via classificação multi-classe ou modelo dedicado a eventos rasos --- como discutido no Capítulo~6.
+\end{itemize}
+
+O recorte é uma operação de uma linha (\texttt{cut\_curve(time, flux, t\_ini, t\_fim)}) e pode ser feita interativamente, no Debug Console do VS Code, durante uma sessão de depuração. Isso fornece ao analista uma ferramenta prática para explorar diferentes hipóteses sobre cada porção da curva sem retreinar o modelo nem reescrever a \textit{pipeline}.
+
+\subsection{Interpretação}
+
+O estudo de caso reforça, na prática, três conclusões dos experimentos formais:
+
+\begin{enumerate}
+	\item \textbf{Generalização para dados externos:} mesmo treinado em curvas predominantemente sintéticas e oriundas dos catálogos VizieR/Grupo do Rio, o modelo do Experimento~5 classifica corretamente registros de uma campanha observacional distinta, em três bandas espectrais e dois telescópios diferentes.
+	\item \textbf{Robustez a complexidade morfológica:} a presença de estruturas secundárias na curva (anéis) não confunde o classificador, que mantém probabilidades $> 0{,}99$ para o evento principal.
+	\item \textbf{Utilidade operacional:} o procedimento --- leitura do \texttt{.dat}, limpeza, recorte opcional e inferência --- é executado em segundos e pode ser incorporado a campanhas reais com modificação mínima.
+\end{enumerate}
+
+Como limitação, vale registrar que se trata de um \textit{n} pequeno (três curvas, todas do mesmo evento) e que os modelos atuais não estão otimizados para detectar separadamente os eventos de anel; uma avaliação sistemática nesse regime --- inclusive incorporando dados de campanhas similares no banco de treino --- é uma das direções recomendadas no Capítulo~6.
 
 % -----------------------------------------------------------------------------
 \section{Comparação entre os experimentos}
