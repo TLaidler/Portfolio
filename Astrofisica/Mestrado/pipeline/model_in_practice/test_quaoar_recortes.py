@@ -47,6 +47,14 @@ FLUX_COL = 9   # fluxo normalizado
 # segundos relativos a este instante (negativo = antes, positivo = depois).
 EVENT_REFERENCE = '2022-08-09 06:34:49.26'
 
+# Limiar de decisao tau aplicado a probabilidade do modelo. Default no
+# treinamento e 0.5 (modo balanceado). Reduzir tau aumenta a sensibilidade
+# (captura ocultacoes rasas / aneis finos) ao custo de mais falsos positivos
+# — ver Secao 5.9 (sec:threshold_tuning) da tese.
+#   tau=0.50 -> modo balanceado (padrao)
+#   tau=0.03 -> modo triagem agressiva (captura Q2R sem reativar ruido)
+THRESHOLD = 0.03
+
 
 # =============================================================================
 # 2) DEFINICAO DOS RECORTES
@@ -151,8 +159,14 @@ def features_from_window(time_arr, flux_arr, name):
     return feats
 
 
-def predict_one(feats, model, imputer, feature_names):
-    """Roda o XGBoost em um unico dict de features. Devolve (pred, proba)."""
+def predict_one(feats, model, imputer, feature_names, threshold=THRESHOLD):
+    """Roda o XGBoost em um unico dict de features.
+
+    Devolve (pred_tau, pred_padrao, proba), onde:
+      - pred_tau    : classificacao usando o limiar configurado `threshold`
+      - pred_padrao : classificacao padrao do model.predict() (tau=0.5)
+      - proba       : probabilidade da classe positiva
+    """
     df_one = pd.DataFrame([feats])
     for col in feature_names:
         if col not in df_one.columns:
@@ -162,9 +176,10 @@ def predict_one(feats, model, imputer, feature_names):
         X = pd.DataFrame(imputer.transform(X), columns=X.columns)
     else:
         X = X.fillna(X.median()).fillna(0)
-    pred = int(model.predict(X).flatten()[0])
     proba = float(model.predict_proba(X)[0, 1])
-    return pred, proba
+    pred_padrao = int(model.predict(X).flatten()[0])    # tau=0.5
+    pred_tau = int(proba >= threshold)                  # tau ajustado
+    return pred_tau, pred_padrao, proba
 
 
 # =============================================================================
