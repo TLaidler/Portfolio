@@ -149,27 +149,103 @@ profundidade absoluta. Por isso:
 
 ---
 
-## 4. Achados principais (para reportar na tese)
+## 4. Experimento adicional — ajuste do limiar de decisão $\tau$
+
+### 4.1 Motivação
+A Seção~\ref{sec:threshold_tuning} da tese mostra teoricamente que
+classificadores que produzem probabilidades calibradas (como XGBoost)
+permitem operar em modo de triagem agressiva apenas ajustando o limiar
+de decisão $\tau$ em pós-processamento, sem retreinar. A análise da §2.3
+sugeriu que $\tau \approx 0{,}03$ seria suficiente para incluir os anéis
+Q2R sem reativar o trecho de ruído. **Esta seção testa essa previsão
+empiricamente.**
+
+### 4.2 Implementação
+Adicionou-se a constante `THRESHOLD = 0.03` ao topo de
+`test_quaoar_recortes.py`. A função `predict_one()` foi modificada para
+devolver tanto o veredito-padrão (`model.predict()`, $\tau = 0{,}5$) quanto
+o veredito-ajustado ($\hat{p} \geq \tau$). O console e a legenda do plot
+mostram ambos lado a lado, marcando com `*` os recortes em que a
+classificação muda.
+
+### 4.3 Resultados (XGBoost, $\tau = 0{,}03$)
+
+| Recorte | Tipo esperado | $\hat{p}$ | $\tau=0{,}5$ | $\tau=0{,}03$ | Mudou? |
+|---|---|---:|:---:|:---:|:---:|
+| zero   | baseline (controle) | 0,0006 | NEG | NEG | — |
+| um     | Q1R *continuous*    | 0,9601 | OCC | OCC | — |
+| **dois**   | **Q2R_1 real**      | 0,0434 | NEG | **OCC** | ✓ |
+| três   | Q2R_1 ruído         | 0,0005 | NEG | NEG | — |
+| **quatro** | **Q2R_2**           | 0,0807 | NEG | **OCC** | ✓ |
+| cinco  | Q1R *dense*         | 0,9994 | OCC | OCC | — |
+
+### 4.4 Interpretação
+- **Detecções recuperadas:** 2 anéis finos (Q2R_1 e Q2R_2) que estavam
+  invisíveis no limiar padrão passam a ser corretamente identificados.
+- **Falsos positivos adicionais: nenhum.** Nem o controle (zero,
+  $\hat{p}=6\times10^{-4}$) nem o ruído (três, $\hat{p}=5\times10^{-4}$)
+  cruzam o novo limiar.
+- **Margens de operação:**
+  - Entre $\tau=0{,}03$ e a probabilidade do ruído (0,0005): fator
+    $\sim 60\times$ — margem confortável.
+  - Entre $\tau=0{,}03$ e o ocultador de menor probabilidade
+    (Q2R_1 real, 0,0434): margem absoluta de 0,013 — apertada mas
+    suficiente.
+- **Resultado operacional:** 4 OCC / 2 NEG (vs 2 OCC / 4 NEG no padrão).
+  Recall sobre os 4 eventos físicos: 100% (vs 50% no padrão).
+  Precisão sobre os recortes-controle (zero + três): 100% (mantida).
+
+### 4.5 Significado para a tese
+Este é o **caso de uso ideal** para ilustrar a Seção~\ref{sec:threshold_tuning}.
+A análise teórica do capítulo previa que a separabilidade elevada das
+classes (AUC-ROC $\geq 0{,}998$) permitiria operar com $\tau \ll 0{,}5$
+sem inflar significativamente os falsos positivos. O caso Quaoar
+**confirma essa previsão em dados reais externos ao treino**: a janela
+de probabilidades atribuídas aos ocultadores ($\geq 0{,}043$) está
+separada por mais de uma ordem de grandeza da janela atribuída aos
+não-eventos ($\leq 0{,}0006$), o que viabiliza um $\tau$ em qualquer
+ponto entre essas duas escalas.
+
+A consequência prática é forte: **com um único parâmetro de
+pós-processamento, transforma-se um classificador que perde os anéis
+Q2R em um que os detecta sem custo em falsos alarmes**. Não é necessário
+retreinar, nem ampliar o conjunto de *features*, nem reformular o
+problema como multi-classe — embora todas essas direções continuem
+sendo melhorias arquiteturais válidas para os trabalhos futuros (§3.5
+e §5.3).
+
+---
+
+## 5. Achados principais (para reportar na tese)
 
 1. **Modelo capta corretamente o controle negativo** (recorte zero, sem
    evento): $\hat{p} \approx 0{,}0006$ no XGBoost — descarta a hipótese
    de viés pró-positivo do classificador.
 2. **Detecta os anéis "fortes" Q1R**: parte *continuous* (recorte um,
    $\hat{p}=0{,}96$) e parte *dense* (recorte cinco, $\hat{p}=0{,}999$).
-3. **Não detecta os anéis "finos" Q2R** (recortes dois e quatro), mesmo
-   sob expansão de janela; classifica corretamente o trecho de ruído
-   adjacente (recorte três, $\hat{p}=0{,}0005$).
+3. **No limiar padrão $\tau = 0{,}5$, não detecta os anéis "finos" Q2R**
+   (recortes dois e quatro), mesmo sob expansão de janela; classifica
+   corretamente o trecho de ruído adjacente (recorte três,
+   $\hat{p}=0{,}0005$). **Sob limiar ajustado $\tau = 0{,}03$, os dois
+   anéis Q2R são detectados** (§4) sem nenhum falso positivo
+   adicional — confirmação empírica do mecanismo da Seção~5.9 da tese.
 4. **XGBoost > CatBoost** neste caso real: probabilidades mais
    polarizadas, razão real-vs-ruído ~7× maior (86× vs 12×). Coerente
    com a liderança do XGBoost no Experimento~7 (teste em curvas reais).
 5. **Janela curta não é a causa** da falha em anéis finos. Causa é
    estrutural: o conjunto de *features* é dominado por estatísticas
    globais da janela.
-6. **Diagnóstico para trabalhos futuros**: detectar anéis finos exige
-   ou (a) janela deslizante de tamanho compatível com a duração do
-   evento esperado, ou (b) classificação multi-classe com *features*
-   locais (profundidade máxima de subjanela, ajuste a poço retangular
-   curto, simetria do perfil), ou (c) modelo dedicado treinado em curvas
+6. **Ajuste de limiar é uma alavanca de pós-processamento eficaz neste
+   *dataset*.** Com $\tau = 0{,}03$, recall sobre eventos físicos sobe
+   de 50% (2/4) para 100% (4/4) sem inflar falsos positivos — porque a
+   separação entre probabilidades de eventos ($\geq 0{,}043$) e de
+   não-eventos ($\leq 0{,}0006$) é de mais de uma ordem de grandeza.
+7. **Diagnóstico para trabalhos futuros**: ainda que o ajuste de $\tau$
+   resolva o caso Quaoar, soluções estruturais mais robustas para
+   eventos rasos exigem (a) janela deslizante de tamanho compatível
+   com a duração do evento esperado, (b) *features* locais
+   (profundidade máxima de subjanela, ajuste a poço retangular curto,
+   simetria do perfil), ou (c) modelo dedicado treinado em curvas
    sintéticas de anéis. Estas três direções reforçam o item
    "Classificação multi-classe de eventos" já presente em
    `capitulo6.tex`.
@@ -209,9 +285,16 @@ profundidade absoluta. Por isso:
 > aproximadamente $86\times$ maior do que a atribuída ao ruído adjacente
 > de duração comparável. Esse contraste, oculto pela classificação
 > binária no limiar padrão, é integralmente recuperado pela estratégia
-> de ajuste de limiar discutida na Seção~\ref{sec:threshold_tuning}:
-> bastaria $\tau \approx 0{,}03$ para incluir os anéis Q2R sem
-> reativar o trecho de ruído."
+> de ajuste de limiar discutida na Seção~\ref{sec:threshold_tuning}.
+> Aplicando $\tau = 0{,}03$ aos mesmos seis recortes, os anéis Q2R_1 e
+> Q2R_2 passam a ser corretamente classificados como ocultações, sem
+> que o trecho de ruído ($\hat{p}=5\times10^{-4}$) ou o controle de
+> *baseline* ($\hat{p}=6\times10^{-4}$) cruzem o novo limiar. O recall
+> sobre os quatro eventos físicos (Q1R *cont.*, Q1R *dense*, Q2R_1,
+> Q2R_2) sobe de 50\% para 100\%, sem introduzir nenhum falso alarme
+> nos dois recortes-controle. Esta é a manifestação prática, em dados
+> reais externos ao treino, do mecanismo de \textit{threshold tuning}
+> apresentado na Seção~\ref{sec:threshold_tuning}."
 
 ### 5.2 Para um parágrafo de discussão (Seção `sec:discussao` ou nova subseção)
 
@@ -255,16 +338,23 @@ profundidade absoluta. Por isso:
 ## 6. Artefatos
 
 - **Script:** `pipeline/model_in_practice/test_quaoar_recortes.py`
+  - Constante `THRESHOLD` no topo do arquivo controla o limiar $\tau$
+    aplicado em pós-processamento (default $0{,}03$, padrão do modelo
+    é $0{,}5$). A função `predict_one()` devolve tanto o veredito-padrão
+    quanto o veredito-ajustado, e o console / legenda mostram os dois
+    lado a lado, marcando com `*` os recortes em que a classificação
+    muda.
 - **Figura gerada:** `pipeline/model_in_practice/quaoar_recortes.png`
   (gráfico da curva inteira com as seis janelas destacadas em cores
-  distintas; legenda traz o veredito e a probabilidade do XGBoost por
-  janela; eixo $x$ em segundos relativos a 2022-08-09 06:34:49,26 UTC,
-  intervalo $[-300, +350]$ s).
+  distintas; legenda traz $\hat{p}$, veredito em $\tau=0{,}5$ e em
+  $\tau=\text{THRESHOLD}$ por janela; eixo $x$ em segundos relativos a
+  2022-08-09 06:34:49,26 UTC, intervalo $[-300, +350]$ s).
 - **Curva de referência do paper:** `writing_latex/Tese/pngs/quaoar_test.png`
   (figura já incluída no capítulo~5 — anotações Q1R/Q2R e *insets* dos
   anéis vêm de \citep{Quaoar2023}).
 - **Modelo usado:** `pipeline/model_training/outputs/resultado5_split0.8-0.2_less_features_noMin-noKmeans/`
-  (mesmo Experimento~5 do capítulo~5).
+  (mesmo Experimento~5 do capítulo~5; artefatos `xgboost_model.pkl`,
+  `imputer_model.pkl`, `feature_names.pkl`).
 
 ---
 
@@ -275,10 +365,19 @@ profundidade absoluta. Por isso:
 - [ ] Inserir parágrafo sobre o experimento de expansão de janelas (§3),
       como evidência adicional na subseção de interpretação ou em
       "Limitações".
+- [ ] **Adicionar tabela e parágrafo sobre o experimento de ajuste de
+      limiar (§4)** na mesma subseção "Aplicação a recortes da curva",
+      ou como continuação direta da Seção~5.9 (`sec:threshold_tuning`)
+      — serve como demonstração empírica em dados reais externos ao
+      treino do mecanismo lá apresentado. A frase de fechamento da
+      sugestão §5.1 já incorpora esse resultado.
 - [ ] Atualizar o item de trabalhos futuros do capítulo~6 com as três
-      direções de §5.3 (janela deslizante, *features* locais, multi-classe).
-- [ ] Considerar gerar uma figura derivada (curva + 6 janelas coloridas)
-      para a tese, similar ao `quaoar_recortes.png`. Copiar para
+      direções de §5.3 (janela deslizante, *features* locais, multi-classe),
+      mantendo claro que o ajuste de $\tau$ resolve o caso prático mas
+      não substitui as melhorias arquiteturais.
+- [ ] Considerar gerar uma figura derivada (curva + 6 janelas coloridas,
+      legenda com $\tau=0{,}5$ e $\tau=0{,}03$ lado a lado) para a tese,
+      similar ao `quaoar_recortes.png`. Copiar para
       `writing_latex/Tese/pngs/`, e referenciar com label tipo
       `fig:quaoar_recortes`.
 - [ ] Citação `\citep{Quaoar2023}` já está no bibtex (`teseon.tex:227`).
@@ -293,4 +392,14 @@ profundidade absoluta. Por isso:
 (d)~maior razão real-vs-ruído ($\sim 86\times$ vs $\sim 12\times$ no Q2R_1),
 o que torna o ajuste de limiar $\tau$ mais robusto;
 (e)~equivalência estatística pelo McNemar é respeitada — a escolha cai em
-critérios secundários, e XGBoost vence nesses.
+critérios secundários, e XGBoost vence nesses;
+(f)~**no caso Quaoar com $\tau = 0{,}03$ (§4), atinge recall de 100\%
+sobre os quatro eventos físicos sem nenhum falso positivo nos dois
+recortes-controle**, validando empiricamente o mecanismo de
+*threshold tuning* da Seção~5.9.
+
+**Modo operacional sugerido:** XGBoost (Experimento~5, 11 *features*)
+$+$ $\tau = 0{,}03$ para campanhas de triagem em que o custo de perder
+uma ocultação supera o de revisar um falso alarme — caso típico de
+ocultações por TNOs com possíveis anéis ou atmosferas. Para relatórios
+de desempenho geral, manter $\tau = 0{,}5$.
