@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Teste do CatBoost em RECORTES da curva CFHT_Wircam_Ks (Quaoar).
+Teste do XGBoost em RECORTES de uma curva de Quaoar.
 
 Cada recorte e uma janela temporal distinta da curva (sem ocultacao,
 aneis Q1R/Q2R, ruido parecido com ocultacao, etc.). O script:
@@ -25,7 +25,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import joblib
-from catboost import CatBoostClassifier
 
 
 # =============================================================================
@@ -55,10 +54,13 @@ EVENT_REFERENCE = '2022-08-09 06:34:49.26'
 # Cada recorte: (t_inicio, t_fim) em segundos UTC, descricao, e cor para o plot.
 # A ordem do dict define a ordem de iteracao e da legenda.
 RECORTES = {
-    'zero':   {'window': (23200, 23350),
+    # Valores em segundos UTC do dia (formato do arquivo .dat).
+    # Os comentarios indicam a posicao equivalente no eixo relativo do plot
+    # (referencia = 2022-08-09 06:34:49.26 UTC, offset = 23689.26 s).
+    'zero':   {'window': (23399, 23439),    # rel: -290 .. -250 s
                'desc':   'sem ocultacao (esperado NEGATIVO)',
                'color':  'tab:gray'},
-    'um':     {'window': (23400, 23550),
+    'um':     {'window': (23464, 23489),    # rel: -225 .. -200 s
                'desc':   'Q1R - continuous part',
                'color':  'tab:orange'},
     'dois':   {'window': (23560, 23575),
@@ -150,7 +152,7 @@ def features_from_window(time_arr, flux_arr, name):
 
 
 def predict_one(feats, model, imputer, feature_names):
-    """Roda o CatBoost em um unico dict de features. Devolve (pred, proba)."""
+    """Roda o XGBoost em um unico dict de features. Devolve (pred, proba)."""
     df_one = pd.DataFrame([feats])
     for col in feature_names:
         if col not in df_one.columns:
@@ -169,7 +171,7 @@ def predict_one(feats, model, imputer, feature_names):
 # 5) CARREGA A CURVA INTEIRA
 # =============================================================================
 print("=" * 70)
-print("  TESTE DO MODELO EM RECORTES DA CURVA CFHT_Wircam_Ks (Quaoar)")
+print("  TESTE DO MODELO XGBoost EM RECORTES DA CURVA DE QUAOAR")
 print("=" * 70)
 
 filepath = os.path.join(QUAOAR_DIR, CURVE_FILE)
@@ -181,10 +183,9 @@ print(f"    intervalo: {time_full.min():.1f} .. {time_full.max():.1f} s UTC")
 # =============================================================================
 # 6) CARREGA O MODELO E ARTEFATOS
 # =============================================================================
-print("\n[2] Carregando CatBoost + artefatos...")
+print("\n[2] Carregando XGBoost + artefatos...")
 
-model = CatBoostClassifier()
-model.load_model(os.path.join(MODEL_DIR, 'catboost_model.cbm'))
+model = joblib.load(os.path.join(MODEL_DIR, 'xgboost_model.pkl'))
 
 try:
     imputer = joblib.load(os.path.join(MODEL_DIR, 'imputer_model.pkl'))
@@ -256,7 +257,7 @@ print(f"  -> Eixo x convertido para s relativos a {EVENT_REFERENCE} UTC"
 fig, ax = plt.subplots(figsize=(14, 5))
 
 # Curva inteira em cinza claro (referencia visual)
-ax.plot(time_full_rel, flux_full, '.', markersize=1.0, color='lightgray', alpha=0.6)
+ax.plot(time_full_rel, flux_full, '-', markersize=1.0, color='lightgray', alpha=0.6)
 
 # Cada recorte: faixa vertical colorida + pontos da janela em destaque.
 # As janelas em UTC sao deslocadas pelo mesmo offset para alinhar ao eixo.
@@ -270,11 +271,10 @@ for name, res in resultados.items():
         continue
 
     ax.axvspan(t_ini - ref_sec, t_fim - ref_sec, color=color, alpha=0.15)
-    ax.plot(time_full_rel[mask], flux_full[mask], '.', markersize=2.5, color=color)
+    ax.plot(time_full_rel[mask], flux_full[mask], '-', markersize=2.5, color=color)
 
-# Limita o eixo x ao intervalo dos dados (com pequena margem)
-xpad = 0.02 * (time_full_rel.max() - time_full_rel.min())
-ax.set_xlim(time_full_rel.min() - xpad, time_full_rel.max() + xpad)
+# Limita o eixo x a janela de interesse em torno do evento (s relativos)
+ax.set_xlim(-300, 350)
 
 # Baseline
 ax.axhline(1.0, color='gray', linestyle='--', alpha=0.5)
@@ -294,11 +294,11 @@ for name, res in resultados.items():
     legend_items.append(Patch(facecolor=res['color'], alpha=0.5, label=label))
 
 ax.legend(handles=legend_items, loc='lower left', fontsize=8,
-          framealpha=0.9, title='Recortes e veredito do CatBoost')
+          framealpha=0.9, title='Recortes e veredito do XGBoost')
 
 ax.set_xlabel(f'Tempo relativo a {EVENT_REFERENCE} UTC (s)')
 ax.set_ylabel('Fluxo normalizado')
-ax.set_title(f'{CURVE_FILE}: recortes da curva e resultado do modelo CatBoost')
+ax.set_title(f'{CURVE_FILE}: recortes da curva e resultado do modelo XGBoost')
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
@@ -306,6 +306,13 @@ plt.tight_layout()
 out_path = os.path.join(SCRIPT_DIR, 'quaoar_recortes.png')
 fig.savefig(out_path, dpi=150, bbox_inches='tight')
 print(f"  -> Figura salva em: {out_path}")
+
+# Abre a janela interativa do matplotlib (zoom, pan, salvar com novo nome,
+# etc.). Bloqueia ate voce fechar a janela. Funciona somente quando o
+# matplotlib esta usando um backend interativo (padrao em Windows com
+# Anaconda: TkAgg). Se nada aparecer, verifique se MPLBACKEND nao esta
+# definido como 'Agg' no ambiente.
+print("  -> Abrindo janela interativa do matplotlib (feche para finalizar)...")
 plt.show()
 
 
