@@ -214,6 +214,59 @@ problema como multi-classe — embora todas essas direções continuem
 sendo melhorias arquiteturais válidas para os trabalhos futuros (§3.5
 e §5.3).
 
+### 4.6 Cuidado com a generalização — $\tau = 0{,}03$ é específico do evento
+
+A descoberta de §4 pode ser tentadoramente sintetizada como uma regra
+operacional: *"para triagem de ocultações fracas (anéis, atmosferas),
+use $\tau = 0{,}03$"*. Essa síntese precisa de qualificação importante,
+para não ser sobre-vendida na tese:
+
+- **O que foi demonstrado.** Em **uma** curva (Gemini-'Alopeke Red-$z$),
+  para **um** evento (ocultação por Quaoar em 2022-08-09), sobre
+  **seis** janelas hand-picked, $\tau = 0{,}03$ produziu recall 100\%
+  sobre os 4 eventos físicos e 0 falsos positivos sobre os 2
+  recortes-controle.
+- **O que NÃO foi demonstrado.** Não foi medido quantas curvas
+  **negativas do banco de teste** teriam $\hat{p} \geq 0{,}03$ no
+  XGBoost. É plausível que o número seja pequeno (o modelo é altamente
+  polarizado, AUC-ROC $\geq 0{,}998$), mas é uma quantidade que precisa
+  ser **lida da curva precisão-recall** (Seção~\ref{sec:threshold_tuning})
+  ou do arquivo `predictions_xgboost.csv` de `resultado5`, não inferida
+  do caso Quaoar.
+- **Por que $0{,}03$ foi suficiente aqui.** O número caiu da margem
+  específica entre o ocultador de menor probabilidade
+  ($\hat{p}=0{,}0434$ no Q2R_1 real) e o ruído de maior probabilidade
+  ($\hat{p}=0{,}0005$ no recorte três) — quase **duas ordens de
+  grandeza** entre os dois grupos. Essa folga é generosa neste caso mas
+  não é garantida em outras curvas com mais ruído ou eventos mais rasos.
+
+**Formulação operacional honesta para a tese:**
+
+> "Para triagem de eventos fracos, usar XGBoost com $\tau$ **calibrado
+> por campanha**, escolhido pela curva precisão-sensibilidade no
+> conjunto de validação para garantir uma sensibilidade-alvo (ex.:
+> $\geq 99{,}5\%$) sob taxa aceitável de falsos alarmes para a equipe
+> de análise --- critério já adotado na Seção~\ref{sec:threshold_tuning}.
+> No caso concreto da curva Gemini-'Alopeke Red-$z$ de Quaoar, esse
+> limiar ficou em $\tau \approx 0{,}03$. É razoável usá-lo como
+> **ponto de partida** para campanhas similares (Q1R/Q2R do mesmo
+> evento, ou anéis de outros TNOs com SNR comparável), mas o valor
+> deve ser revalidado para cada *dataset*."
+
+Em outras palavras: a **abordagem** (baixar $\tau$ para detectar eventos
+fracos) está validada empiricamente em dados reais externos ao treino;
+o **valor específico** $0{,}03$ deve ser tratado como ordem-de-grandeza
+("entre $1\%$ e $10\%$"), não como uma constante universal. Para definir
+um $\tau$ de produção, recorrer à curva PR no banco de teste e à análise
+de custo da Seção~\ref{sec:threshold_tuning}.
+
+**TODO opcional:** ler `pipeline/model_training/outputs/resultado5_.../`
+e contar quantas linhas com `occ=0` e `XGBoost_proba >= 0.03` existem.
+Esse número (e a precisão resultante em $\tau = 0{,}03$ no banco de
+teste) decide se 0,03 também é defensável como **default global** na
+tese, ou se permanece apenas como o ponto operacional específico do
+caso Quaoar.
+
 ---
 
 ## 5. Achados principais (para reportar na tese)
@@ -236,10 +289,13 @@ e §5.3).
    estrutural: o conjunto de *features* é dominado por estatísticas
    globais da janela.
 6. **Ajuste de limiar é uma alavanca de pós-processamento eficaz neste
-   *dataset*.** Com $\tau = 0{,}03$, recall sobre eventos físicos sobe
+   caso.** Com $\tau = 0{,}03$, recall sobre eventos físicos sobe
    de 50% (2/4) para 100% (4/4) sem inflar falsos positivos — porque a
    separação entre probabilidades de eventos ($\geq 0{,}043$) e de
    não-eventos ($\leq 0{,}0006$) é de mais de uma ordem de grandeza.
+   **Atenção (§4.6):** o valor $0{,}03$ é específico deste evento; como
+   regra geral, $\tau$ deve ser calibrado por campanha via curva
+   precisão-sensibilidade no conjunto de validação, não fixado em 3%.
 7. **Diagnóstico para trabalhos futuros**: ainda que o ajuste de $\tau$
    resolva o caso Quaoar, soluções estruturais mais robustas para
    eventos rasos exigem (a) janela deslizante de tamanho compatível
