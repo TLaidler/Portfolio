@@ -64,9 +64,9 @@ FLUX_COL = 9   # fluxo normalizado (valores proximos a 1.0)
 #           time_arr, flux_arr = cut_curve(time_arr, flux_arr, 23680, 23750)
 # -----------------------------------------------------------------------------
 CUT_RANGES = {
-    # 'CFHT_Wircam_Ks_cor-time':  (23680, 23750),
+    'CFHT_Wircam_Ks_cor-time':  (23400, 23550),
     # 'Gemini-Alopeke_Blue-r':    (23620, 23700),
-     'Gemini-Alopeke_Red-z':     (23620, 23700),
+    #'Gemini-Alopeke_Red-z':     (23620, 23700),
 }
 
 
