@@ -260,12 +260,66 @@ o **valor específico** $0{,}03$ deve ser tratado como ordem-de-grandeza
 um $\tau$ de produção, recorrer à curva PR no banco de teste e à análise
 de custo da Seção~\ref{sec:threshold_tuning}.
 
-**TODO opcional:** ler `pipeline/model_training/outputs/resultado5_.../`
-e contar quantas linhas com `occ=0` e `XGBoost_proba >= 0.03` existem.
-Esse número (e a precisão resultante em $\tau = 0{,}03$ no banco de
-teste) decide se 0,03 também é defensável como **default global** na
-tese, ou se permanece apenas como o ponto operacional específico do
-caso Quaoar.
+### 4.7 Validação de $\tau = 0{,}03$ no banco de teste
+
+Para responder se $\tau = 0{,}03$ é defensável como ponto operacional
+*default* (e não apenas como o limiar específico do caso Quaoar),
+contou-se quantas curvas **negativas do banco de teste** do
+`resultado5` (XGBoost, Experimento~5) cruzariam o novo limiar. O
+conjunto de teste contém **339 curvas (160 positivas + 179 negativas)**,
+provenientes de uma mistura de curvas reais e sintéticas (composição
+geral do *dataset* descrita no capítulo~4).
+
+**Tabela: precisão e sensibilidade do XGBoost em função de $\tau$
+sobre o conjunto de teste do Experimento~5.**
+
+| $\tau$ | FP (de 179 neg) | TP (de 160 pos) | Precisão | Sensibilidade |
+|---:|---:|---:|---:|---:|
+| 0,50 (padrão) |  1 | 156 | 0,9936 | 0,9750 |
+| 0,30 |  2 | 157 | 0,9874 | 0,9812 |
+| 0,10 |  3 | 159 | 0,9815 | 0,9938 |
+| **0,03** | **6** | **159** | **0,9636** | **0,9938** |
+| 0,02 |  8 | 159 | 0,9521 | 0,9938 |
+| 0,01 | 11 | 160 | 0,9357 | 1,0000 |
+
+**Distribuição das probabilidades das negativas** (cauda esquerda da
+distribuição global):
+
+| Percentil | $\hat{p}$ |
+|---|---:|
+| mínimo | 0,000280 |
+| mediana | 0,000672 |
+| p90 | 0,005297 |
+| p95 | 0,019291 |
+| p99 | 0,324116 |
+| máximo | 0,538412 |
+
+**Interpretação:**
+
+- **Recall sobe de 97{,}5\% para 99{,}4\%** ao baixar $\tau$ de $0{,}5$
+  para $0{,}03$ — recupera-se 3 ocultações verdadeiras que estavam
+  na zona de incerteza.
+- **Precisão cai apenas $\approx 3$ pp** (de 99{,}4\% para 96{,}4\%),
+  ao custo de 5 falsos alarmes adicionais em 179 negativas (de 1 para 6).
+- **Quase toda a massa de probabilidade das negativas está abaixo de
+  $0{,}02$** (p95): 95\% das negativas continuam corretamente
+  classificadas sob $\tau = 0{,}03$. Apenas $\sim 1\%$ das negativas
+  tem $\hat{p} > 0{,}3$, e a "negativa mais tóxica" (P=0,538) já é
+  falso positivo no limiar padrão também.
+- Comparando com $\tau=0{,}05$ ou $\tau=0{,}10$: a diferença de FP é
+  marginal (5--6 falsos alarmes), e o ganho em recall é nulo a partir
+  de $\tau \leq 0{,}10$. Ou seja, **a faixa $\tau \in [0{,}03;\,0{,}10]$
+  é praticamente equivalente em desempenho global**, e a escolha entre
+  elas pode ser guiada pela tolerância da equipe de análise a falsos
+  alarmes ou pela natureza da campanha (eventos mais fracos $\to$
+  $\tau$ mais baixo).
+
+**Conclusão revisada:** $\tau = 0{,}03$ **é defensável como *default*
+global na tese**, com custo operacional baixíssimo (5 falsos alarmes
+extras em 179 negativas, em troca de recall quase perfeito sobre as
+positivas). Para campanhas em que o custo de revisar um falso alarme
+seja maior (e.g., milhares de curvas por noite), $\tau = 0{,}10$ é uma
+alternativa praticamente equivalente que reduz os falsos alarmes a 3.
 
 ---
 
@@ -455,7 +509,12 @@ recortes-controle**, validando empiricamente o mecanismo de
 *threshold tuning* da Seção~5.9.
 
 **Modo operacional sugerido:** XGBoost (Experimento~5, 11 *features*)
-$+$ $\tau = 0{,}03$ para campanhas de triagem em que o custo de perder
-uma ocultação supera o de revisar um falso alarme — caso típico de
-ocultações por TNOs com possíveis anéis ou atmosferas. Para relatórios
-de desempenho geral, manter $\tau = 0{,}5$.
+$+$ $\tau$ no intervalo $[0{,}03;\,0{,}10]$ para campanhas de triagem
+de ocultações fracas (anéis, atmosferas). A validação no conjunto de
+teste do `resultado5` (§4.7) mostrou que $\tau = 0{,}03$ recupera 3
+ocultações da zona de incerteza ao custo de apenas 5 falsos alarmes
+extras (em 179 negativas), e $\tau = 0{,}10$ é praticamente equivalente
+com 2 falsos alarmes a menos. A escolha entre os dois extremos da
+faixa depende da tolerância da equipe de análise a falsos alarmes e da
+natureza da campanha. Para relatórios de desempenho geral e comparação
+entre modelos, manter $\tau = 0{,}5$.
