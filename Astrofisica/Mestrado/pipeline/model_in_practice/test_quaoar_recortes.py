@@ -53,7 +53,7 @@ EVENT_REFERENCE = '2022-08-09 06:34:49.26'
 # — ver Secao 5.9 (sec:threshold_tuning) da tese.
 #   tau=0.50 -> modo balanceado (padrao)
 #   tau=0.03 -> modo triagem agressiva (captura Q2R sem reativar ruido)
-THRESHOLD = 0.03
+THRESHOLD = 0.08
 
 
 # =============================================================================
@@ -219,7 +219,9 @@ print(f"  -> {len(feature_names)} features esperadas")
 # =============================================================================
 print("\n[3] Processando cada recorte...")
 
-resultados = {}  # {name: {window, desc, color, n_pts, pred, proba}}
+resultados = {}  # {name: {window, desc, color, n_pts, pred, pred_padrao, proba}}
+
+print(f"  (limiar tau aplicado: {THRESHOLD:.3f};  padrao do modelo: 0.500)")
 
 for name, cfg in RECORTES.items():
     t_ini, t_fim = cfg['window']
@@ -236,6 +238,7 @@ for name, cfg in RECORTES.items():
         print(f"             (curva valida: {time_full.min():.1f} .. "
               f"{time_full.max():.1f} s UTC)")
         res['pred'] = None
+        res['pred_padrao'] = None
         res['proba'] = None
         resultados[name] = res
         continue
@@ -244,15 +247,22 @@ for name, cfg in RECORTES.items():
     if feats is None:
         print("     [AVISO] extracao de features falhou. Pulando predicao.")
         res['pred'] = None
+        res['pred_padrao'] = None
         res['proba'] = None
         resultados[name] = res
         continue
 
-    pred, proba = predict_one(feats, model, imputer, feature_names)
-    label = 'OCULTACAO' if pred == 1 else 'sem evento'
-    print(f"     -> {label}  (P={proba:.4f})")
+    pred_tau, pred_padrao, proba = predict_one(
+        feats, model, imputer, feature_names
+    )
+    label_tau = 'OCULTACAO' if pred_tau == 1 else 'sem evento'
+    label_pad = 'OCULTACAO' if pred_padrao == 1 else 'sem evento'
+    mudou = '  <-- mudou!' if pred_tau != pred_padrao else ''
+    print(f"     P={proba:.4f}  |  tau=0.5: {label_pad}  |  "
+          f"tau={THRESHOLD:.3f}: {label_tau}{mudou}")
 
-    res['pred'] = pred
+    res['pred'] = pred_tau
+    res['pred_padrao'] = pred_padrao
     res['proba'] = proba
     resultados[name] = res
 
@@ -294,14 +304,19 @@ ax.set_xlim(-300, 350)
 # Baseline
 ax.axhline(1.0, color='gray', linestyle='--', alpha=0.5)
 
-# Legenda customizada: uma entrada por recorte com a predicao do modelo.
-# Mostra a janela ja em segundos relativos ao evento para casar com o eixo.
+# Legenda customizada: uma entrada por recorte com os dois vereditos
+# (padrao tau=0.5 e ajustado tau=THRESHOLD), destacando '*' quando o
+# limiar ajustado muda a classificacao.
 legend_items = []
 for name, res in resultados.items():
     if res['pred'] is None:
         verdict = 'sem dados'
     else:
-        verdict = ('OCC' if res['pred'] == 1 else 'NEG') + f"  P={res['proba']:.3f}"
+        pad = 'OCC' if res['pred_padrao'] == 1 else 'NEG'
+        tau = 'OCC' if res['pred'] == 1 else 'NEG'
+        flip = ' *' if res['pred'] != res['pred_padrao'] else ''
+        verdict = (f"P={res['proba']:.3f}  |  "
+                   f"tau=0.5: {pad}  |  tau={THRESHOLD:.2f}: {tau}{flip}")
     t_ini_rel = res['window'][0] - ref_sec
     t_fim_rel = res['window'][1] - ref_sec
     label = (f"{name:6s} [{t_ini_rel:+.0f} .. {t_fim_rel:+.0f} s]  "
@@ -309,11 +324,14 @@ for name, res in resultados.items():
     legend_items.append(Patch(facecolor=res['color'], alpha=0.5, label=label))
 
 ax.legend(handles=legend_items, loc='lower left', fontsize=8,
-          framealpha=0.9, title='Recortes e veredito do XGBoost')
+          framealpha=0.9,
+          title=f'Recortes e veredito do XGBoost  ('
+                f'* = muda com tau={THRESHOLD:.2f})')
 
 ax.set_xlabel(f'Tempo relativo a {EVENT_REFERENCE} UTC (s)')
 ax.set_ylabel('Fluxo normalizado')
-ax.set_title(f'{CURVE_FILE}: recortes da curva e resultado do modelo XGBoost')
+ax.set_title(f'{CURVE_FILE}: recortes — XGBoost '
+             f'(tau padrao=0.5  vs  tau ajustado={THRESHOLD:.2f})')
 ax.grid(True, alpha=0.3)
 
 plt.tight_layout()
@@ -334,18 +352,26 @@ plt.show()
 # =============================================================================
 # 9) RESUMO TABULAR
 # =============================================================================
-print("\n" + "=" * 70)
-print("  RESUMO DOS RECORTES")
-print("=" * 70)
-print(f"{'Recorte':8s} {'Janela':18s} {'N':>5s} {'Veredito':12s} {'Proba':>8s}  Descricao")
-print("-" * 95)
+print("\n" + "=" * 90)
+print(f"  RESUMO DOS RECORTES  (tau padrao=0.500, tau ajustado={THRESHOLD:.3f})")
+print("=" * 90)
+header = (f"{'Recorte':8s} {'Janela':18s} {'N':>5s} {'Proba':>8s}  "
+          f"{'tau=0.5':>9s}  {'tau='+f'{THRESHOLD:.2f}':>9s}  Descricao")
+print(header)
+print("-" * 110)
 for name, res in resultados.items():
     win = f"{res['window'][0]}..{res['window'][1]}"
     if res['pred'] is None:
-        veredito = '-'
         proba_str = '-'
+        v_pad = '-'
+        v_tau = '-'
     else:
-        veredito = 'OCULTACAO' if res['pred'] == 1 else 'sem evento'
         proba_str = f"{res['proba']:.4f}"
-    print(f"{name:8s} {win:18s} {res['n_pts']:>5d} {veredito:12s} {proba_str:>8s}  {res['desc']}")
-print("=" * 70)
+        v_pad = 'OCC' if res['pred_padrao'] == 1 else 'NEG'
+        v_tau = 'OCC' if res['pred'] == 1 else 'NEG'
+        if res['pred'] != res['pred_padrao']:
+            v_tau += '*'
+    print(f"{name:8s} {win:18s} {res['n_pts']:>5d} {proba_str:>8s}  "
+          f"{v_pad:>9s}  {v_tau:>9s}  {res['desc']}")
+print("=" * 90)
+print(f"  (* = classificacao mudou ao baixar o limiar para tau={THRESHOLD:.3f})")
