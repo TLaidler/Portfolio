@@ -328,3 +328,35 @@ for i, curve_name in enumerate(curve_names):
 print("\n" + "=" * 70)
 print("  FIM")
 print("=" * 70)
+
+
+#Caso queira formatar o tempo de Epoch para segundos após evento:
+
+from datetime import datetime
+
+def time_to_relative(df, reference='2022-08-09 06:34:49.26', col='time'):
+    """Adiciona ao DataFrame uma coluna 'time_rel' em segundos relativos
+    a uma data/hora UTC de referencia.
+
+    Parametros
+    ----------
+    df : DataFrame com a coluna `col` em segundos UTC do dia (formato PRAIA).
+    reference : string 'YYYY-MM-DD HH:MM:SS[.ff]' (UTC).
+    col : nome da coluna de tempo absoluto. Default 'time'.
+
+    Retorna
+    -------
+    Novo DataFrame (copia) com a coluna 'time_rel' acrescentada.
+    """
+    ref_dt = datetime.strptime(reference, '%Y-%m-%d %H:%M:%S.%f')
+    ref_seconds = (
+        ref_dt.hour * 3600
+        + ref_dt.minute * 60
+        + ref_dt.second
+        + ref_dt.microsecond / 1e6
+    )
+    df = df.copy()
+    df['time_rel'] = df[col] - ref_seconds
+    return df
+
+
