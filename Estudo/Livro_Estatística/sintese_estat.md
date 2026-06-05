@@ -596,6 +596,82 @@ Sendo esta a equação que define a distribuição de Poisson.
  - Distribuição randômica
 --- MD CELL 80 ---
  - Calculando a probabilidade num intervalo
+--- MD CELL 81 ---
+### Lei dos Grandes Números
+
+Antes de chegarmos ao Teorema do Limite Central, precisamos dar nome a uma ideia que **já apareceu duas vezes** nestas anotações sem que a batizássemos. Lembra do "ponto de estabilidade" lá no capítulo de probabilidade? Jogávamos a moeda mil vezes, anotávamos a fração de caras, e víamos essa fração balançar muito no começo e ir se acalmando perto de $0{,}5$. E lembra do método de Monte Carlo (que veremos adiante), quando estimamos $\pi$ jogando pontos num quadrado e dizemos "para $N$ grande, a fração converge para $\pi/4$"? Nos dois casos estamos usando, sem dizer, a **Lei dos Grandes Números** (LGN).
+
+A ideia é simples e profunda ao mesmo tempo: *a média de muitas observações independentes se aproxima da média verdadeira conforme acumulamos dados*. É a promessa que faz a estatística funcionar. Um único fóton que chega de uma estrela distante é puro ruído; a média de um milhão deles revela o brilho real do astro. Um único pregão diz pouco sobre o retorno esperado de uma carteira; a média de muitos pregões, sob as condições certas, revela a tendência.
+
+> **Por que a média se acalma? (a intuição quantitativa)**
+> Já sabemos que a média amostral $\bar{X}_n = \frac{1}{n}\sum_{i=1}^n X_i$ tem variância $\sigma^2/n$. Ou seja: *quanto mais dados, menor o espalhamento da média em torno do valor verdadeiro*. O denominador grande engole a bagunça do numerador. Usando a desigualdade de Chebyshev, dá até para colocar um número nisso:
+> $$P\big(|\bar{X}_n - \mu| \geq \varepsilon\big) \;\leq\; \frac{\text{Var}(\bar{X}_n)}{\varepsilon^2} = \frac{\sigma^2}{n\,\varepsilon^2} \xrightarrow[n\to\infty]{} 0.$$
+> Não importa quão pequena seja a tolerância $\varepsilon$ que você exija: basta coletar $n$ suficiente para que a probabilidade de errar por mais que $\varepsilon$ vá a zero.
+
+Concretizando com a própria moeda: depois de $n$ lançamentos, a fração de caras $\hat{p}_n$ tem desvio padrão $\sqrt{p(1-p)/n} = \sqrt{0{,}25/n}$. Com $n = 100$, isso dá $0{,}05$ — a fração tipicamente vive em $0{,}50 \pm 0{,}05$. Com $n = 10\,000$, cai para $0{,}005$. Com um milhão de lançamentos, $0{,}0005$. É o "ponto de estabilidade" virando número.
+
+> **Cuidado (a mesma armadilha de antes):** a LGN **não** diz que a moeda "se lembra" e compensa resultados passados — isso seria a falácia do apostador que já discutimos na roleta. Ela diz apenas que o *denominador* cresce e dilui os desvios. Cada lançamento futuro continua sendo $1/2$, independente do passado.
+
+E, como toda boa ferramenta, a LGN tem uma letra miúda: ela exige **variância finita**. Existem distribuições de cauda tão pesada — a Cauchy é o exemplo canônico, a mesma que citamos na ressalva do TCL — para as quais a média de um milhão de observações não é melhor que a de uma só. Para essas, a LGN simplesmente *não vale*. (É exatamente o tipo de cauda gorda que apareceu na curtose dos retornos financeiros no Capítulo 2 — um lembrete de que mercados raramente são tão comportados quanto gostaríamos.)
+
+##### As duas leis: fraca e forte
+
+Aqui mora uma sutileza que vale a pena enfrentar. Na verdade existem **duas** Leis dos Grandes Números, não uma — e a diferença entre elas é justamente o que nos obriga a falar dos *modos de convergência* logo abaixo.
+
+> **Lei Fraca (Khintchine):** a média amostral converge *em probabilidade* para $\mu$:
+> $$\forall\, \varepsilon > 0:\quad \lim_{n\to\infty} P\big(|\bar{X}_n - \mu| > \varepsilon\big) = 0.$$
+>
+> **Lei Forte (Kolmogorov):** a média amostral converge *quase certamente* para $\mu$:
+> $$P\Big(\lim_{n\to\infty}\bar{X}_n = \mu\Big) = 1.$$
+
+À primeira vista parecem dizer a mesma coisa. Não dizem. Para entender a diferença, precisamos de uma pequena gramática nova.
+
+##### Os três modos de convergência
+
+Quando dizemos que uma sequência de variáveis aleatórias $Y_n$ "se aproxima" de um alvo, há três sentidos diferentes — do mais fraco ao mais forte:
+
+> **Convergência em distribuição** ($Y_n \xrightarrow{d} Y$): apenas o *formato* da distribuição converge. Formalmente, as funções de distribuição acumulada satisfazem $F_n(y) \to F(y)$ em todo ponto de continuidade de $F$. Não se afirma nada sobre os valores individuais — só sobre a silhueta da distribuição no limite.
+>
+> **Convergência em probabilidade** ($Y_n \xrightarrow{P} Y$): para todo $\varepsilon$, $P(|Y_n - Y| > \varepsilon) \to 0$. Em qualquer instante distante que você escolha *de antemão*, é quase certo estar perto do alvo.
+>
+> **Convergência quase certa** ($Y_n \xrightarrow{q.c.} Y$): $P(\lim_n Y_n = Y) = 1$. A *própria trajetória* assenta no alvo e não se afasta mais de forma duradoura.
+
+E há uma hierarquia rígida — as setas só valem num sentido:
+$$\xrightarrow{q.c.}\ \Longrightarrow\ \xrightarrow{P}\ \Longrightarrow\ \xrightarrow{d}.$$
+
+Traduzindo de volta: a **Lei Fraca** é convergência em probabilidade; a **Lei Forte** é convergência quase certa. Por isso a forte é, de fato, *mais forte* — ela implica a fraca, mas não o contrário.
+
+> **Uma observação que conecta tudo:** você já usou a flecha $\xrightarrow{d}$ neste material! É exatamente ela que aparece no enunciado formal do Teorema do Limite Central, logo abaixo. Quando dizemos que a média amostral "se distribui *aproximadamente* como uma Normal", aquele *aproximadamente* tem nome técnico: convergência em distribuição. O TCL é, no fundo, uma afirmação sobre o modo *mais fraco* de convergência — e, ainda assim, poderosíssimo.
+
+**E qual a diferença prática entre "em probabilidade" e "quase certa"?** Pense num exemplo do nosso próprio mundo, o da observação astronômica. Imagine um detector (um CCD) medindo o fluxo de uma estrela, *frame* após *frame*. O detector é bom, mas de vez em quando um **raio cósmico** atinge o sensor e corrompe aquela leitura específica, produzindo um pico espúrio — exatamente o tipo de "ruído do instrumento" que mencionamos no capítulo de correlações. Suponha que a engenharia vá refinando o aparelho, de modo que a probabilidade de uma leitura corrompida no $n$-ésimo *frame* seja $1/n$.
+
+- *Em probabilidade:* num *frame* distante específico — digamos, o de número um milhão — é quase certo que a leitura está limpa, porque a chance de glitch ali é só $1/1\,000\,000$. A sequência de leituras converge **em probabilidade** para o valor verdadeiro.
+- *Quase certa?* **Não!** Por mais longe que você vá na sequência, *ainda virão outros glitches lá na frente*. Como a soma $\sum 1/n$ diverge, fica garantido (é o lema de Borel-Cantelli) que os picos espúrios ocorrem *infinitas* vezes. A trajetória nunca "assenta de vez" — então ela **não** converge quase certamente.
+
+Agora gire um único botão: suponha que o instrumento melhore mais rápido, com probabilidade de glitch $1/n^2$ no $n$-ésimo *frame*. Como $\sum 1/n^2$ é *finita*, os glitches eventualmente **cessam para sempre** a partir de algum *frame*. Aí sim a sequência converge **quase certamente**. A diferença entre os dois modos foi decidida por algo tão simples quanto uma série convergir ou divergir.
+
+> **A imagem para guardar:** a convergência em probabilidade é uma *foto* — tirada num instante distante qualquer, ela quase sempre mostra você perto do alvo. A convergência quase certa é o *filme inteiro* — garante que, a partir de certo ponto, você fica perto do alvo e não sai mais. A foto pode estar quase sempre boa mesmo que o filme nunca se aquiete por completo.
+
+**Na prática**, para o cientista de bancada, os modos que mais importam são o *em distribuição* (com que justificamos usar a Normal do TCL) e o *em probabilidade* (com que justificamos confiar que a média amostral estima a verdadeira). A convergência quase certa é o alicerce filosófico — é ela que garante que "repetir o experimento indefinidamente" de fato revela o parâmetro. Felizmente, para dados i.i.d. com variância finita — o caso de quase tudo que fazemos aqui — as **duas** leis valem ao mesmo tempo, então raramente precisamos nos preocupar com a fresta entre elas. Mas é bom saber que o chão é firme.
+
+##### O erro padrão: a que velocidade a média converge?
+
+A LGN diz *para onde* a média vai (o destino: $\mu$). Mas e a *velocidade*? Quão rápido a média se acalma? A resposta é uma das relações mais importantes — e mais subestimadas — de toda a estatística aplicada, e já a temos em mãos. A média amostral tem desvio padrão
+
+$$\text{EP}(\bar{X}_n) = \frac{\sigma}{\sqrt{n}},$$
+
+quantidade que chamamos de **erro padrão** (*standard error*) da média. Repare na tirania — e na beleza — do $\sqrt{n}$ no denominador: para **reduzir o erro pela metade, você precisa de quatro vezes mais dados**. Para reduzi-lo a um décimo, cem vezes mais. O custo da precisão cresce em potências.
+
+Na astronomia isso é literal: para dobrar a relação sinal-ruído de uma imagem de uma estrela fraca, é preciso expor a placa *quatro vezes* mais tempo. No mercado, é por isso que estimar o retorno esperado de um ativo com precisão é tão difícil — séries curtas dão erros padrão enormes, e o passado disponível quase nunca é longo o bastante.
+
+> **O mesmo $\sqrt{n}$ em três lugares deste livro.** Vale perceber que essa criatura — o erro padrão — reaparece, disfarçada, em outros capítulos:
+> - no **Teorema do Limite Central** (logo abaixo), a Normal-limite tem largura $\sigma/\sqrt{n}$;
+> - no **intervalo de confiança** (Capítulo 5), a margem é $\bar{X} \pm 1{,}96\,\dfrac{\sigma}{\sqrt{n}}$ — a largura do IC *é* o erro padrão vezes $1{,}96$;
+> - no **método de Monte Carlo** (Capítulo 6), dizemos que o erro "decresce como $1/\sqrt{N}$" — exatamente o mesmo $\sqrt{n}$.
+>
+> É sempre o mesmo personagem. O erro padrão é o motor *quantitativo* da LGN: a Lei nos diz que $\bar{X}_n \to \mu$; o erro padrão $\sigma/\sqrt{n}$ nos diz *quão rápido*. (Na prática raramente conhecemos $\sigma$ e o trocamos pelo desvio amostral $s$ — com o $n-1$ que vamos justificar no Capítulo 6 —, razão pela qual, em amostras pequenas, a Normal dá lugar à $t$ de Student.)
+
+Com a Lei dos Grandes Números nos dizendo *onde* a média aterrissa, e o erro padrão nos dizendo *a que velocidade*, falta apenas descrever **o formato do tremor** em torno do caminho. É exatamente esse o papel do Teorema do Limite Central.
 --- MD CELL 82 ---
 ### Teorema do limite central
 --- MD CELL 83 ---
@@ -989,6 +1065,43 @@ Quando estamos tratando de dados, é preciso diferenciar o que seriam os parâme
 > **OBS**: Mais detalhes da matemática por trás dessa distinção podem ser vistos no *exemplo 11.4* na página 299 do livro *Estatística básica - Bussab e Morettin*
 
 Lembrando que a unidade da variância é o quadrado da unidade dos dados. Por exemplo, se os dados forem medidos em metros, a unidade da variância será metro ao quadrado. Logo, para que se tenha o desvio *de fato* dos nossos dados, será necessário tirar sua raíz. É o que chamamos de **desvio padrão**.
+
+##### O que faz um bom estimador? Viés, variância e erro quadrático médio
+
+Acabamos de tropeçar de novo naquela velha pergunta — *por que dividir por $n-1$ e não por $n$?* — que ficou pendente desde o Capítulo 2. Chegou a hora de pagá-la. E, ao fazê-lo, vamos ganhar o vocabulário para responder a uma pergunta muito mais geral, que reaparecerá no exemplo da fibra logo adiante: **dada uma estimativa, como sei se ela é boa?**
+
+Um estimador $\hat{\theta}$ é uma receita que pega os dados e cospe um palpite sobre um parâmetro verdadeiro $\theta$ (a média populacional, a variância, o coeficiente de uma reta...). Como todo palpite calculado a partir de uma amostra aleatória, *ele próprio é uma variável aleatória*: troque a amostra e o palpite muda. Há duas formas de um estimador errar, e elas correspondem exatamente à distinção entre **acurácia** e **precisão** que vimos lá no início, no exemplo do sujeito mandado "seguir 3,15 km a leste":
+
+- **Viés** (falta de acurácia): o estimador erra *sistematicamente* para um lado — como uma mira torta, que acerta sempre ao lado do alvo. Definimos:
+$$\text{Viés}(\hat{\theta}) = E[\hat{\theta}] - \theta.$$
+Um estimador é **não-viesado** quando $E[\hat{\theta}] = \theta$: em média, acerta o alvo.
+- **Variância** (falta de precisão): o estimador *balança muito* de amostra para amostra — como uma mão trêmula, que espalha os tiros mesmo com a mira certa.
+
+**Resolvendo o $n-1$: a correção de Bessel.** Agora a conta que ficou devendo. Tome a variância calculada *dividindo por $n$*, em torno da média amostral $\bar{x}$:
+$$S_n^2 = \frac{1}{n}\sum_{i=1}^n (x_i - \bar{x})^2.$$
+Pode-se mostrar (a álgebra está justamente no *exemplo 11.4* de Bussab-Morettin que citamos acima) que
+$$E[S_n^2] = \frac{n-1}{n}\,\sigma^2 \;<\; \sigma^2.$$
+Ou seja: dividir por $n$ produz um estimador **viesado**, que *subestima* sistematicamente a variância verdadeira. A razão é intuitiva — medimos os desvios em torno de $\bar{x}$, que foi calculada *a partir dos próprios dados*, e $\bar{x}$ é, por construção, o ponto que torna $\sum(x_i - \bar{x})^2$ a *menor possível*. Os dados parecem menos espalhados em torno da sua própria média do que de fato são em torno da média verdadeira $\mu$. "Gastamos" um grau de liberdade ao estimar $\bar{x}$. A correção é dividir por $n-1$:
+$$s^2 = \frac{1}{n-1}\sum_{i=1}^n (x_i - \bar{x})^2, \qquad E[s^2] = \sigma^2.$$
+Isso é a **correção de Bessel**, e é a resposta exata à pergunta do Capítulo 2. Repare que ela confirma com rigor a intuição que havíamos anotado: dividir por um número menor deixa a variância "maior e, portanto, mais segura". O nome técnico daquele "mais segura" é *não-viesada*.
+
+**Juntando os dois erros: o Erro Quadrático Médio.** Viés mede a mira; variância mede o tremor. Como combiná-los numa única medida da qualidade do estimador? Com o **Erro Quadrático Médio** (EQM, ou *MSE*):
+$$\text{EQM}(\hat{\theta}) = E\big[(\hat{\theta} - \theta)^2\big].$$
+É a distância quadrática média entre o palpite e a verdade — no mesmo espírito do "erro quadrático total" que usaremos nos mínimos quadrados, só que medido em relação ao *parâmetro verdadeiro*. E ele se decompõe de uma forma belíssima:
+$$\boxed{\;\text{EQM}(\hat{\theta}) = \underbrace{\text{Var}(\hat{\theta})}_{\text{tremor}} + \underbrace{\big[\text{Viés}(\hat{\theta})\big]^2}_{\text{mira torta}}\;}$$
+(A demonstração é de três linhas: dentro do quadrado, some e subtraia $E[\hat{\theta}]$, expanda, e o termo cruzado se anula.) Em palavras: **erro total = espalhamento + viés ao quadrado**. É a tradução matemática exata do alvo de dardos — a mesma dualidade *precisão × acurácia* que perseguimos o livro inteiro, agora destilada numa equação. Se você quisesse um nome para "a relação fundamental do erro", é esta.
+
+**A surpresa: viés nem sempre é vilão.** Aqui vem uma lição que humilha a intuição ingênua. Como o EQM soma *dois* termos, às vezes vale a pena **aceitar um pouquinho de viés para reduzir muito a variância**. Veja nossas duas estimativas da variância: a versão $\div(n-1)$ é não-viesada (mira certa), mas balança mais; a versão $\div n$ tem um viés pequeno (mira levemente torta), porém balança menos. Quando somamos os dois efeitos no EQM, para dados normais a versão *viesada* $\div n$ tem **erro quadrático médio menor**:
+$$\text{EQM}\!\left(\tfrac{1}{n}\textstyle\sum(x_i-\bar{x})^2\right) \;<\; \text{EQM}\!\left(\tfrac{1}{n-1}\textstyle\sum(x_i-\bar{x})^2\right).$$
+Ou seja: *não-viesado não é sinônimo de ótimo*. Trocar um tico de acurácia por bastante precisão é uma das ideias mais férteis da estatística moderna — está por trás da regressão *ridge*, da contração de James-Stein e de boa parte do aprendizado de máquina, onde esse equilíbrio tem nome próprio: o **trade-off viés-variância**.
+
+> **Um número para fixar.** Suponha $n = 5$ medidas de algo cuja variância verdadeira é $\sigma^2 = 10$ (logo $\sigma^4 = 100$).
+> - A estimativa $\div n$ tem viés $= \frac{n-1}{n}\sigma^2 - \sigma^2 = -\frac{\sigma^2}{n} = -2$: em média devolve $8$, não $10$ — subestima.
+> - A estimativa $\div(n-1)$ tem viés $0$: em média devolve $10$, na mosca.
+>
+> E, no entanto, juntando variância e viés no EQM (para dados normais), a primeira sai na frente: $\text{EQM}_{\div n} = \frac{2n-1}{n^2}\sigma^4 = 36$, contra $\text{EQM}_{\div(n-1)} = \frac{2}{n-1}\sigma^4 = 50$. A versão de mira torta, por tremer menos, erra menos *no total*. A escolha entre uma e outra depende do que te custa mais caro: errar sistematicamente, ou errar de forma imprevisível.
+
+Munidos disso, voltaremos ao exemplo da fibra (logo adiante) com olhos novos: quando estimarmos $\theta$ e perguntarmos "*como verificar a qualidade dessa estimativa?*", a resposta tem agora nome e fórmula — *qual o viés de $\hat{\theta}$? qual a variância? qual o EQM?*. É também por isso que o método dos mínimos quadrados é especial: sob as hipóteses de Gauss-Markov (que listaremos), ele entrega o estimador de **menor variância dentre todos os lineares e não-viesados** — o melhor da classe, em termos de EQM, quando o viés já é zero.
 --- MD CELL 138 ---
 - Regressão
 
@@ -1052,6 +1165,8 @@ Agora ele deseja estimar o parâmetro θ, baseado numa amostra de cinco unidades
 --- MD CELL 160 ---
 Inspecionando os resultados, conclui-se que θ = 3 parece ser um valor razoável. 
 Mas, **como verificar a qualidade dessa estimativa?**
+
+> Aqui colhemos o que plantamos na seção sobre *viés, variância e EQM*: julgar a qualidade de $\hat{\theta}$ é perguntar pelo seu **viés** ($E[\hat{\theta}] - \theta$), pela sua **variância** e pelo **erro quadrático médio** que os reúne. Por ora, sigamos o caminho histórico — medir o "erro quadrático total da amostra" —, que é a porta de entrada concreta para essas ideias.
 --- MD CELL 161 ---
 Podemos utilizar o modelo $Y = 3X$ e ver como esse prevê os valores de $Y$, para os dados valores de $X$, e como são as discrepâncias entre os valores observados e os estimados pelo modelo.
 
