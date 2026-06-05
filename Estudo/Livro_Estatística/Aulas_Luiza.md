@@ -222,6 +222,37 @@ Um experimento mental que torna isso óbvio: pegue **$n=1$** dado. A média amos
 
 Por que dividir por $n-1$ conserta? Porque ao usar $\bar x$ em vez de $\mu$, você "gastou" um pedacinho da informação dos dados para *fabricar o próprio ponto de referência*. Tecnicamente: gastou **1 grau de liberdade**. Com $n$ pontos, sobram só $n-1$ desvios genuinamente livres. Dividir pela quantidade *honesta* de informação ($n-1$, e não $n$) infla a estimativa exatamente o tanto que faltava para cancelar a subestimação. No exemplo do $n=1$: dividir por $n-1=0$ dá "indefinido" — que é a resposta *correta*, porque com um ponto você realmente **não pode** estimar variância. A fórmula é honesta até nisso.
 
+---
+
+#### Um exemplo bobo que prova tudo isso na unha
+
+Vamos pegar uma "população" minúscula e *trapacear olhando a verdade*: a população é só $\{2, 4, 6\}$. Como conhecemos a população inteira, sabemos a verdade sem erro nenhum:
+$$\mu = 4, \qquad \sigma^2=\frac{(2{-}4)^2+(4{-}4)^2+(6{-}4)^2}{3}=\frac{4+0+4}{3}=\frac{8}{3}\approx 2{,}67.$$
+
+Agora finja que você é um estatístico míope: você só consegue sortear **amostras de tamanho $n=2$** (com reposição, para os saques serem independentes). Há $3\times3=9$ amostras igualmente prováveis. Para cada uma, calcule a variância dos *dois jeitos* — dividindo por $n=2$ (o $\hat\sigma^2$ da questão) e por $n-1=1$ (o $s^2$ consertado):
+
+| Amostra | $\bar x$ | $\hat\sigma^2$ (÷ n=2) | $s^2$ (÷ n−1=1) |
+|---|---|---|---|
+| (2,2) | 2 | 0 | 0 |
+| (2,4) | 3 | 1 | 2 |
+| (2,6) | 4 | 4 | 8 |
+| (4,2) | 3 | 1 | 2 |
+| (4,4) | 4 | 0 | 0 |
+| (4,6) | 5 | 1 | 2 |
+| (6,2) | 4 | 4 | 8 |
+| (6,4) | 5 | 1 | 2 |
+| (6,6) | 6 | 0 | 0 |
+
+Agora a hora da verdade — faça a **média de cada coluna** (é isso que $E[\cdot]$ significa: a média sobre todas as amostras possíveis):
+$$E[\hat\sigma^2]=\frac{0+1+4+1+0+1+4+1+0}{9}=\frac{12}{9}=\frac{4}{3}\approx 1{,}33,\qquad E[s^2]=\frac{0+2+8+2+0+2+8+2+0}{9}=\frac{24}{9}=\frac{8}{3}\approx 2{,}67.$$
+
+Olhe o que aconteceu:
+
+- O $\hat\sigma^2$ (÷n) devolve, em média, **1,33 — exatamente metade da verdade 2,67**. Subestimou! E "metade" não é coincidência: é o fator $\frac{n-1}{n}=\frac{1}{2}$ que a teoria previu. A mira está torta para baixo, como o Feynman avisou.
+- O $s^2$ (÷ n−1) devolve, em média, **2,67 — na mosca**, igualzinho a $\sigma^2$. O conserto funciona *exatamente*.
+
+> Repare também, amostra por amostra, *de onde* vem o viés: sempre que os dois pontos sorteados calham de ser iguais — (2,2), (4,4), (6,6) — o $\hat\sigma^2$ grita "espalhamento = 0!", embora a população seja claramente espalhada. São esses zeros teimosos (o $\bar x$ "puxa-saco" colado nos dados) que puxam a média para baixo. Dividir por um número menor ($n-1$) é o que compensa essa preguiça.
+
 > **Resumo de cofrinho:** $\hat\sigma^2$ mede a dispersão a partir de um centro que foi escolhido para minimizar essa própria dispersão → subestima → viés para baixo. Mas o erro relativo é $\frac1n$, que some quando $n$ cresce → ainda assim consistente. **Viés = mira torta agora; consistência = grudar na verdade no infinito. Coisas diferentes.**
 
 ---
