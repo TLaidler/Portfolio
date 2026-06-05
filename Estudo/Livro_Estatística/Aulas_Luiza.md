@@ -134,8 +134,12 @@ Ordem sugerida de explicação (cada bloco puxa o próximo):
 
 $$\mathrm{EQM}(\hat\theta)=E\!\left[(\hat\theta-\theta)^2\right]=\mathrm{Var}(\hat\theta)+\big[\mathrm{Vi\acute es}(\hat\theta)\big]^2$$
 
+onde o viés é o erro sistemático do estimador (o quanto ele erra o alvo, em média):
+
+$$\mathrm{Vi\acute es}(\hat\theta)=E[\hat\theta]-\theta$$
+
 - $\mathrm{Var}(\hat\theta)$ → o **tremor** (precisão / mão trêmula)
-- $[\mathrm{Vi\acute es}(\hat\theta)]^2$ → a **mira torta** (acurácia / erro sistemático), com $\mathrm{Vi\acute es}(\hat\theta)=E[\hat\theta]-\theta$
+- $[\mathrm{Vi\acute es}(\hat\theta)]^2$ → a **mira torta** (acurácia / erro sistemático)
 
 O erro total se decompõe em **variância** (espalhamento) + **viés ao quadrado** (erro sistemático). É a tradução matemática exata do alvo de dardos — a dualidade precisão × acurácia destilada numa equação.
 
