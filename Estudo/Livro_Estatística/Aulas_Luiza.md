@@ -143,6 +143,21 @@ $$\mathrm{Vi\acute es}(\hat\theta)=E[\hat\theta]-\theta$$
 
 O erro total se decompõe em **variância** (espalhamento) + **viés ao quadrado** (erro sistemático). É a tradução matemática exata do alvo de dardos — a dualidade precisão × acurácia destilada numa equação.
 
+**Exemplo numérico (uma balança descalibrada).** O peso verdadeiro de um objeto é $\theta = 10$ kg. Uma balança ruim, repetindo a pesagem, devolve com igual chance ($\tfrac14$ cada) os valores **9, 11, 13, 15** kg. Vamos medir a qualidade dela.
+
+1. **Média do estimador:** $E[\hat\theta]=\dfrac{9+11+13+15}{4}=\dfrac{48}{4}=12$.
+2. **Viés** (mira torta): $\mathrm{Vi\acute es}=E[\hat\theta]-\theta = 12-10 = +2$ → em média a balança lê 2 kg **a mais**.
+3. **Variância** (tremor, desvios em torno da *própria* média 12):
+$$\mathrm{Var}(\hat\theta)=\frac{(9{-}12)^2+(11{-}12)^2+(13{-}12)^2+(15{-}12)^2}{4}=\frac{9+1+1+9}{4}=5.$$
+
+Agora confira que as **duas rotas dão o mesmo EQM**:
+
+- **Pela decomposição:** $\mathrm{EQM}=\mathrm{Var}+\mathrm{Vi\acute es}^2 = 5 + 2^2 = \boxed{9}$.
+- **Direto pela definição** (desvios em torno da *verdade* 10):
+$$\mathrm{EQM}=\frac{(9{-}10)^2+(11{-}10)^2+(13{-}10)^2+(15{-}10)^2}{4}=\frac{1+1+9+25}{4}=\boxed{9}.\ \checkmark$$
+
+> **Moral:** dos 9 de erro total, **5 vêm do tremor** (variância) e **4 vêm da mira torta** (viés²). Calibrar a balança (zerar o viés) derrubaria o erro de 9 para 5; comprar uma balança mais firme (reduzir a variância) atacaria os outros 5. As duas doenças são independentes e somam no EQM.
+
 ---
 
 **🔵 Q17 — Ilustre um estimador não-viesado e um viesado.**
