@@ -131,7 +131,12 @@ Ordem sugerida de explicação (cada bloco puxa o próximo):
 **🟢 Q16 — Relação entre erro, viés e erro quadrático médio.**
 
 **Gabarito.**
-$$\text{EQM}(\hat\theta)=E[(\hat\theta-\theta)^2]=\underbrace{\text{Var}(\hat\theta)}_{\text{tremor / precisão}}+\underbrace{[\text{Viés}(\hat\theta)]^2}_{\text{mira torta / acurácia}}$$
+
+$$\mathrm{EQM}(\hat\theta)=E\!\left[(\hat\theta-\theta)^2\right]=\mathrm{Var}(\hat\theta)+\big[\mathrm{Vi\acute es}(\hat\theta)\big]^2$$
+
+- $\mathrm{Var}(\hat\theta)$ → o **tremor** (precisão / mão trêmula)
+- $[\mathrm{Vi\acute es}(\hat\theta)]^2$ → a **mira torta** (acurácia / erro sistemático), com $\mathrm{Vi\acute es}(\hat\theta)=E[\hat\theta]-\theta$
+
 O erro total se decompõe em **variância** (espalhamento) + **viés ao quadrado** (erro sistemático). É a tradução matemática exata do alvo de dardos — a dualidade precisão × acurácia destilada numa equação.
 
 ---
