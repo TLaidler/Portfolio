@@ -239,6 +239,8 @@ Os hiperparâmetros (número de árvores, profundidade máxima, regularização,
 \section{Resultados do Experimento 1}
 \label{sec:resultados_exp1}
 
+\textcolor{red}{É interessante mostrar uma curva positiva que não tenha sido detectada como tal por algum dos modelos}
+
 No Experimento 1 foram utilizadas as 28 \textit{features} descritas na Tabela~\ref{tab:features_completo} (conjunto completo). A Tabela~\ref{tab:metricas_1} resume as métricas de desempenho no conjunto de teste.
 
 \begin{table}[htbp]
@@ -486,7 +488,7 @@ Exp.\ 3 & 80\%/20\% & Random Forest & 0,9905 \\
 
 \subsection{Motivação}
 
-No \textit{dataset} utilizado, cerca de 78\% das curvas negativas são \textbf{sintéticas} (geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}). Assim, o conjunto de teste padrão mistura curvas reais e sintéticas. Para avaliar se o desempenho se mantém em cenários onde apenas curvas \textbf{reais} são classificadas --- situação típica de uso em campanhas observacionais --- foi realizado o Experimento~7: os modelos são treinados com o mesmo protocolo do Experimento~6 (11 \textit{features}, split 65\%/35\%), porém a avaliação é feita \textbf{somente em curvas reais} (excluindo as sintéticas do conjunto de teste).
+No \textit{dataset} utilizado, cerca de 78\% das curvas negativas são \textbf{sintéticas} (geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. Assim, o conjunto de teste padrão mistura curvas reais e sintéticas. Para avaliar se o desempenho se mantém em cenários onde apenas curvas \textbf{reais} são classificadas --- situação típica de uso em campanhas observacionais --- foi realizado o Experimento~7: os modelos são treinados com o mesmo protocolo do Experimento~6 (11 \textit{features}, split 65\%/35\%), porém a avaliação é feita \textbf{somente em curvas reais} (excluindo as sintéticas do conjunto de teste).
 
 \subsection{Resultados do Experimento 7}
 \label{sec:resultados_exp7}
@@ -534,7 +536,7 @@ Nos experimentos anteriores, todos os modelos utilizam o limiar de decisão padr
 No contexto de triagem de curvas de luz para análise de ocultações estelares, os custos são \textbf{assimétricos}:
 
 \begin{itemize}
-	\item \textbf{Falso negativo} (ocultação real classificada como negativa): a curva é descartada ou recebe baixa prioridade de análise. O evento científico é perdido, potencialmente de forma irreversível --- a ocultação não se repetirá nas mesmas condições.
+	\item \textbf{Falso negativo} (ocultação real classificada como negativa): a curva é descartada ou recebe baixa prioridade de análise. O evento científico é perdido, potencialmente de forma irreversível --- a ocultação não se repetirá nas mesmas condições \textcolor{red}{(de fato, o evento não se repetirá mas, desde que os dados não sejam jogados fora, a informação continua lá. Sugiro que a frase seja algo como: evento deixa de ser prioridade para análise mais detalhada, podendo demorar para ser "redescoberto", inclusive levando à perda de trabalho contendo possível resultado inédito pelo grupo.)}.
 	\item \textbf{Falso positivo} (curva sem evento classificada como positiva): a curva recebe prioridade indevida e será examinada por um analista humano, que rapidamente descartará o falso alarme. O custo é apenas tempo de análise.
 \end{itemize}
 
@@ -542,7 +544,7 @@ Essa assimetria é análoga à de sistemas de triagem médica (\textit{screening
 
 \subsection{Método: variação do limiar de classificação}
 
-Todos os quatro classificadores utilizados neste trabalho produzem \textbf{probabilidades calibradas} via o método \texttt{predict\_proba}. A classificação binária é obtida pela aplicação de um limiar $\tau$:
+Todos os quatro classificadores utilizados neste trabalho produzem \textbf{probabilidades calibradas} via o método \texttt{predict\_proba} \textcolor{red}{(o que é isso? já foi definido anteriormente?)}. A classificação binária é obtida pela aplicação de um limiar $\tau$:
 %
 \[
 \hat{y} =
@@ -585,6 +587,7 @@ Neste trabalho, adota-se o critério de \textbf{sensibilidade mínima garantida}
 O ajuste de limiar foi aplicado aos quatro modelos do Experimento~3 (13 \textit{features}, split 80\%/20\%). Para cada modelo, foram calculadas as métricas em função do limiar $\tau \in [0{,}01,\; 0{,}99]$. A Tabela~\ref{tab:threshold_comparacao} resume pontos operacionais representativos.
 
 \begin{table}[htbp]
+\textcolor{red}{a tabela parece sair do limite da página - se precisar, deixe-a em landscape}
 \centering
 \caption{Pontos operacionais selecionados na análise de limiar (Experimento 3, 13 \textit{features}). Para cada modelo: limiar padrão ($\tau = 0{,}5$), limiar sensível ou ótimo, e métricas associadas (FP = falsos positivos, FN = falsos negativos).}
 \label{tab:threshold_comparacao}
@@ -614,7 +617,7 @@ As Figuras~\ref{fig:precision_recall_curve} e \ref{fig:metrics_vs_threshold} ilu
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[width=0.75\linewidth]{Tese/pngs/exp3/precision_recall_curve.png}
-\caption{Curvas precisão-sensibilidade dos quatro modelos (Experimento 3). Cada ponto corresponde a um valor de limiar $\tau$.}
+\caption{Curvas precisão-sensibilidade dos quatro modelos (Experimento 3). Cada ponto corresponde a um valor de limiar $\tau$. \textcolor{red}{precisas deixar mais claro a interpretação destes gráficos. Ainda, talvez o eixo x pudesse iniciar em 0.9}}
 \label{fig:precision_recall_curve}
 \end{center}
 \end{figure}
@@ -644,7 +647,7 @@ A escolha do limiar pode, inclusive, ser adaptada por campanha observacional: em
 
 \subsection{Motivação}
 
-Os sete experimentos descritos nas seções anteriores avaliam a \textit{pipeline} sobre curvas oriundas do banco de dados de treinamento (catálogo \texttt{B/occ/asteroid} do VizieR e Grupo do Rio), respeitando a partição treino/teste. Para complementar essa avaliação, apresenta-se nesta seção um \textbf{estudo de caso} no qual a \textit{pipeline} é aplicada a um conjunto de curvas \textbf{externas ao banco}: registros de uma ocultação estelar pelo objeto transnetuniano \textbf{(50000) Quaoar}, que não estavam armazenadas no VizieR nem no \textit{drive} do Grupo do Rio. O evento é especialmente interessante porque, além da queda profunda associada ao corpo principal, apresenta assinaturas adicionais atribuídas aos dois anéis recentemente descobertos em torno de Quaoar~\citep{Quaoar2023}, configurando uma curva complexa com múltiplas \textit{features} físicas (anel, corpo, possível atmosfera) em uma única série temporal.
+Os sete experimentos descritos nas seções anteriores avaliam a \textit{pipeline} sobre curvas oriundas do banco de dados de treinamento (catálogo \texttt{B/occ/asteroid} do VizieR e Grupo do Rio), respeitando a partição treino/teste. Para complementar essa avaliação, apresenta-se nesta seção um \textbf{estudo de caso} no qual a \textit{pipeline} é aplicada a um conjunto de curvas \textbf{externas ao banco}: registros de uma ocultação estelar pelo objeto transnetuniano \textbf{(50000) Quaoar}, que não estavam armazenadas no VizieR nem no \textit{drive} do Grupo do Rio. O evento é especialmente interessante porque, além da queda profunda associada ao corpo principal, apresenta assinaturas adicionais atribuídas aos dois anéis recentemente descobertos em torno de Quaoar~\citep{Quaoar2023}, configurando uma curva complexa com múltiplas \textit{features} físicas (anel, corpo, \st{possível atmosfera} \textcolor{red}{limite para existência de uma possível atmosfera}) em uma única série temporal.
 
 Este estudo de caso tem três objetivos:
 \begin{enumerate}
@@ -663,7 +666,7 @@ Foram utilizadas três curvas de luz fotométricas da mesma ocultação estelar 
 	\item \textbf{Gemini-N/'Alopeke --- canal \textit{Red} (filtro $z$):} visível-vermelho, 12000 pontos.
 \end{itemize}
 
-As três curvas estão originalmente em formato \texttt{.dat} do PRAIA, com colunas para tempo (segundos UTC), fluxo normalizado e diversos diagnósticos fotométricos. Os dados foram \textbf{gentilmente cedidos pelo autor principal} de~\citet{Quaoar2023}, no qual a redução fotométrica completa do evento e a caracterização dos dois anéis Q1R e Q2R são apresentadas. Nenhuma das três curvas figura no banco SQLite usado para treinar os modelos --- não estão no catálogo \texttt{B/occ/asteroid} do VizieR nem no \textit{drive} do Grupo do Rio --- garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
+As três curvas estão originalmente em formato \texttt{.dat} do PRAIA, com colunas para tempo (segundos UTC), fluxo normalizado e diversos \hl{diagnósticos fotométricos} \textcolor{red}{(acho saudável dar uns 2 exemplos aqui)}. Os dados foram \textbf{gentilmente cedidos pelo autor principal} de~\citet{Quaoar2023}, no qual a redução fotométrica completa do evento e a caracterização dos dois anéis Q1R e Q2R são apresentadas. Nenhuma das três curvas\textcolor{red}{, como já mencionado no texto,} figura no banco SQLite usado para treinar os modelos --- não estão no catálogo \texttt{B/occ/asteroid} do VizieR nem no \textit{drive} do Grupo do Rio --- garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
 
 \subsection{Procedimento}
 
@@ -699,6 +702,8 @@ Gemini-'Alopeke \textit{Red}-$z$  & 0{,}9951 & 0{,}99 & 117{,}2 & 48{,}07 \\
 \end{table}
 
 Os três registros foram classificados como positivos com $\hat{p} > 0{,}995$ pelo CatBoost. A profundidade próxima de 1{,}0 e a duração de $\approx$48~s são coerentes entre as três bandas e compatíveis com a passagem do corpo principal de Quaoar diante da estrela. A Figura~\ref{fig:quaoar_curvas} apresenta as três séries temporais após o pré-processamento descrito, evidenciando: (i)~o \textit{baseline} próximo a 1{,}0; (ii)~o \textit{dip} central profundo associado ao corpo; e (iii)~regiões adjacentes ao \textit{dip} central onde se observam quedas secundárias mais rasas e curtas, compatíveis com cruzamento dos anéis reportados em~\citep{Quaoar2023}.
+
+\textcolor{red}{Não deixe de colocar nesta seção a análise que discutimos em reunião, em particular, isolar os eventos do anel e verificar se o ML os detecta.}
 
 \begin{figure}[htbp]
 \begin{center}
@@ -830,7 +835,7 @@ As Figuras~\ref{fig:ROC1}--\ref{fig:ROC3} apresentam as curvas ROC dos Experimen
 
 \subsection{Análise de importância das \textit{features}}
 
-As Figuras~\ref{fig:feature_importance_1} a \ref{fig:feature_importance_3} apresentam os gráficos de importância de variáveis para os quatro modelos nos Experimentos 1--3; figuras análogas para os Experimentos 4, 5 e 7 estão nas pastas \texttt{pngs/exp4}, \texttt{pngs/exp5} e \texttt{pngs/exp7}. A interpretação dos valores deve considerar as diferenças metodológicas discutidas na Seção~\ref{sec:feature_importance_metodologia}: o eixo horizontal varia de 0 a $\approx$0,25 no Random Forest (MDI normalizado para soma~1), de 0 a $\approx$0,15 no XGBoost (\textit{weight} normalizado), de 0 a $\approx$30 no CatBoost (\textit{PredictionValuesChange} normalizado para soma~100), e de 0 a $\approx$4 na Regressão Logística ($|\beta_j|$ sem normalização).
+As Figuras~\ref{fig:feature_importance_1} a \ref{fig:feature_importance_3} apresentam os gráficos de importância de variáveis para os quatro modelos nos Experimentos 1--3; figuras análogas para os Experimentos 4, 5 e 7 estão nas pastas \texttt{pngs/exp4}, \texttt{pngs/exp5} e \texttt{pngs/exp7} \textcolor{red}{(que pastas são essas?)}. A interpretação dos valores deve considerar as diferenças metodológicas discutidas na Seção~\ref{sec:feature_importance_metodologia}: o eixo horizontal varia de 0 a $\approx$0,25 no Random Forest (MDI normalizado para soma~1), de 0 a $\approx$0,15 no XGBoost (\textit{weight} normalizado), de 0 a $\approx$30 no CatBoost (\textit{PredictionValuesChange} normalizado para soma~100), e de 0 a $\approx$4 na Regressão Logística ($|\beta_j|$ sem normalização).
 
 Em todos os experimentos e modelos, as variáveis mais relevantes consistentemente incluem:
 
@@ -868,7 +873,7 @@ Em todos os experimentos e modelos, as variáveis mais relevantes consistentemen
 	\vspace{0.3em}
 	\small (d) CatBoost
 \end{minipage}\\[0.5em]
-\caption{Importância de variáveis por modelo --- Experimento 1 (28 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost.}
+\caption{Importância de variáveis por modelo --- Experimento 1 (28 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost. \textcolor{red}{As legendas dessas figuras estão muito pequenas}}
 \label{fig:feature_importance_1}
 \end{figure}
 
@@ -948,9 +953,9 @@ A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável
 \section{Validação cruzada estratificada}
 \label{sec:cross_validation}
 
-Os resultados apresentados nas seções anteriores baseiam-se em um único \textit{split} treino/teste por experimento. Embora útil para comparações controladas, essa abordagem não permite estimar a \textbf{variabilidade} do desempenho em função da partição dos dados. Para obter uma estimativa mais robusta da capacidade de generalização, implementou-se a \textbf{validação cruzada estratificada com $k=5$ dobras}, respeitando o agrupamento por curva de luz (todos os segmentos de uma mesma curva permanecem na mesma dobra, evitando \textit{data leakage}).
+Os resultados apresentados nas seções anteriores baseiam-se em um único \textit{split} treino/teste por experimento. Embora útil para comparações controladas, essa abordagem não permite estimar a \textbf{variabilidade} do desempenho em função da partição dos dados. Para obter uma estimativa mais robusta da capacidade de generalização, implementou-se a \textbf{validação cruzada estratificada com $k=5$ dobras}, respeitando o agrupamento por curva de luz (todos os segmentos de uma mesma curva permanecem na mesma dobra, evitando \textit{data leakage}). \textcolor{red}{Não entendo o que fizestes aqui. Deve estar muito claro para você, mas não para quem lê. Você, às vezes e do meu ponto de vista, rebusca na linguagem às custas de clareza do que foi feito.}
 
-O procedimento é o seguinte: os dados são divididos em 5 partições estratificadas (preservando a proporção de classes em cada dobra); em cada rodada, 4 dobras são usadas para treino e 1 para teste, e os quatro modelos (RF, XGBoost, CatBoost, Regressão Logística) são treinados e avaliados independentemente. As métricas coletadas por dobra são: F1-score, precisão, sensibilidade e AUC-ROC. O resultado final é reportado como \textbf{média $\pm$ desvio padrão} sobre as 5 dobras.
+O procedimento é o seguinte: os dados são divididos em 5 partições estratificadas (preservando a proporção de classes em cada dobra); em cada rodada, 4 dobras são usadas para treino e 1 para teste, e os quatro modelos (RF, XGBoost, CatBoost, Regressão Logística) são treinados e avaliados independentemente. As métricas coletadas por dobra são: F1-score, precisão, sensibilidade e AUC-ROC. O resultado final é reportado como \textbf{média $\pm$ desvio padrão} sobre as 5 dobras. \textcolor{red}{Não estendi o que foi feito aqui. As classes não são apenas duas: positiva ou negativa?}
 
 A Tabela~\ref{tab:cross_validation} apresenta a média e o desvio padrão das métricas na validação cruzada estratificada 5-fold (Experimento~3, 13 \textit{features}).
 
@@ -976,7 +981,7 @@ A validação cruzada cumpre dois objetivos: (1)~confirmar que o desempenho elev
 \subsection{Teste de McNemar entre modelos}
 \label{sec:mcnemar}
 
-Para determinar se as diferenças de desempenho entre pares de modelos são \textbf{estatisticamente significativas} --- e não meras flutuações amostrais --- aplicou-se o \textbf{teste de McNemar} \citep{McNemar1947}. Esse teste é apropriado para comparar dois classificadores avaliados no mesmo conjunto de teste: constrói-se uma tabela $2 \times 2$ de concordância/discordância entre as predições dos dois modelos, e testa-se se os padrões de discordância são simétricos.
+Para determinar se as diferenças de desempenho entre pares de modelos são \textbf{estatisticamente significativas} --- e não meras flutuações amostrais --- aplicou-se o \textbf{teste de McNemar} \citep{McNemar1947} \textcolor{red}{a referência falhou aqui}. Esse teste é apropriado para comparar dois classificadores avaliados no mesmo conjunto de teste: constrói-se uma tabela $2 \times 2$ de concordância/discordância entre as predições dos dois modelos, e testa-se se os padrões de discordância são simétricos.
 
 Sejam $b$ o número de exemplos que o modelo~A erra e o modelo~B acerta, e $c$ o número de exemplos que o modelo~A acerta e o modelo~B erra. A estatística de McNemar (com correção de continuidade) é:
 \begin{equation}
