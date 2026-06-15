@@ -53,7 +53,7 @@ EVENT_REFERENCE = '2022-08-09 06:34:49.26'
 # — ver Secao 5.9 (sec:threshold_tuning) da tese.
 #   tau=0.50 -> modo balanceado (padrao)
 #   tau=0.03 -> modo triagem agressiva (captura Q2R sem reativar ruido)
-THRESHOLD = 0.08
+THRESHOLD = 0.03
 
 
 # =============================================================================
