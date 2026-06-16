@@ -348,7 +348,7 @@ Para $\beta > 1$, o $F_\beta$ penaliza mais os falsos negativos (favorecendo a s
 
 Nesta dissertação, os modelos são avaliados por acurácia, precisão, sensibilidade, F1-score e AUC-ROC no conjunto de teste (Capítulo~5). Para a análise de ajuste de limiar, utilizam-se também o $F_2$-score e a curva precision-recall.
 
-\subsection{Overfitting, underfitting e trade-off viés-variância}
+\subsection{Overfitting, underfitting e o compromisso entre viés e variância}
 \label{sec:overfitting}
 
 A identificação de \textbf{sobreajuste} (overfitting) e \textbf{subajuste} (underfitting) baseia-se na comparação do desempenho do modelo nos dados usados no treinamento versus nos dados reservados para teste ou validação \citep{geron2019maos}. Em termos intuitivos: \textbf{sobreajuste} ocorre quando o modelo "decora" os dados de treino (incluindo o ruído) e deixa de generalizar --- o erro no treino fica muito baixo, mas o erro em dados novos permanece alto. \textbf{Subajuste} ocorre quando o modelo é simples demais e não captura o padrão verdadeiro dos dados --- tanto o erro de treino quanto o de validação ficam altos. O erro de generalização pode ser decomposto em \textbf{viés}, \textbf{variância} e \textbf{ruído irredutível} \citep{Deisenroth2019, Levada2026}. Formalmente, para um modelo $\hat{f}$ treinado em diferentes amostras do mesmo processo gerador, o erro quadrático médio esperado em um ponto $\vec{x}$ é:
