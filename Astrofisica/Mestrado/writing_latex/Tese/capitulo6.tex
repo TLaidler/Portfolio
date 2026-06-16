@@ -9,14 +9,12 @@ Este capítulo sintetiza os principais achados da dissertação, responde à hip
 
 A \textit{pipeline} desenvolvida neste trabalho demonstrou que a detecção automatizada de ocultações estelares em curvas de luz pode atingir desempenho elevado --- F1-score entre 0,978 e 0,994 e AUC-ROC superior a 0,998 --- utilizando \textit{features} clássicas extraídas das séries temporais e \textit{ensembles} de árvores de decisão (Random Forest, XGBoost, CatBoost), além de Regressão Logística como \textit{baseline}.
 
-Os sete experimentos realizados permitiram identificar os seguintes padrões:
+Os seis experimentos realizados permitiram identificar os seguintes padrões:
 
 \begin{enumerate}
 	\item \textbf{O \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.} A redução de 28 para 13--14 \textit{features} (remoção de variáveis redundantes) não degradou --- e em alguns casos melhorou --- o desempenho, indicando que um conjunto compacto de variáveis fisicamente motivadas é suficiente.
 
-	\item \textbf{A \textit{feature} \texttt{kmeans\_centroid\_dist} é dispensável apesar de sua alta importância atribuída pelos modelos de árvore.} O estudo de ablação (Experimento~4) mostrou que a remoção dessa variável causa degradação desprezível ($\leq$0,3~pp em F1), demonstrando que importância de \textit{feature} não é sinônimo de insubstituibilidade: outras variáveis colineares (sobretudo \texttt{Feature\_Savgol\_std}) compensam sua ausência.
-
-	\item \textbf{O desempenho é robusto ao volume de treino.} A estabilidade do F1-score entre os \textit{splits} 80\%/20\% (Experimento~5) e 65\%/35\% (Experimento~6) indica que o desempenho não é limitado pela quantidade de dados de treino disponível, sugerindo que o \textit{dataset} atual já é suficiente para a tarefa.
+	\item \textbf{A \textit{feature} \texttt{kmeans\_centroid\_dist} é dispensável apesar de sua alta importância atribuída pelos modelos de árvore.} O estudo de ablação (Experimento~6) mostrou que a remoção dessa variável causa degradação desprezível ($\leq$0,3~pp em F1), demonstrando que importância de \textit{feature} não é sinônimo de insubstituibilidade: outras variáveis colineares (sobretudo \texttt{Feature\_Savgol\_std}) compensam sua ausência.
 
 	\item \textbf{O ajuste do limiar de decisão permite operar a \textit{pipeline} em regime de alta sensibilidade} (minimização de falsos negativos) sem retreinamento, explorando a separabilidade elevada entre as classes. O estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) demonstrou, em dados reais, que essa alavanca recupera anéis finos que passariam despercebidos no limiar padrão.
 \end{enumerate}
@@ -76,19 +74,11 @@ Com base nos resultados e limitações identificados, sugerem-se as seguintes di
 
 	\item \textbf{Experimento \textit{real holdout}:} reservar todas as curvas reais (positivas e negativas genuínas) para o conjunto de teste, treinando apenas com curvas sintéticas e artificiais, para avaliar a transferibilidade do modelo.
 
-	\item \textbf{Aplicação a campanhas específicas:} ampliar o estudo de caso conduzido sobre a ocultação por Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) a outras campanhas observacionais e a um número maior de eventos por objeto, em cenário real de uso integrado ao SORA.
-
 	\item \textbf{\textit{Features} baseadas em difração de Fresnel:} incorporar características derivadas de modelos físicos mais sofisticados (escala de Fresnel, opacidade parcial, diâmetro aparente da estrela), que poderiam melhorar a discriminação em eventos de baixo SNR.
-
-	\item \textbf{Otimização de hiperparâmetros:} aplicar busca em grade ou otimização bayesiana (e.g., Optuna) para ajuste fino dos hiperparâmetros dos modelos.
-
-	\item \textbf{Integração operacional:} incorporar a \textit{pipeline} ao fluxo de trabalho do SORA como módulo de triagem automática, com interface para ajuste do limiar de decisão conforme a campanha.
 
 	\item \textbf{Detecção em regime de baixo S/N:} construir um subconjunto de teste composto exclusivamente por curvas difíceis --- baixo S/N, ocultações rasantes, eventos com poucos pontos no \textit{dip} --- para avaliar o desempenho da \textit{pipeline} nas condições em que a triagem automática é de fato necessária, isto é, onde a inspeção visual é ambígua.
 
 	\item \textbf{Janela deslizante e \textit{features} locais:} o estudo de recortes de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) mostrou que o ajuste de limiar resolve o caso prático de detecção de anéis finos, mas que a causa estrutural da baixa probabilidade absoluta atribuída a esses eventos é o caráter \textbf{global} das \textit{features} (estatísticas agregadas sobre toda a janela diluem um \textit{dip} de poucos segundos). Duas direções complementares atacam essa raiz: (i)~aplicar a \textit{pipeline} por \textbf{janela deslizante} de largura compatível com a duração típica do evento alvo, tornando o conjunto atual de \textit{features} sensível a eventos locais; e (ii)~enriquecer o conjunto com \textbf{\textit{features} locais} --- profundidade máxima de qualquer subjanela de $N$ pontos abaixo do \textit{baseline}, simetria do perfil de ingresso/egresso, ajuste a poço retangular curto.
 
 	\item \textbf{Classificação multi-classe de eventos:} estender a formulação binária (ocultação presente/ausente) para uma classificação multi-classe que distinga o \textbf{tipo} de evento observado: ocultação por corpo sólido, assinatura atmosférica (refração e absorção), detecção de anéis e padrões de difração de Fresnel. Essa extensão exigiria \textit{features} adicionais --- por exemplo, simetria do perfil de ingresso/egresso, profundidade relativa de quedas secundárias e ajuste a modelos de difração --- além de um \textit{dataset} curado com rótulos para cada categoria, possivelmente com apoio de curvas sintéticas geradas por simuladores que incluam esses fenômenos.
-
-	\item \textbf{Extração automática de parâmetros físicos:} utilizar os modelos de ML não apenas para classificar, mas para \textbf{estimar} grandezas físicas a partir da curva de luz --- como instantes de imersão e emersão, diâmetro projetado do corpo e escala de Fresnel efetiva. Essa tarefa de regressão poderia complementar a classificação, fornecendo estimativas iniciais que alimentem os modelos de ajuste do SORA e acelerem a análise de campanhas com grande volume de dados.
 \end{itemize}
