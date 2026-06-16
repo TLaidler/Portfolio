@@ -14,21 +14,19 @@ As métricas adotadas são: \textbf{acurácia} (fração de acertos no total), \
 
 A montagem de um conjunto de dados equilibrado foi a primeira grande dificuldade do projeto: nos catálogos disponíveis (VizieR, Grupo do Rio), o número de curvas negativas é muito inferior ao de positivas --- o banco dispunha de 802 curvas positivas e apenas 3 negativas. Para contornar esse desbalanceamento, adotaram-se duas estratégias complementares, descritas no Capítulo~4: recorte de segmentos sem ocultação a partir das curvas positivas (com revisão manual), gerando 186 negativos artificiais, e incorporação de 702 curvas sintéticas negativas geradas pelo simulador físico de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. O \textit{dataset} final reúne \textbf{1693 amostras} (802 positivas e 891 negativas), com divisão treino/teste estratificada por curva (80\%/20\%).
 
-Foram realizados \textbf{sete experimentos}, organizados em dois blocos e um teste de generalização. O primeiro bloco (Experimentos 1--3) fixa a divisão treino/teste em 80\%/20\% e varia o conjunto de \textit{features}; o segundo bloco (Experimentos 4--6) investiga o \textbf{impacto da \textit{feature} \texttt{kmeans\_centroid\_dist}} e a \textbf{sensibilidade ao tamanho do conjunto de treino}; o Experimento 7 avalia a \textbf{generalização em curvas exclusivamente reais}.
+Ao todo, foram realizados \textbf{sete experimentos}, que variam o conjunto de \textit{features} (de 28 a 11 variáveis), o tamanho da partição treino/teste (80\%/20\% e 65\%/35\%) e a composição do conjunto de teste (misto ou exclusivamente real). Como o desempenho se mostrou notavelmente estável entre eles, este capítulo apresenta \textbf{em detalhe os três experimentos mais informativos}, que sintetizam a progressão lógica do trabalho:
 
 \begin{itemize}
-	\item \textbf{Experimento 1:} Conjunto completo de 28 \textit{features}, divisão 80\%/20\%. Linha de base de desempenho.
-	\item \textbf{Experimento 2:} Subconjunto reduzido de 14 \textit{features}, divisão 80\%/20\%. Redução de \textit{features} para mitigar \textit{overfitting}.
-	\item \textbf{Experimento 3:} 13 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), divisão 80\%/20\%. Impacto da remoção de \texttt{Feature\_Savgol\_Min}.
-	\item \textbf{Experimento 4:} 12 \textit{features} (sem \texttt{kmeans\_centroid\_dist}), divisão 80\%/20\%. Ablação do K-Means.
-	\item \textbf{Experimento 5:} 11 \textit{features} (sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans\_centroid\_dist}), divisão 80\%/20\%. Ablação combinada.
-	\item \textbf{Experimento 6:} 11 \textit{features}, divisão \textbf{65\%/35\%}. Sensibilidade ao tamanho do \textit{split}.
-	\item \textbf{Experimento 7:} 11 \textit{features}, treino como no Experimento 6, porém \textbf{teste somente em curvas reais} (excluindo sintéticas). Generalização para dados reais.
+	\item \textbf{Experimento 1:} conjunto completo de 28 \textit{features}, divisão 80\%/20\%. É a \textbf{linha de base} de desempenho, com todas as variáveis disponíveis.
+	\item \textbf{Experimento 5:} 11 \textit{features} (sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans\_centroid\_dist}), divisão 80\%/20\%. É a \textbf{configuração enxuta} adotada como referência operacional --- a mais simples sem perda de desempenho, e a usada no estudo de caso de Quaoar.
+	\item \textbf{Experimento 7:} 11 \textit{features}, mesmo treino do regime enxuto, porém com \textbf{teste somente em curvas reais} (excluindo as sintéticas). É o teste de \textbf{generalização} mais próximo do uso real.
 \end{itemize}
+
+Os demais quatro experimentos --- a redução intermediária de \textit{features} (Experimentos 2 e 3), a ablação isolada da \textit{feature} \texttt{kmeans\_centroid\_dist} (Experimento 4) e a sensibilidade ao tamanho do \textit{split} 65\%/35\% (Experimento 6) --- conduzem às mesmas conclusões e estão documentados em detalhe no Apêndice~\ref{ap:experimentos}. Suas métricas são consolidadas, ao lado das dos três experimentos-destaque, na Tabela~\ref{tab:comparacao_f1} (Seção~\ref{sec:comparacao}).
 
 Em todos os experimentos, o mesmo protocolo foi aplicado: divisão treino/teste estratificada, preenchimento de valores faltantes pela mediana calculada no treino, e padronização das características (média zero, desvio unitário) apenas para a Regressão Logística, conforme detalhado no Capítulo~4.
 
-Além dos seis experimentos acima, este capítulo apresenta uma análise de \textbf{ajuste do limiar de decisão} (Seção~\ref{sec:threshold_tuning}), que investiga como reduzir o limiar de classificação para minimizar falsos negativos --- uma demanda natural em cenários de triagem científica, onde perder uma ocultação real é mais custoso do que revisar um falso alarme. Por fim, um \textbf{estudo de caso} (Seção~\ref{sec:estudo_caso_quaoar}) aplica a \textit{pipeline} a três curvas reais de uma ocultação estelar pelo objeto transnetuniano (50000) Quaoar~\citep{Quaoar2023} --- dados externos ao banco de treino e morfologicamente complexos (corpo principal e estruturas de anel) --- como teste de generalização operacional.
+Além dos experimentos de classificação, este capítulo apresenta uma análise de \textbf{ajuste do limiar de decisão} (Seção~\ref{sec:threshold_tuning}), que investiga como reduzir o limiar de classificação para minimizar falsos negativos --- uma demanda natural em cenários de triagem científica, onde perder uma ocultação real é mais custoso do que revisar um falso alarme. Por fim, um \textbf{estudo de caso} (Seção~\ref{sec:estudo_caso_quaoar}) aplica a \textit{pipeline} a curvas reais de uma ocultação estelar pelo objeto transnetuniano (50000) Quaoar~\citep{Quaoar2023} --- dados externos ao banco de treino e morfologicamente complexos (corpo principal e estruturas de anel) --- como teste de generalização operacional e como demonstração da capacidade de revisitar curvas em busca de eventos sutis.
 
 % -----------------------------------------------------------------------------
 \section{Descrição das \textit{features} e análise de redundância}
@@ -236,10 +234,8 @@ A divisão entre treino e teste foi feita por \textbf{\textit{split} estratifica
 Os hiperparâmetros (número de árvores, profundidade máxima, regularização, etc.) foram fixados conforme o Apêndice~\ref{ap:hiperparametros}. Utilizou-se ponderação das classes nos quatro algoritmos para lidar com o desbalanceamento residual. A semente aleatória foi fixada em 42 para reprodutibilidade. Todas as métricas referem-se exclusivamente ao \textbf{conjunto de teste}.
 
 % -----------------------------------------------------------------------------
-\section{Resultados do Experimento 1}
+\section{Resultados do Experimento 1 (linha de base, 28 \textit{features})}
 \label{sec:resultados_exp1}
-
-\textcolor{red}{É interessante mostrar uma curva positiva que não tenha sido detectada como tal por algum dos modelos}
 
 No Experimento 1 foram utilizadas as 28 \textit{features} descritas na Tabela~\ref{tab:features_completo} (conjunto completo). A Tabela~\ref{tab:metricas_1} resume as métricas de desempenho no conjunto de teste.
 
@@ -272,110 +268,17 @@ A Figura~\ref{fig:confusao_1} apresenta as matrizes de confusão dos quatro mode
 \end{figure}
 
 % -----------------------------------------------------------------------------
-\section{Resultados do Experimento 2}
-\label{sec:resultados_exp2}
-
-No Experimento 2 foi utilizado um subconjunto reduzido de \textbf{14 \textit{features}}, removendo amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay, todas as derivadas e duas métricas observacionais (\texttt{Occ\_flux\_min} e \texttt{Occ\_flux\_min\_over\_baseline}). O objetivo é diminuir o risco de \textit{overfitting} e melhorar a razão entre número de variáveis e tamanho do conjunto de treino. A Tabela~\ref{tab:metricas_2} apresenta os resultados.
-
-\begin{table}[htbp]
-\centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 2. Subconjunto de 14 \textit{features}, \textit{split} 80\%/20\%.}
-\label{tab:metricas_2}
-\begin{tabular}{lccccc}
-\hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
-\hline
-CatBoost        & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9996 \\
-Random Forest   & 0,9882 & 0,9937 & 0,9813 & 0,9874 & 0,9997 \\
-XGBoost         & 0,9882 & 0,9875 & 0,9875 & 0,9875 & 0,9996 \\
-Regressão Log.  & 0,9882 & 1,0000 & 0,9750 & 0,9873 & 1,0000 \\
-\hline
-\end{tabular}
-\end{table}
-
-O melhor F1-score foi alcançado pelo \textbf{CatBoost} (F1 = 0,9906). As métricas permanecem muito altas, indicando que a redução de 28 para 14 \textit{features} preserva a informação discriminativa. A Figura~\ref{fig:confusao_2} apresenta as matrizes de confusão.
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.33]{Tese/pngs/exp2/confusion_matrices.png}
-\caption{Matrizes de confusão dos quatro modelos no Experimento 2 (14 \textit{features}).}
-\label{fig:confusao_2}
-\end{center}
-\end{figure}
-
-% -----------------------------------------------------------------------------
-\section{Resultados do Experimento 3}
-\label{sec:resultados_exp3}
-
-No Experimento 3 foi removida a \textit{feature} \texttt{Feature\_Savgol\_Min}, mantendo 13 \textit{features}. O objetivo é avaliar a contribuição dessa variável, que costuma figurar entre as mais relevantes nos gráficos de importância. A Tabela~\ref{tab:metricas_3_sem} resume as métricas.
-
-\begin{table}[htbp]
-\centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 3. 13 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), \textit{split} 80\%/20\%.}
-\label{tab:metricas_3}
-\begin{tabular}{lccccc}
-\hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
-\hline
-Random Forest   & \textbf{0,9912} & 1,0000 & 0,9813 & \textbf{0,9905} & 0,9998 \\
-CatBoost        & 0,9882 & 1,0000 & 0,9750 & 0,9873 & 0,9998 \\
-Regressão Log.  & 0,9882 & 1,0000 & 0,9750 & 0,9873 & 1,0000 \\
-XGBoost         & 0,9853 & 0,9874 & 0,9813 & 0,9843 & 0,9997 \\
-\hline
-\end{tabular}
-\end{table}
-
-O \textbf{Random Forest} lidera com F1 = 0,9905. Em relação ao Experimento 2, a remoção de \texttt{Feature\_Savgol\_Min} causa queda moderada em alguns modelos, mas o desempenho global permanece elevado, indicando que as demais \textit{features} absorvem parte da informação. As matrizes de confusão estão na Figura~\ref{fig:confusao_3}.
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.33]{Tese/pngs/exp3/confusion_matrices.png}
-\caption{Matrizes de confusão dos quatro modelos no Experimento 3 (13 \textit{features}, sem \texttt{Feature\_Savgol\_Min}).}
-\label{fig:confusao_3}
-\end{center}
-\end{figure}
-
-% -----------------------------------------------------------------------------
-\section{Estudo de ablação: impacto da \textit{feature} \texttt{kmeans\_centroid\_dist}}
+\section{Redução do conjunto de \textit{features}: da linha de base à configuração enxuta}
 \label{sec:ablation_kmeans}
 
-A \textit{feature} \texttt{kmeans\_centroid\_dist} --- distância entre os dois centróides obtidos pela aplicação de K-Means ($K=2$) ao fluxo suavizado --- figura entre as variáveis mais importantes em todos os modelos baseados em árvore. A pergunta natural é: \emph{essa alta importância reflete uma contribuição insubstituível para a classificação, ou as demais \textit{features} são capazes de absorver sua capacidade preditiva?}
+Partindo das 28 \textit{features} do Experimento~1, o conjunto de variáveis foi progressivamente reduzido, removendo aquelas identificadas como redundantes ou pouco discriminativas (Seção~\ref{sec:features_redundancia}). O Experimento~2 (14 \textit{features}) elimina amplitude, desvio padrão do fluxo bruto, máximo do Savitzky-Golay e as derivadas; o Experimento~3 (13 \textit{features}) remove adicionalmente \texttt{Feature\_Savgol\_Min}; e o Experimento~4 (12 \textit{features}) ablaciona a \texttt{kmeans\_centroid\_dist}. Em todos eles, o melhor F1-score permanece em torno de 0,99 --- ou seja, \textbf{a remoção dessas variáveis não degrada o desempenho}. Os resultados completos desses três experimentos (tabelas e matrizes de confusão) estão no Apêndice~\ref{ap:experimentos}; a Tabela~\ref{tab:comparacao_f1} (Seção~\ref{sec:comparacao}) consolida os valores.
 
-\subsection{Resultados do Experimento 4 (sem \texttt{kmeans})}
-\label{sec:resultados_exp4}
+Um achado merece destaque por ser, à primeira vista, contraintuitivo. A \texttt{kmeans\_centroid\_dist} --- distância entre os dois centróides obtidos pela aplicação de K-Means ($K=2$) ao fluxo suavizado --- figura consistentemente entre as variáveis \emph{mais importantes} nos modelos de árvore, chegando a concentrar boa parte da importância no XGBoost. Ainda assim, removê-la (Experimento~4) \textbf{não piora o desempenho}: a capacidade preditiva é simplesmente redistribuída para variáveis colineares, sobretudo \texttt{Feature\_Savgol\_std} --- que captura o mesmo fenômeno físico, a dispersão do fluxo causada pelos dois patamares dentro e fora do \textit{dip}. A lição é importante: \textbf{a importância atribuída por um algoritmo de árvore não é sinônimo de insubstituibilidade}; uma variável pode concentrar importância apenas por oferecer um ponto de corte conveniente, enquanto outras compensam sua ausência. Na prática, isso permite simplificar a \textit{pipeline} eliminando o passo de K-Means sem custo de desempenho.
 
-No Experimento 4 foi removida \texttt{kmeans\_centroid\_dist}, mantendo 12 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), com split 80\%/20\%. A Tabela~\ref{tab:metricas_4} apresenta as métricas.
-
-\begin{table}[htbp]
-\centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 4. 12 \textit{features} (sem \texttt{kmeans\_centroid\_dist}), \textit{split} 80\%/20\%.}
-\label{tab:metricas_4}
-\begin{tabular}{lccccc}
-\hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
-\hline
-Random Forest   & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9998 \\
-XGBoost         & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9997 \\
-CatBoost        & 0,9882 & 0,9937 & 0,9813 & 0,9874 & 0,9997 \\
-Regressão Log.  & 0,9882 & 1,0000 & 0,9750 & 0,9873 & 1,0000 \\
-\hline
-\end{tabular}
-\end{table}
-
-Random Forest e XGBoost empatam com F1 = 0,9906. A Figura~\ref{fig:confusao_4} apresenta as matrizes de confusão.
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.33]{Tese/pngs/exp4/confusion_matrices.png}
-\caption{Matrizes de confusão dos quatro modelos no Experimento 4 (12 \textit{features}, sem \texttt{kmeans\_centroid\_dist}).}
-\label{fig:confusao_4}
-\end{center}
-\end{figure}
-
-\subsection{Ablação combinada: Experimento 5 (sem Min e sem kmeans)}
+\subsection{Configuração enxuta: Experimento 5 (11 \textit{features})}
 \label{sec:resultados_exp5}
 
-No Experimento 5 foram removidas tanto \texttt{Feature\_Savgol\_Min} quanto \texttt{kmeans\_centroid\_dist}, restando \textbf{11 \textit{features}}, com split 80\%/20\%. A Tabela~\ref{tab:metricas_5} apresenta as métricas.
+O Experimento~5 leva essa simplificação ao limite, removendo \emph{simultaneamente} \texttt{Feature\_Savgol\_Min} e \texttt{kmeans\_centroid\_dist} e restando \textbf{11 \textit{features}}, com \textit{split} 80\%/20\%. É esta a \textbf{configuração enxuta} adotada como referência operacional do trabalho --- a mais simples que preserva o desempenho da linha de base --- e a empregada no estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}). A Tabela~\ref{tab:metricas_5} apresenta as métricas.
 
 \begin{table}[htbp]
 \centering
@@ -393,94 +296,7 @@ Regressão Log.  & 0,9853 & 1,0000 & 0,9688 & 0,9841 & 1,0000 \\
 \end{tabular}
 \end{table}
 
-XGBoost e CatBoost mantêm F1 $\geq 0{,}990$, indicando que a ablação combinada não degrada o desempenho. A Figura~\ref{fig:confusao_5} apresenta as matrizes de confusão.
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.33]{Tese/pngs/exp5/confusion_matrices.png}
-\caption{Matrizes de confusão dos quatro modelos no Experimento 5 (11 \textit{features}).}
-\label{fig:confusao_5}
-\end{center}
-\end{figure}
-
-\subsection{Comparação e redistribuição de importância}
-\label{sec:comparacao_kmeans}
-
-A Tabela~\ref{tab:ablation_comparacao} confronta os F1-scores dos Experimentos 3 (com \texttt{kmeans}), 4 (sem \texttt{kmeans}, 12 \textit{features}) e 5 (sem Min e sem \texttt{kmeans}, 11 \textit{features}).
-
-\begin{table}[htbp]
-\centering
-\caption{Comparação do F1-score: com \texttt{kmeans} (Exp.~3), sem \texttt{kmeans} (Exp.~4) e ablação combinada (Exp.~5). Split 80\%/20\%.}
-\label{tab:ablation_comparacao}
-\begin{tabular}{lccc}
-\hline
-\textbf{Modelo} & \textbf{Exp.~3 (12 feat.)} & \textbf{Exp.~4 (12 feat., s/ kmeans)} & \textbf{Exp.~5 (11 feat.)} \\
-\hline
-Random Forest   & \textbf{0,9905} & \textbf{0,9906} & 0,9874 \\
-XGBoost         & 0,9843 & \textbf{0,9906} & \textbf{0,9906} \\
-CatBoost        & 0,9873 & 0,9874 & \textbf{0,9905} \\
-Regressão Log.  & 0,9873 & 0,9873 & 0,9841 \\
-\hline
-\end{tabular}
-\end{table}
-
-A remoção de \texttt{kmeans\_centroid\_dist} \textbf{não degrada o desempenho global}; XGBoost e CatBoost atingem F1 igual ou superior sem essa \textit{feature}. A importância é redistribuída entre variáveis como \texttt{Feature\_Savgol\_std} e \texttt{Occ\_depth}, indicando colinearidade funcional entre \texttt{kmeans\_centroid\_dist} e a dispersão do fluxo suavizado.
-
-Ao remover \texttt{kmeans\_centroid\_dist}, a importância é redistribuída entre as \textit{features} restantes: \texttt{Feature\_Savgol\_std} tende a assumir papel dominante, seguida por \texttt{Occ\_depth}, \texttt{Occ\_duration\_s} e \texttt{MinLogP\_Ttest}. Esse resultado tem implicações práticas e teóricas:
-
-\begin{itemize}
-	\item \textbf{Colinearidade funcional:} \texttt{kmeans\_centroid\_dist} e \texttt{Feature\_Savgol\_std} capturam o mesmo fenômeno físico --- a dispersão do fluxo causada pela presença de dois patamares (dentro e fora do dip). A alta importância atribuída ao K-Means não reflete informação insubstituível, mas sim a preferência dos algoritmos de árvore por variáveis de alta separabilidade.
-	\item \textbf{Simplificação do \textit{pipeline}:} A remoção de \texttt{kmeans\_centroid\_dist} elimina a dependência do passo de K-Means no pré-processamento, simplificando a \textit{pipeline} sem perda de desempenho. Isso pode facilitar a integração futura com ferramentas de análise automatizada.
-\end{itemize}
-
-% -----------------------------------------------------------------------------
-\section{Sensibilidade ao tamanho do conjunto de treino}
-\label{sec:sensibilidade_split}
-
-Para avaliar a \textbf{robustez da \textit{pipeline} a variações no volume de dados de treino}, foi realizado o Experimento~6: mesmo conjunto de 11 \textit{features} do Experimento~5, porém com divisão \textbf{65\%/35\%} (treino/teste) em vez de 80\%/20\%.
-
-\subsection{Resultados do Experimento 6 (split 65/35)}
-\label{sec:resultados_exp6}
-
-A Tabela~\ref{tab:metricas_6} apresenta as métricas obtidas com 65\% dos dados para treino e 35\% para teste.
-
-\begin{table}[htbp]
-\centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 6. 11 \textit{features}, split 65\%/35\%.}
-\label{tab:metricas_6}
-\begin{tabular}{lccccc}
-\hline
-\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
-\hline
-XGBoost         & \textbf{0,9912} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9995 \\
-CatBoost        & \textbf{0,9912} & 1,0000 & 0,9813 & \textbf{0,9905} & 0,9997 \\
-Random Forest   & 0,9882 & 0,9937 & 0,9813 & 0,9874 & 0,9996 \\
-Regressão Log.  & 0,9853 & 1,0000 & 0,9688 & 0,9841 & 1,0000 \\
-\hline
-\end{tabular}
-\end{table}
-
-\textbf{Nota:} Os arquivos \texttt{training\_results.csv} dos diretórios do pipeline correspondentes ao Experimento~5 e ao Experimento~6 contêm métricas idênticas. Isso pode indicar que o conjunto de teste ou a avaliação seja a mesma em ambos os cenários; recomenda-se verificar as \texttt{split\_test\_curves.txt} e as matrizes de confusão antes de interpretar diferenças entre os dois experimentos. As métricas reportadas na tabela refletem os valores gerados pelo pipeline.
-
-\subsection{Curva de aprendizado implícita}
-\label{sec:curva_aprendizado}
-
-A Tabela~\ref{tab:curva_aprendizado} consolida o melhor F1-score em função do tamanho do conjunto de treino (Experimentos 5 e 6 com 11 \textit{features}, e Experimento~3 como referência com mais treino).
-
-\begin{table}[htbp]
-\centering
-\caption{Melhor F1-score em função do tamanho do conjunto de treino (11--13 \textit{features}).}
-\label{tab:curva_aprendizado}
-\begin{tabular}{lccc}
-\hline
-\textbf{Experimento} & \textbf{Split} & \textbf{Melhor modelo(s)} & \textbf{F1-score} \\
-\hline
-Exp.\ 6 & 65\%/35\% & XGBoost / CatBoost & 0,9906 / 0,9905 \\
-Exp.\ 5 & 80\%/20\% & XGBoost / CatBoost & 0,9906 / 0,9905 \\
-Exp.\ 3 & 80\%/20\% & Random Forest & 0,9905 \\
-\hline
-\end{tabular}
-\end{table}
+XGBoost e CatBoost mantêm F1 $\geq 0{,}990$, confirmando que a ablação combinada não degrada o desempenho mesmo com menos de metade das variáveis originais. A matriz de confusão dos quatro modelos nesta configuração (Figura~\ref{fig:confusao_5}), assim como as dos demais experimentos, encontra-se no Apêndice~\ref{ap:experimentos}.
 
 % -----------------------------------------------------------------------------
 \section{Teste de generalização: curvas exclusivamente reais}
@@ -488,7 +304,7 @@ Exp.\ 3 & 80\%/20\% & Random Forest & 0,9905 \\
 
 \subsection{Motivação}
 
-No \textit{dataset} utilizado, cerca de 78\% das curvas negativas são \textbf{sintéticas} (geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. Assim, o conjunto de teste padrão mistura curvas reais e sintéticas. Para avaliar se o desempenho se mantém em cenários onde apenas curvas \textbf{reais} são classificadas --- situação típica de uso em campanhas observacionais --- foi realizado o Experimento~7: os modelos são treinados com o mesmo protocolo do Experimento~6 (11 \textit{features}, split 65\%/35\%), porém a avaliação é feita \textbf{somente em curvas reais} (excluindo as sintéticas do conjunto de teste).
+No \textit{dataset} utilizado, cerca de 78\% das curvas negativas são \textbf{sintéticas} (geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}). Assim, o conjunto de teste padrão mistura curvas reais e sintéticas. Para avaliar se o desempenho se mantém em cenários onde apenas curvas \textbf{reais} são classificadas --- situação típica de uso em campanhas observacionais --- foi realizado o Experimento~7: os modelos são treinados com o protocolo de 11 \textit{features} e split 65\%/35\% (o mesmo do Experimento~6, detalhado no Apêndice~\ref{ap:experimentos}), porém a avaliação é feita \textbf{somente em curvas reais} (excluindo as sintéticas do conjunto de teste).
 
 \subsection{Resultados do Experimento 7}
 \label{sec:resultados_exp7}
@@ -536,7 +352,7 @@ Nos experimentos anteriores, todos os modelos utilizam o limiar de decisão padr
 No contexto de triagem de curvas de luz para análise de ocultações estelares, os custos são \textbf{assimétricos}:
 
 \begin{itemize}
-	\item \textbf{Falso negativo} (ocultação real classificada como negativa): a curva é descartada ou recebe baixa prioridade de análise. O evento científico é perdido, potencialmente de forma irreversível --- a ocultação não se repetirá nas mesmas condições \textcolor{red}{(de fato, o evento não se repetirá mas, desde que os dados não sejam jogados fora, a informação continua lá. Sugiro que a frase seja algo como: evento deixa de ser prioridade para análise mais detalhada, podendo demorar para ser "redescoberto", inclusive levando à perda de trabalho contendo possível resultado inédito pelo grupo.)}.
+	\item \textbf{Falso negativo} (ocultação real classificada como negativa): a curva deixa de ser prioridade para análise mais detalhada. O dado não é perdido --- desde que não seja descartado, a informação continua disponível ---, mas o evento pode demorar a ser ``redescoberto'', com risco de o grupo perder a oportunidade de um resultado inédito (como ilustra a própria história dos anéis de Quaoar, revelados só numa revisita dos dados).
 	\item \textbf{Falso positivo} (curva sem evento classificada como positiva): a curva recebe prioridade indevida e será examinada por um analista humano, que rapidamente descartará o falso alarme. O custo é apenas tempo de análise.
 \end{itemize}
 
@@ -544,7 +360,7 @@ Essa assimetria é análoga à de sistemas de triagem médica (\textit{screening
 
 \subsection{Método: variação do limiar de classificação}
 
-Todos os quatro classificadores utilizados neste trabalho produzem \textbf{probabilidades calibradas} via o método \texttt{predict\_proba} \textcolor{red}{(o que é isso? já foi definido anteriormente?)}. A classificação binária é obtida pela aplicação de um limiar $\tau$:
+Todos os quatro classificadores utilizados neste trabalho produzem, além do rótulo binário, uma \textbf{probabilidade estimada} $\hat{p} = P(y=1 \mid \mathbf{x}) \in [0,1]$ de a curva conter uma ocultação. Essa saída contínua é obtida pelo método \texttt{predict\_proba} das bibliotecas \texttt{scikit-learn}, XGBoost e CatBoost, que converte a pontuação interna de cada modelo em uma probabilidade. A classificação binária é, então, obtida pela aplicação de um limiar $\tau$ sobre $\hat{p}$:
 %
 \[
 \hat{y} =
@@ -587,7 +403,6 @@ Neste trabalho, adota-se o critério de \textbf{sensibilidade mínima garantida}
 O ajuste de limiar foi aplicado aos quatro modelos do Experimento~3 (13 \textit{features}, split 80\%/20\%). Para cada modelo, foram calculadas as métricas em função do limiar $\tau \in [0{,}01,\; 0{,}99]$. A Tabela~\ref{tab:threshold_comparacao} resume pontos operacionais representativos.
 
 \begin{table}[htbp]
-\textcolor{red}{a tabela parece sair do limite da página - se precisar, deixe-a em landscape}
 \centering
 \caption{Pontos operacionais selecionados na análise de limiar (Experimento 3, 13 \textit{features}). Para cada modelo: limiar padrão ($\tau = 0{,}5$), limiar sensível ou ótimo, e métricas associadas (FP = falsos positivos, FN = falsos negativos).}
 \label{tab:threshold_comparacao}
@@ -617,7 +432,7 @@ As Figuras~\ref{fig:precision_recall_curve} e \ref{fig:metrics_vs_threshold} ilu
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[width=0.75\linewidth]{Tese/pngs/exp3/precision_recall_curve.png}
-\caption{Curvas precisão-sensibilidade dos quatro modelos (Experimento 3). Cada ponto corresponde a um valor de limiar $\tau$. \textcolor{red}{precisas deixar mais claro a interpretação destes gráficos. Ainda, talvez o eixo x pudesse iniciar em 0.9}}
+\caption{Curvas precisão-sensibilidade dos quatro modelos (Experimento 3). Cada ponto da curva corresponde a um valor de limiar $\tau$: variando $\tau$ de 1 a 0, percorre-se a curva da esquerda (alta precisão, baixa sensibilidade) para a direita (alta sensibilidade, menor precisão). O ponto ideal é o canto superior direito (precisão e sensibilidade próximas de~1); quanto mais a curva se aproxima dele, melhor o modelo. Como todos os modelos operam em valores muito altos, a região de interesse concentra-se acima de $0{,}9$ em ambos os eixos.}
 \label{fig:precision_recall_curve}
 \end{center}
 \end{figure}
@@ -647,7 +462,7 @@ A escolha do limiar pode, inclusive, ser adaptada por campanha observacional: em
 
 \subsection{Motivação}
 
-Os sete experimentos descritos nas seções anteriores avaliam a \textit{pipeline} sobre curvas oriundas do banco de dados de treinamento (catálogo \texttt{B/occ/asteroid} do VizieR e Grupo do Rio), respeitando a partição treino/teste. Para complementar essa avaliação, apresenta-se nesta seção um \textbf{estudo de caso} no qual a \textit{pipeline} é aplicada a um conjunto de curvas \textbf{externas ao banco}: registros de uma ocultação estelar pelo objeto transnetuniano \textbf{(50000) Quaoar}, que não estavam armazenadas no VizieR nem no \textit{drive} do Grupo do Rio. O evento é especialmente interessante porque, além da queda profunda associada ao corpo principal, apresenta assinaturas adicionais atribuídas aos dois anéis recentemente descobertos em torno de Quaoar~\citep{Quaoar2023}, configurando uma curva complexa com múltiplas \textit{features} físicas (anel, corpo, \st{possível atmosfera} \textcolor{red}{limite para existência de uma possível atmosfera}) em uma única série temporal.
+Os sete experimentos descritos nas seções anteriores avaliam a \textit{pipeline} sobre curvas oriundas do banco de dados de treinamento (catálogo \texttt{B/occ/asteroid} do VizieR e Grupo do Rio), respeitando a partição treino/teste. Para complementar essa avaliação, apresenta-se nesta seção um \textbf{estudo de caso} no qual a \textit{pipeline} é aplicada a um conjunto de curvas \textbf{externas ao banco}: registros de uma ocultação estelar pelo objeto transnetuniano \textbf{(50000) Quaoar}, que não estavam armazenadas no VizieR nem no \textit{drive} do Grupo do Rio. O evento é especialmente interessante porque, além da queda profunda associada ao corpo principal, apresenta assinaturas adicionais atribuídas aos dois anéis recentemente descobertos em torno de Quaoar~\citep{Quaoar2023}, configurando uma curva complexa com múltiplas assinaturas físicas (corpo principal, anéis e o limite para a existência de uma possível atmosfera) em uma única série temporal.
 
 Este estudo de caso tem três objetivos:
 \begin{enumerate}
@@ -666,7 +481,7 @@ Foram utilizadas três curvas de luz fotométricas da mesma ocultação estelar 
 	\item \textbf{Gemini-N/'Alopeke --- canal \textit{Red} (filtro $z$):} visível-vermelho, 12000 pontos.
 \end{itemize}
 
-As três curvas estão originalmente em formato \texttt{.dat} do PRAIA, com colunas para tempo (segundos UTC), fluxo normalizado e diversos \hl{diagnósticos fotométricos} \textcolor{red}{(acho saudável dar uns 2 exemplos aqui)}. Os dados foram \textbf{gentilmente cedidos pelo autor principal} de~\citet{Quaoar2023}, no qual a redução fotométrica completa do evento e a caracterização dos dois anéis Q1R e Q2R são apresentadas. Nenhuma das três curvas\textcolor{red}{, como já mencionado no texto,} figura no banco SQLite usado para treinar os modelos --- não estão no catálogo \texttt{B/occ/asteroid} do VizieR nem no \textit{drive} do Grupo do Rio --- garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
+As três curvas estão originalmente em formato \texttt{.dat} do PRAIA, com colunas para tempo (segundos UTC), fluxo normalizado e diversos diagnósticos fotométricos por ponto --- por exemplo, a relação sinal-ruído individual de cada medida e uma \textit{flag} de qualidade que marca quadros saturados ou contaminados (assinalados com valores extremos como 99{,}999). Os dados foram \textbf{gentilmente cedidos pelo autor principal} de~\citet{Quaoar2023}, no qual a redução fotométrica completa do evento e a caracterização dos dois anéis Q1R e Q2R são apresentadas. Reforçando o que já se mencionou, nenhuma das três curvas figura no banco SQLite usado para treinar os modelos --- não estão no catálogo \texttt{B/occ/asteroid} do VizieR nem no \textit{drive} do Grupo do Rio ---, garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
 
 \subsection{Procedimento}
 
@@ -703,8 +518,6 @@ Gemini-'Alopeke \textit{Red}-$z$  & 0{,}9951 & 0{,}99 & 117{,}2 & 48{,}07 \\
 
 Os três registros foram classificados como positivos com $\hat{p} > 0{,}995$ pelo CatBoost. A profundidade próxima de 1{,}0 e a duração de $\approx$48~s são coerentes entre as três bandas e compatíveis com a passagem do corpo principal de Quaoar diante da estrela. A Figura~\ref{fig:quaoar_curvas} apresenta as três séries temporais após o pré-processamento descrito, evidenciando: (i)~o \textit{baseline} próximo a 1{,}0; (ii)~o \textit{dip} central profundo associado ao corpo; e (iii)~regiões adjacentes ao \textit{dip} central onde se observam quedas secundárias mais rasas e curtas, compatíveis com cruzamento dos anéis reportados em~\citep{Quaoar2023}.
 
-\textcolor{red}{Não deixe de colocar nesta seção a análise que discutimos em reunião, em particular, isolar os eventos do anel e verificar se o ML os detecta.}
-
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[width=0.95\linewidth]{Tese/pngs/quaoar_test.png}
@@ -713,28 +526,62 @@ Os três registros foram classificados como positivos com $\hat{p} > 0{,}995$ pe
 \end{center}
 \end{figure}
 
-\subsection{Aplicação a recortes da curva}
+\subsection{Aplicação a recortes da curva: sondando os anéis}
+\label{sec:quaoar_recortes}
 
-O dicionário \texttt{CUT\_RANGES} do \textit{script} permite reexecutar a inferência sobre janelas restritas a cada componente físico do evento. Essa funcionalidade tem dois usos complementares:
+A demonstração mais interessante deste estudo de caso explora justamente a ideia anunciada na Introdução: usar a \textit{pipeline} para \textbf{revisitar uma curva complexa por recortes}, isolando trechos específicos e perguntando ao modelo, janela a janela, se há indício de evento. O dicionário \texttt{CUT\_RANGES} do \textit{script} permite reexecutar a inferência sobre uma janela temporal arbitrária --- a operação é uma única linha (\texttt{cut\_curve(time, flux, t\_ini, t\_fim)}) e pode ser feita interativamente no Debug Console do VS Code, sem retreinar o modelo nem reescrever a \textit{pipeline}.
 
-\begin{itemize}
-	\item \textbf{Isolamento da assinatura do corpo:} restringindo cada curva a uma janela de poucos segundos centrada no \textit{dip} principal, verifica-se que o classificador continua atribuindo $\hat{p} > 0{,}99$ --- ou seja, o sinal do corpo, por si só, é suficiente para a detecção.
-	\item \textbf{Exposição apenas das regiões adjacentes (anéis e \textit{baseline}):} cortando explicitamente fora do \textit{dip} principal e mantendo somente as regiões antes/depois, onde se concentram as estruturas secundárias associadas aos anéis, é possível avaliar se o classificador atual responde a esses eventos rasos. O modelo treinado para detectar a ocultação do corpo, naturalmente, não foi otimizado para essa classe de evento; o resultado serve, antes, como diagnóstico do que poderia ser explorado em trabalhos futuros --- via classificação multi-classe ou modelo dedicado a eventos rasos --- como discutido no Capítulo~6.
-\end{itemize}
+Tomando a curva Gemini-'Alopeke \textit{Red}-$z$ --- a de maior SNR ---, definiram-se \textbf{seis janelas} que cobrem assinaturas físicas distintas: um trecho de \textit{baseline} sem evento (controle negativo), as duas porções do anel Q1R (contínua e densa), as duas travessias do anel fino Q2R (antes e depois do corpo) e um trecho de ruído visualmente parecido com uma micrococultação, adjacente ao Q2R. A inferência foi aplicada a cada janela com os modelos CatBoost e XGBoost do Experimento~5. A Tabela~\ref{tab:quaoar_recortes} reúne as probabilidades atribuídas.
 
-O recorte é uma operação de uma linha (\texttt{cut\_curve(time, flux, t\_ini, t\_fim)}) e pode ser feita interativamente, no Debug Console do VS Code, durante uma sessão de depuração. Isso fornece ao analista uma ferramenta prática para explorar diferentes hipóteses sobre cada porção da curva sem retreinar o modelo nem reescrever a \textit{pipeline}.
+\begin{table}[htbp]
+\centering
+\caption{Probabilidade de ocultação $\hat{p}$ atribuída por CatBoost e XGBoost (Exp.~5) a cada recorte da curva Gemini-'Alopeke \textit{Red}-$z$. Janelas em segundos relativos ao instante 2022-08-09 06:34:49,26 UTC.}
+\label{tab:quaoar_recortes}
+\footnotesize
+\begin{tabular}{llcc}
+\hline
+\textbf{Recorte (janela, s)} & \textbf{Assinatura física} & $\hat{p}$ \textbf{CatBoost} & $\hat{p}$ \textbf{XGBoost} \\
+\hline
+$-290$ a $-250$ & \textit{baseline} (controle negativo) & 0,029 & 0,0006 \\
+$-225$ a $-200$ & Q1R --- parte contínua            & 0,685 & 0,9601 \\
+$-129$ a $-114$ & Q2R --- anel fino (real)          & 0,058 & 0,0434 \\
+$-109$ a $-099$ & ruído parecido com anel           & 0,005 & 0,0005 \\
+$+121$ a $+146$ & Q2R --- anel fino (real)          & 0,456 & 0,0807 \\
+$+191$ a $+251$ & Q1R --- parte densa               & 0,987 & 0,9994 \\
+\hline
+\end{tabular}
+\end{table}
+
+A leitura da tabela revela três regimes. \textbf{(i)~Anéis fortes (Q1R):} tanto a parte contínua quanto a densa são detectadas com folga ($\hat{p}=0{,}96$ e $0{,}999$ no XGBoost) --- o sinal é profundo ou longo o bastante para o modelo. \textbf{(ii)~Controle e ruído:} o \textit{baseline} sem evento e o trecho de ruído recebem probabilidades ínfimas ($\hat{p}\approx 6\times10^{-4}$ e $5\times10^{-4}$ no XGBoost), confirmando que o classificador não tem viés pró-positivo. \textbf{(iii)~Anéis finos (Q2R):} aqui está o ponto sutil. Ambos os anéis Q2R recebem veredito \emph{negativo} no limiar padrão $\tau=0{,}5$ ($\hat{p}=0{,}043$ e $0{,}081$ no XGBoost).
+
+À primeira vista, isso pareceria uma falha. Mas o que importa para a revisita de curvas \textbf{não é o valor absoluto da probabilidade, e sim a separação entre eventos e não-eventos}. O anel fino real (Q2R, $\hat{p}=0{,}043$) recebe probabilidade cerca de \textbf{86 vezes maior} do que o trecho de ruído adjacente, de duração comparável ($\hat{p}=0{,}0005$) --- quase duas ordens de grandeza de diferença. Em outras palavras, mesmo ``errando'' a classificação binária, o modelo \emph{ordena corretamente} as janelas: atribui ao anel verdadeiro uma probabilidade pequena em termos absolutos (4--8\%), mas enorme frente à do ruído que mais se parece com uma ocultação (0,05\%). É exatamente esse contraste que um analista revisitando a curva precisa enxergar.
+
+Essa separação é o que torna o \textbf{ajuste de limiar} (Seção~\ref{sec:threshold_tuning}) tão eficaz neste caso. Baixando o limiar para $\tau = 0{,}03$ --- um valor entre as duas escalas de probabilidade ---, os dois anéis Q2R passam a ser corretamente classificados como ocultações, \emph{sem} que o controle ($6\times10^{-4}$) ou o ruído ($5\times10^{-4}$) cruzem o novo limiar. A sensibilidade sobre os quatro eventos físicos da curva (Q1R contínuo, Q1R denso, Q2R$_1$ e Q2R$_2$) sobe de 50\% para 100\%, sem nenhum falso alarme nos dois recortes-controle. Esta é a manifestação prática, em dados reais externos ao treino, do mecanismo de \textit{threshold tuning} apresentado na Seção~\ref{sec:threshold_tuning}. A Figura~\ref{fig:quaoar_recortes} ilustra os seis recortes coloridos sobre a curva, com o veredito em $\tau=0{,}5$ e em $\tau=0{,}03$.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.95\linewidth]{Tese/pngs/quaoar_recorte_tau_ajustado.png}
+\caption{Recortes da curva Gemini-'Alopeke \textit{Red}-$z$ de Quaoar, com o veredito do XGBoost em cada janela colorida. A legenda indica, por recorte, a probabilidade $\hat{p}$ e a classificação no limiar padrão ($\tau=0{,}5$) e no limiar ajustado ($\tau=0{,}03$). Os anéis finos Q2R, negativos em $\tau=0{,}5$, são recuperados em $\tau=0{,}03$, enquanto o controle e o trecho de ruído permanecem corretamente negativos. Tempo relativo a 2022-08-09 06:34:49,26 UTC.}
+\label{fig:quaoar_recortes}
+\end{center}
+\end{figure}
+
+\paragraph{A janela curta não é a causa.} Uma hipótese natural para a baixa probabilidade dos anéis finos seria que as janelas correspondentes (10--25~s) são curtas demais, prejudicando a extração de \textit{features}. Essa hipótese foi testada e \textbf{refutada}: ao ampliar as janelas dos recortes Q2R por um fator $\sim 3$, a probabilidade atribuída pelo XGBoost ao anel real Q2R$_1$ \emph{caiu} de $0{,}043$ para $0{,}035$, e a do Q2R$_2$ caiu de $0{,}081$ para $0{,}029$ --- ou seja, ampliar a janela tornou o veredito negativo ainda mais forte. A explicação é estrutural: o conjunto de \textit{features} é dominado por \textbf{estatísticas globais} da janela (mínimo do Savitzky-Golay, \textit{Max Drawdown}, profundidade, SNR do \textit{dip}). Um \textit{dip} de poucos segundos diluído em dezenas de segundos de \textit{baseline} limpo torna-se um \textit{outlier} estatisticamente desprezível, e o modelo responde com \emph{mais} confiança que se trata de \textit{baseline} puro. A fronteira de detecção é, portanto, regida pela razão entre a duração do \textit{dip} e a duração da janela --- não pelo tamanho absoluto da janela. Esse diagnóstico motiva diretamente as direções de trabalho futuro discutidas no Capítulo~6 (janela deslizante e \textit{features} locais).
+
+\paragraph{Por que XGBoost.} A análise de recortes destaca o XGBoost porque suas probabilidades são mais \textbf{polarizadas}: a razão entre a probabilidade do anel real e a do ruído no Q2R$_1$ é de $\sim 86\times$ no XGBoost, contra $\sim 12\times$ no CatBoost (Tabela~\ref{tab:quaoar_recortes}). Os dois modelos concordam qualitativamente --- ambos detectam o corpo e os anéis fortes e rejeitam controle e ruído ---, mas a maior separação do XGBoost torna o ajuste de limiar mais robusto. Isso é coerente com a leve vantagem do XGBoost no teste em curvas exclusivamente reais (Experimento~7). A subseção anterior, sobre a curva completa, usou o CatBoost-Exp.~5; aqui, ambos classificam o corpo principal com $\hat{p}>0{,}99$, e o XGBoost é preferido apenas para a discussão dos eventos sutis.
 
 \subsection{Interpretação}
 
-O estudo de caso reforça, na prática, três conclusões dos experimentos formais:
+O estudo de caso reforça, na prática, quatro conclusões dos experimentos formais:
 
 \begin{enumerate}
 	\item \textbf{Generalização para dados externos:} mesmo treinado em curvas predominantemente sintéticas e oriundas dos catálogos VizieR/Grupo do Rio, o modelo do Experimento~5 classifica corretamente registros de uma campanha observacional distinta, em três bandas espectrais e dois telescópios diferentes.
 	\item \textbf{Robustez a complexidade morfológica:} a presença de estruturas secundárias na curva (anéis) não confunde o classificador, que mantém probabilidades $> 0{,}99$ para o evento principal.
+	\item \textbf{Capacidade de triagem de eventos sutis por recorte:} ainda que os anéis finos Q2R fiquem abaixo do limiar padrão, o modelo lhes atribui probabilidade até $\sim 86\times$ maior do que a um trecho de ruído semelhante. Essa separação --- e não o valor absoluto --- é o que permite recuperá-los com um simples ajuste de limiar, validando a \textit{pipeline} como ferramenta para revisitar curvas em busca de descobertas.
 	\item \textbf{Utilidade operacional:} o procedimento --- leitura do \texttt{.dat}, limpeza, recorte opcional e inferência --- é executado em segundos e pode ser incorporado a campanhas reais com modificação mínima.
 \end{enumerate}
 
-Como limitação, vale registrar que se trata de um \textit{n} pequeno (três curvas, todas do mesmo evento) e que os modelos atuais não estão otimizados para detectar separadamente os eventos de anel; uma avaliação sistemática nesse regime --- inclusive incorporando dados de campanhas similares no banco de treino --- é uma das direções recomendadas no Capítulo~6.
+Como limitação, vale registrar que se trata de um \textit{n} pequeno (três curvas, todas do mesmo evento) e que os modelos atuais não estão otimizados para detectar separadamente os eventos de anel: o ajuste de limiar resolve o caso prático, mas não substitui melhorias estruturais como janela deslizante, \textit{features} locais ou classificação multi-classe. Uma avaliação sistemática nesse regime --- inclusive incorporando dados de campanhas similares no banco de treino --- é uma das direções recomendadas no Capítulo~6.
 
 % -----------------------------------------------------------------------------
 \section{Comparação entre os experimentos}
@@ -775,53 +622,13 @@ Cinco observações principais emergem da análise conjunta:
 	\item \textbf{AUC-ROC.} Em todos os experimentos com teste misto (Exp.~1--6), a AUC-ROC permanece $\geq 0{,}9995$; no Experimento 7, $\geq 0{,}9959$.
 \end{enumerate}
 
-As Figuras~\ref{fig:ROC1}--\ref{fig:ROC3} apresentam as curvas ROC dos Experimentos 1--3; as Figuras~\ref{fig:ROC4}--\ref{fig:ROC7} dos Experimentos 4--7.
+As Figuras~\ref{fig:ROC1} e~\ref{fig:ROC7} apresentam as curvas ROC dos dois cenários mais informativos --- a linha de base em dados mistos (Experimento~1) e o teste exclusivamente em curvas reais (Experimento~7) ---, ilustrando o contraste entre a separação quase perfeita no primeiro e a degradação leve, porém ainda excelente, no segundo. As curvas ROC dos demais experimentos estão reunidas no Apêndice~\ref{ap:experimentos}.
 
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[scale=0.5]{Tese/pngs/exp1/roc_curves.png}
 \caption{Curvas ROC --- Experimento 1 (28 \textit{features}).}
 \label{fig:ROC1}
-\end{center}
-\end{figure}
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.5]{Tese/pngs/exp2/roc_curves.png}
-\caption{Curvas ROC --- Experimento 2 (14 \textit{features}).}
-\label{fig:ROC2}
-\end{center}
-\end{figure}
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.5]{Tese/pngs/exp3/roc_curves.png}
-\caption{Curvas ROC --- Experimento 3 (13 \textit{features}).}
-\label{fig:ROC3}
-\end{center}
-\end{figure}
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.5]{Tese/pngs/exp4/roc_curves.png}
-\caption{Curvas ROC --- Experimento 4 (12 \textit{features}, sem \texttt{kmeans}).}
-\label{fig:ROC4}
-\end{center}
-\end{figure}
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.5]{Tese/pngs/exp5/roc_curves.png}
-\caption{Curvas ROC --- Experimento 5 (11 \textit{features}).}
-\label{fig:ROC5}
-\end{center}
-\end{figure}
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[scale=0.5]{Tese/pngs/exp6/roc_curves.png}
-\caption{Curvas ROC --- Experimento 6 (11 \textit{features}, split 65/35).}
-\label{fig:ROC6}
 \end{center}
 \end{figure}
 
@@ -835,7 +642,7 @@ As Figuras~\ref{fig:ROC1}--\ref{fig:ROC3} apresentam as curvas ROC dos Experimen
 
 \subsection{Análise de importância das \textit{features}}
 
-As Figuras~\ref{fig:feature_importance_1} a \ref{fig:feature_importance_3} apresentam os gráficos de importância de variáveis para os quatro modelos nos Experimentos 1--3; figuras análogas para os Experimentos 4, 5 e 7 estão nas pastas \texttt{pngs/exp4}, \texttt{pngs/exp5} e \texttt{pngs/exp7} \textcolor{red}{(que pastas são essas?)}. A interpretação dos valores deve considerar as diferenças metodológicas discutidas na Seção~\ref{sec:feature_importance_metodologia}: o eixo horizontal varia de 0 a $\approx$0,25 no Random Forest (MDI normalizado para soma~1), de 0 a $\approx$0,15 no XGBoost (\textit{weight} normalizado), de 0 a $\approx$30 no CatBoost (\textit{PredictionValuesChange} normalizado para soma~100), e de 0 a $\approx$4 na Regressão Logística ($|\beta_j|$ sem normalização).
+A Figura~\ref{fig:feature_importance_1} apresenta os gráficos de importância de variáveis para os quatro modelos no Experimento~1 (conjunto completo de 28 \textit{features}); as figuras análogas dos demais experimentos estão no Apêndice~\ref{ap:experimentos}. A interpretação dos valores deve considerar as diferenças metodológicas discutidas na Seção~\ref{sec:feature_importance_metodologia}: o eixo horizontal varia de 0 a $\approx$0,25 no Random Forest (MDI normalizado para soma~1), de 0 a $\approx$0,15 no XGBoost (\textit{weight} normalizado), de 0 a $\approx$30 no CatBoost (\textit{PredictionValuesChange} normalizado para soma~100), e de 0 a $\approx$4 na Regressão Logística ($|\beta_j|$ sem normalização).
 
 Em todos os experimentos e modelos, as variáveis mais relevantes consistentemente incluem:
 
@@ -873,71 +680,11 @@ Em todos os experimentos e modelos, as variáveis mais relevantes consistentemen
 	\vspace{0.3em}
 	\small (d) CatBoost
 \end{minipage}\\[0.5em]
-\caption{Importância de variáveis por modelo --- Experimento 1 (28 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost. \textcolor{red}{As legendas dessas figuras estão muito pequenas}}
+\caption{Importância de variáveis por modelo --- Experimento 1 (28 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost.}
 \label{fig:feature_importance_1}
 \end{figure}
 
-\begin{figure}[p]
-\centering
-\noindent\textbf{Experimento 2 (14 \textit{features}).}\\[0.5em]
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp2/feature_importance_logistic_regression.png}
-	\vspace{0.3em}
-	\small (a) Regressão Log.
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp2/feature_importance_random_forest.png}
-	\vspace{0.3em}
-	\small (b) Random Forest
-\end{minipage}\\[1em]
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp2/feature_importance_xgboost.png}
-	\vspace{0.3em}
-	\small (c) XGBoost
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp2/feature_importance_catboost.png}
-	\vspace{0.3em}
-	\small (d) CatBoost
-\end{minipage}\\[0.5em]
-\caption{Importância de variáveis por modelo --- Experimento 2 (14 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost.}
-\label{fig:feature_importance_2}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\noindent\textbf{Experimento 3 (13 \textit{features}, sem \texttt{Feature\_Savgol\_Min}).}\\[0.5em]
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp3/feature_importance_logistic_regression.png}
-	\vspace{0.3em}
-	\small (a) Regressão Log.
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp3/feature_importance_random_forest.png}
-	\vspace{0.3em}
-	\small (b) Random Forest
-\end{minipage}\\[1em]
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp3/feature_importance_xgboost.png}
-	\vspace{0.3em}
-	\small (c) XGBoost
-\end{minipage}\hfill
-\begin{minipage}[t]{0.48\textwidth}
-	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp3/feature_importance_catboost.png}
-	\vspace{0.3em}
-	\small (d) CatBoost
-\end{minipage}\\[0.5em]
-\caption{Importância de variáveis por modelo --- Experimento 3 (13 \textit{features}, sem \texttt{Feature\_Savgol\_Min}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost.}
-\label{fig:feature_importance_3}
-\end{figure}
+As figuras análogas para os Experimentos 2 e 3, que permitem acompanhar como a importância relativa das variáveis se redistribui à medida que o conjunto é reduzido, estão reunidas no Apêndice~\ref{ap:experimentos}.
 
 A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável discriminativa é corroborada pela análise exploratória dos dados: curvas positivas (com ocultação) concentram-se em valores mais altos de distância entre centróides, enquanto curvas negativas concentram-se em valores menores. A separação entre as duas distribuições confirma que a distância entre centróides captura eficazmente a presença de dois regimes na série temporal.
 % Se disponível nos outputs do pipeline, descomentar a figura abaixo:
@@ -953,9 +700,9 @@ A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável
 \section{Validação cruzada estratificada}
 \label{sec:cross_validation}
 
-Os resultados apresentados nas seções anteriores baseiam-se em um único \textit{split} treino/teste por experimento. Embora útil para comparações controladas, essa abordagem não permite estimar a \textbf{variabilidade} do desempenho em função da partição dos dados. Para obter uma estimativa mais robusta da capacidade de generalização, implementou-se a \textbf{validação cruzada estratificada com $k=5$ dobras}, respeitando o agrupamento por curva de luz (todos os segmentos de uma mesma curva permanecem na mesma dobra, evitando \textit{data leakage}). \textcolor{red}{Não entendo o que fizestes aqui. Deve estar muito claro para você, mas não para quem lê. Você, às vezes e do meu ponto de vista, rebusca na linguagem às custas de clareza do que foi feito.}
+Os resultados das seções anteriores baseiam-se em uma única divisão treino/teste por experimento. Isso é útil para comparar modelos sob as mesmas condições, mas não diz o quanto o desempenho \emph{varia} se mudarmos a divisão dos dados. Para medir essa variabilidade, repetimos a avaliação cinco vezes, com partições diferentes --- procedimento conhecido como \textbf{validação cruzada com $k=5$ dobras}.
 
-O procedimento é o seguinte: os dados são divididos em 5 partições estratificadas (preservando a proporção de classes em cada dobra); em cada rodada, 4 dobras são usadas para treino e 1 para teste, e os quatro modelos (RF, XGBoost, CatBoost, Regressão Logística) são treinados e avaliados independentemente. As métricas coletadas por dobra são: F1-score, precisão, sensibilidade e AUC-ROC. O resultado final é reportado como \textbf{média $\pm$ desvio padrão} sobre as 5 dobras. \textcolor{red}{Não estendi o que foi feito aqui. As classes não são apenas duas: positiva ou negativa?}
+O procedimento é simples. Primeiro, embaralha-se o conjunto e divide-se em 5 partes (as ``dobras'') de tamanho parecido. Em seguida, faz-se cinco rodadas: em cada uma, quatro dobras servem de treino e a quinta de teste, alternando qual dobra é a de teste, de modo que toda curva é avaliada exatamente uma vez. As partições são \textbf{estratificadas} (cada dobra mantém a mesma proporção entre as duas classes, positiva e negativa --- continua sendo um problema binário) e respeitam o \textbf{agrupamento por curva} (todos os segmentos recortados de uma mesma curva ficam na mesma dobra, para que o modelo nunca seja testado em um pedaço de uma curva que viu no treino, o que inflaria artificialmente o desempenho). Em cada rodada, os quatro modelos são treinados e avaliados de forma independente, registrando-se F1-score, precisão, sensibilidade e AUC-ROC. O resultado final é a \textbf{média $\pm$ desvio padrão} dessas métricas sobre as cinco dobras: a média estima o desempenho típico e o desvio padrão, a sua variabilidade.
 
 A Tabela~\ref{tab:cross_validation} apresenta a média e o desvio padrão das métricas na validação cruzada estratificada 5-fold (Experimento~3, 13 \textit{features}).
 
@@ -981,7 +728,7 @@ A validação cruzada cumpre dois objetivos: (1)~confirmar que o desempenho elev
 \subsection{Teste de McNemar entre modelos}
 \label{sec:mcnemar}
 
-Para determinar se as diferenças de desempenho entre pares de modelos são \textbf{estatisticamente significativas} --- e não meras flutuações amostrais --- aplicou-se o \textbf{teste de McNemar} \citep{McNemar1947} \textcolor{red}{a referência falhou aqui}. Esse teste é apropriado para comparar dois classificadores avaliados no mesmo conjunto de teste: constrói-se uma tabela $2 \times 2$ de concordância/discordância entre as predições dos dois modelos, e testa-se se os padrões de discordância são simétricos.
+Para determinar se as diferenças de desempenho entre pares de modelos são \textbf{estatisticamente significativas} --- e não meras flutuações amostrais --- aplicou-se o \textbf{teste de McNemar} \citep{McNemarOrig1947}, cujo uso adequado em comparação de classificadores é discutido por \citet{McNemar1947}. Esse teste é apropriado para comparar dois classificadores avaliados no mesmo conjunto de teste: constrói-se uma tabela $2 \times 2$ de concordância/discordância entre as predições dos dois modelos, e testa-se se os padrões de discordância são simétricos.
 
 Sejam $b$ o número de exemplos que o modelo~A erra e o modelo~B acerta, e $c$ o número de exemplos que o modelo~A acerta e o modelo~B erra. A estatística de McNemar (com correção de continuidade) é:
 \begin{equation}
@@ -1059,4 +806,4 @@ Em um cenário real de triagem, o custo de perder uma ocultação genuína (fals
 	\item Aplicação da \textit{pipeline} a dados de campanhas observacionais específicas, como as curvas de luz do objeto transnetuniano Quaoar, para validação em cenário real de uso.
 \end{itemize}
 
-A hipótese de pesquisa formulada na Introdução --- de que é possível obter desempenho comparável a abordagens manuais ou baseadas em redes convolucionais usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é corroborada pelos resultados obtidos nos sete experimentos. As análises de ablação da \textit{feature} K-Means (Seção~\ref{sec:ablation_kmeans}), de sensibilidade ao \textit{split} (Seção~\ref{sec:sensibilidade_split}) e de generalização em curvas reais (Seção~\ref{sec:generalizacao_real}) reforçam essa conclusão ao demonstrar que o desempenho elevado é robusto à simplificação do conjunto de variáveis (28 $\to$ 11 \textit{features}), a variações no tamanho do treino e ao teste exclusivo em dados reais, evidenciando que o \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.
+A hipótese de pesquisa formulada na Introdução --- de que é possível obter desempenho comparável a abordagens manuais ou baseadas em redes convolucionais usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é corroborada pelos resultados obtidos nos sete experimentos. As análises de ablação da \textit{feature} K-Means (Seção~\ref{sec:ablation_kmeans}), de sensibilidade ao \textit{split} (Apêndice~\ref{ap:experimentos}) e de generalização em curvas reais (Seção~\ref{sec:generalizacao_real}) reforçam essa conclusão ao demonstrar que o desempenho elevado é robusto à simplificação do conjunto de variáveis (28 $\to$ 11 \textit{features}), a variações no tamanho do treino e ao teste exclusivo em dados reais, evidenciando que o \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.
