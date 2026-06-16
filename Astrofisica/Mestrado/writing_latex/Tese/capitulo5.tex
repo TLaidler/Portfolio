@@ -400,7 +400,7 @@ Neste trabalho, adota-se o critério de \textbf{sensibilidade mínima garantida}
 \subsection{Resultados}
 \label{sec:threshold_resultados}
 
-O ajuste de limiar foi aplicado aos quatro modelos do Experimento~5 (13 \textit{features}, divisão 80\%/20\%). Para cada modelo, foram calculadas as métricas em função do limiar $\tau \in [0{,}01,\; 0{,}99]$. A Tabela~\ref{tab:threshold_comparacao} resume pontos operacionais representativos.
+O ajuste de limiar foi aplicado aos quatro modelos do Experimento~5 (13 \textit{features}, divisão 80\%/20\%; detalhado no Apêndice~\ref{ap:experimentos}). Para cada modelo, foram calculadas as métricas em função do limiar $\tau \in [0{,}01,\; 0{,}99]$. A Tabela~\ref{tab:threshold_comparacao} resume pontos operacionais representativos.
 
 \begin{table}[htbp]
 \centering
@@ -704,7 +704,7 @@ Os resultados das seções anteriores baseiam-se em uma única divisão treino/t
 
 O procedimento é simples. Primeiro, embaralha-se o conjunto e divide-se em 5 partes (as ``dobras'') de tamanho parecido. Em seguida, faz-se cinco rodadas: em cada uma, quatro dobras servem de treino e a quinta de teste, alternando qual dobra é a de teste, de modo que toda curva é avaliada exatamente uma vez. As partições são \textbf{estratificadas} (cada dobra mantém a mesma proporção entre as duas classes, positiva e negativa --- continua sendo um problema binário) e respeitam o \textbf{agrupamento por curva} (todos os segmentos recortados de uma mesma curva ficam na mesma dobra, para que o modelo nunca seja testado em um pedaço de uma curva que viu no treino, o que inflaria artificialmente o desempenho). Em cada rodada, os quatro modelos são treinados e avaliados de forma independente, registrando-se F1-score, precisão, sensibilidade e AUC-ROC. O resultado final é a \textbf{média $\pm$ desvio padrão} dessas métricas sobre as cinco dobras: a média estima o desempenho típico e o desvio padrão, a sua variabilidade.
 
-A Tabela~\ref{tab:cross_validation} apresenta a média e o desvio padrão das métricas na validação cruzada estratificada 5-fold (Experimento~5, 13 \textit{features}).
+A Tabela~\ref{tab:cross_validation} apresenta a média e o desvio padrão das métricas na validação cruzada estratificada 5-fold (Experimento~5, 13 \textit{features}; detalhado no Apêndice~\ref{ap:experimentos}).
 
 \begin{table}[htbp]
 \centering
@@ -736,7 +736,7 @@ Sejam $b$ o número de exemplos que o modelo~A erra e o modelo~B acerta, e $c$ o
 \end{equation}
 que segue uma distribuição $\chi^2$ com 1 grau de liberdade sob a hipótese nula $H_0: b = c$ (os modelos têm a mesma taxa de erro). Se $p < 0{,}05$, rejeita-se $H_0$ e conclui-se que a diferença é significativa.
 
-A Tabela~\ref{tab:mcnemar} apresenta os resultados do teste de McNemar entre pares de modelos (Experimento~4, 14 \textit{features}).
+A Tabela~\ref{tab:mcnemar} apresenta os resultados do teste de McNemar entre pares de modelos (Experimento~4, 14 \textit{features}; detalhado no Apêndice~\ref{ap:experimentos}).
 
 \begin{table}[htbp]
 \centering
