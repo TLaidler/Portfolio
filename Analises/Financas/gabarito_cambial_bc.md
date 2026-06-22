@@ -99,3 +99,70 @@ A diferença é sempre **R$ 6.250** — e isso é exatamente o **custo do DI** s
 **O que isso significa:** o swap te entrega a **mesma variação do dólar** que comprar dólar de verdade, **menos o custo de financiamento (DI)**. É um dólar comprado "a prazo, financiado a juros".
 
 > **A grande sacada:** quem compra dólar físico precisa desembolsar R$ 250.000 hoje. Quem usa o swap **não desembolsa nada** à vista — por isso "paga" o DI como custo de carregar a posição. E o BC adora isso porque consegue dar proteção cambial ao mercado **sem tirar um dólar sequer das reservas**. Volta tudo à frase da Seção 0: *mexer na pressão sem tirar moléculas da caixa.* 🎯
+
+---
+
+## Exercício 4 — Separando as quatro taxas
+
+**Dados:** `i_BR = 0,1425` ; `i_US = 0,0365` ; `S = 5,00` ; `F = 5,50`.
+
+**a)** Cupom cambial:
+
+```
+c = (1 + 0,1425) × (5,00 / 5,50) − 1
+  = 1,1425 × 0,909091 − 1
+  = 1,038636 − 1
+  = 0,038636  =  3,8636%
+```
+
+**b)** Diferencial e forward premium:
+
+```
+diferencial bruto = i_BR − i_US = 14,25% − 3,65% = 10,60%
+forward premium   = F/S − 1     = 5,50/5,00 − 1   = 10,00%
+```
+
+**c)** Classificação:
+
+| Taxa | Valor | Tipo |
+|---|---|---|
+| Juro em real (i_BR) | 14,25% | NÍVEL (alto) |
+| **Cupom cambial (c)** | **3,86%** | **NÍVEL (~4%) ← o único "cupom cambial" de verdade** |
+| Juro do dólar lá fora (i_US) | 3,65% | NÍVEL (~4%) |
+| Diferencial / carry | ~10% | DIFERENÇA |
+
+O **cupom cambial** (3,86%) é o único que merece o nome — e repare que ele mora coladinho no juro externo (3,65%), com um prêmio de ~0,21% em cima.
+
+**d)** Verificação da identidade:
+
+```
+(1 + c) × (F/S) = 1,038636 × (5,50/5,00) = 1,038636 × 1,10 = 1,1425 = 1 + i_BR  ✔
+```
+
+Fecha. O cupom e o forward premium são as duas peças que, multiplicadas, reconstroem o juro em real.
+
+---
+
+## Exercício 5 — O ganho (e o risco) do carry-trade
+
+**Dados:** deve `US$ 103,65` ; tem `R$ 571,25` no fim.
+
+**a)** Lucro = `571,25 / S_fim − 103,65`:
+
+| Cenário | S_fim | 571,25 / S_fim | **Lucro (US$)** |
+|---|---|---|---|
+| A (real estável) | 5,00 | 114,25 | **+10,60** |
+| B (cai 10% = forward) | 5,50 | 103,86 | **+0,21** |
+| C (cai 20%, crise) | 6,00 | 95,21 | **−8,44** |
+
+> **Fórmula Excel (cenário A):** `=571,25/5,00-103,65` → `10,60`.
+
+**b)** Breakeven (lucro = 0):
+
+```
+571,25 / S_fim = 103,65   ->   S_fim = 571,25 / 103,65 = 5,5113
+```
+
+**c)** O breakeven (`5,5113`) está **quase colado** no forward (`5,50`). Por quê? Porque o forward é, por construção, o câmbio que faz a operação **travada** dar lucro zero — e a operação não-travada vira a mesma coisa quando o câmbio realizado cai exatamente no forward. A diferencinha (`5,5113` vs `5,50`) é justamente o **prêmio do cupom** (aqueles ~0,2% a mais do dólar onshore) que sobra a seu favor.
+
+**Risco que você corre:** o câmbio futuro `S_fim`. Se o real se desvalorizar **mais** que ~10% (passar de 5,51), você perde — e numa crise cambial ele pode disparar bem além disso. O carry paga ~10,6% nos anos calmos e devolve tudo de uma vez no ano ruim: **prêmio de risco, não arbitragem.** 🎯
