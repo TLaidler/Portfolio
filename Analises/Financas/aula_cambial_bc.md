@@ -156,6 +156,30 @@ Recolhe um pouco de dólar emprestado, sem drama → **liquidez confortável**.
 3. **Rolar = neutro; não rolar = decisão:** olhe o **estoque**, não o leilão isolado.
 
 ---
+
+## 7. As quatro taxas (não confunda!) e o carry-trade
+
+Quando você lê "cupom cambial", há **quatro taxas** circulando — e três delas roubam o nome:
+
+```
+1. Juro em REAL (Selic/DI)............... i_BR  ~14,25%   <- nível ALTO
+2. CUPOM CAMBIAL (juro do dólar AQUI).... c     ~4%        <- o termo CORRETO; nível baixo
+3. Juro do dólar LÁ FORA (SOFR/Treasury). i_US  ~3,65%    <- nível baixo
+4. DIFERENCIAL / carry (i_BR − cupom).... ~10%            <- uma DIFERENÇA, não um nível
+```
+
+O cupom verdadeiro é sempre `c = (1 + i_BR) × S/F − 1`. É um **nível**, ancorado no juro externo:
+
+```
+cupom cambial = juro do dólar lá fora + prêmio de risco-país
+    4,0%      =        3,65%          +        ~0,35%
+```
+
+**Regra anti-confusão:** nível perto de 4%? → é o **cupom**. Diferença perto de 10%? → é o **carry** (a pessoa usou "cupom" de forma solta).
+
+**Carry-trade:** tomar dólar barato lá fora, aplicar em real caro aqui e **não travar o forward**. A arbitragem (travada no forward) dá **zero**; o carry ganha por **não travar** — é uma aposta de que o real cairá **menos** do que o forward previu. Não é almoço grátis: é **prêmio de risco**, que cobra caro nas crises (ganhos pequenos e frequentes, perdas raras e enormes).
+
+---
 ---
 
 # 🧮 Exercícios para resolver no Excel
@@ -263,3 +287,58 @@ para os mesmos cenários A e B.
 **c)** Calcule a **diferença** (físico − swap) em cada cenário. Você vai notar que ela é sempre a mesma. **O que essa diferença representa?** (Pista: é o preço de algo que aparece na fórmula do swap.)
 
 > 💡 *Reflexão final:* o swap te dá a "emoção" de ter dólar sem precisar desembolsar os R$ 250.000 à vista — mas em troca você "paga" o DI. É exatamente por isso que o BC adora: ele oferece proteção cambial **sem tirar dólar das reservas**.
+
+---
+
+## Exercício 4 — Separando as quatro taxas (e não caindo na ambiguidade)
+
+**Contexto:** vamos pôr as quatro taxas da Seção 7 lado a lado e ver quem é "nível" e quem é "diferença".
+
+**Dados (1 ano):**
+
+```
+i_BR = 14,25%  (0,1425)   ->  juro em real
+i_US =  3,65%  (0,0365)   ->  juro do dólar lá fora
+S    = 5,00               ->  dólar à vista
+F    = 5,50               ->  dólar futuro de 1 ano
+```
+
+**a)** Calcule o **cupom cambial**:  `c = (1 + i_BR) × S/F − 1`.
+
+**b)** Calcule o **diferencial bruto** (`i_BR − i_US`) e o **forward premium** (`F/S − 1`).
+
+**c)** Numa coluna, classifique cada um dos quatro valores como **"NÍVEL (~4%)"** ou **"DIFERENÇA (~10%)"**. Qual deles é o *único* que merece o nome "cupom cambial"?
+
+**d)** Verifique a identidade que amarra tudo: `(1 + c) × (F/S)` deve dar `1 + i_BR`. Bate?
+
+> 💡 *Dica:* se (d) não fechar, você inverteu `S/F` em algum lugar. O dólar futuro `F` sempre vai no **denominador** do cupom.
+
+---
+
+## Exercício 5 — O ganho (e o risco) do carry-trade
+
+**Contexto:** mesmo cenário do Exercício 4. Você toma dólar barato, aplica em real caro e **não trava o forward**. Vamos ver de quanto é a aposta.
+
+**Dados:**
+
+```
+Empréstimo   = US$ 100  a  i_US = 3,65%   ->  você deverá  100 × 1,0365 = US$ 103,65
+S (início)   = 5,00     ->  converte:  100 × 5,00 = R$ 500
+i_BR         = 14,25%   ->  aplica:    500 × 1,1425 = R$ 571,25  no fim
+```
+
+No fim do ano você reconverte os R$ 571,25 para dólar ao câmbio **realizado** `S_fim` (que você não conhecia no início) e paga os US$ 103,65.
+
+**a)** Calcule o **lucro em dólares** = `571,25 / S_fim − 103,65` em três cenários:
+
+| Cenário | S_fim | Significado |
+|---|---|---|
+| A | 5,00 | real estável |
+| B | 5,50 | real cai 10% (= o forward!) |
+| C | 6,00 | real cai 20% (crise) |
+
+**b)** Ache o **câmbio de breakeven**: o `S_fim` que zera o lucro (`571,25 / S_fim = 103,65`).
+
+**c)** Compare o breakeven do item (b) com o forward `F = 5,50` do Exercício 4. Eles ficam quase colados — **por quê?** E numa frase: **qual risco você está correndo para ganhar esse carry?**
+
+> 💡 *Reflexão final:* repare que o cenário B (real cai exatamente o que o forward previu) te deixa **quase no zero a zero**. O forward é a "linha d'água" da aposta. Acima dela você perde; abaixo, ganha. É a mesma linha que a arbitragem usaria para travar lucro zero — só que o carry-trader **escolhe não travar**.
