@@ -16,9 +16,11 @@
 | 50.000 | **US$ 2.500.000.000** (2,5 bi) |
 | 550.000 | **US$ 27.500.000.000** (27,5 bi) |
 
-**b)** Perna do swap: $20.000 \times 50.000 = US\$\,1.000.000.000$.
+**b)** Perna do swap: `20.000 × 50.000 = US$ 1.000.000.000`.
 
-$$\text{diferença} = 1.000.000.000 - 1.000.000.000 = \mathbf{0}$$
+```
+diferença = 1.000.000.000 − 1.000.000.000 = 0
+```
 
 **c)** **Neutra.** As duas pernas têm exatamente o mesmo tamanho (US$ 1 bi cada). O BC vende dólar à vista e, ao mesmo tempo, "recompra" o mesmo tanto via swap reverso. A exposição líquida em direção de dólar é zero → o objetivo é ajustar o **cupom cambial / liquidez de curtíssimo prazo**, não empurrar o preço do dólar.
 
@@ -28,54 +30,58 @@ $$\text{diferença} = 1.000.000.000 - 1.000.000.000 = \mathbf{0}$$
 
 ## Exercício 2 — O cupom cambial escondido no casado
 
-**Dados:** $i = 0{,}025$; $S = 5{,}40$; $F = 5{,}4675$.
+**Dados:** `i = 0,025` ; `S = 5,40` ; `F = 5,4675`.
 
 **a)** Casado:
-$$F - S = 5{,}4675 - 5{,}40 = \mathbf{0{,}0675}$$
+
+```
+F − S = 5,4675 − 5,40 = 0,0675
+```
 
 **b)** Cupom cambial:
-$$
-c = (1+0{,}025)\cdot\frac{5{,}40}{5{,}4675} - 1
-= 1{,}025 \times 0{,}987654 - 1
-= 1{,}012346 - 1
-= \mathbf{1{,}2346\%}
-$$
+
+```
+c = (1 + 0,025) × (5,40 / 5,4675) − 1
+  = 1,025 × 0,987654 − 1
+  = 1,012346 − 1
+  = 0,012346  =  1,2346%
+```
 
 > **Fórmula Excel:** `=(1+0,025)*(5,40/5,4675)-1`, formate a célula como porcentagem com 4 casas.
 
-**c)** Sensibilidade (mesmos $S=5{,}40$ e $i=0{,}025$):
+**c)** Sensibilidade (mesmos `S = 5,40` e `i = 0,025`):
 
-| Cenário | $F$ | Casado $(F-S)$ | Cupom $c$ |
+| Cenário | F | Casado (F − S) | Cupom c |
 |---|---|---|---|
 | 1 | 5,4675 | 0,0675 | **1,2346%** |
 | 2 | 5,4900 | 0,0900 | **0,8197%** |
 | 3 | 5,5200 | 0,1200 | **0,2717%** |
 
-**Conclusão:** quando o dólar futuro **sobe** (casado aumenta), o cupom cambial **desce**. 
+**Conclusão:** quando o dólar futuro **sobe** (casado aumenta), o cupom cambial **desce**.
 
-*Intuição:* na fórmula $c = (1+i)\,\frac{S}{F} - 1$, o $F$ está no **denominador**. Aumentar $F$ encolhe a fração, então $c$ cai. Em termos econômicos: se o mercado já "embute" um dólar bem mais caro no futuro, sobra menos juro em dólar para compensar — o prêmio de carregar dólar diminui.
+*Intuição:* na fórmula `c = (1 + i) × S/F − 1`, o **F está no denominador**. Aumentar F encolhe a fração, então c cai. Em termos econômicos: se o mercado já "embute" um dólar bem mais caro no futuro, sobra menos juro em dólar para compensar — o prêmio de carregar dólar diminui.
 
 ---
 
 ## Exercício 3 — O swap como dólar sintético financiado
 
-**Dados:** Notional $= R\$\,250.000$; $S_{\text{ini}} = 5{,}00$; DI $= 0{,}025$.
+**Dados:** `Notional = R$ 250.000` ; `S_ini = 5,00` ; `DI = 0,025`.
 
-**a)** Resultado do swap $= 250.000 \times \left(\frac{S_{\text{fim}}}{5{,}00} - 1 - 0{,}025\right)$:
+**a)** Resultado do swap = `250.000 × ((S_fim / 5,00) − 1 − 0,025)`:
 
-| Cenário | $S_{\text{fim}}$ | Variação do dólar | Variação − DI | **Resultado swap** |
+| Cenário | S_fim | Variação do dólar | Variação − DI | **Resultado swap** |
 |---|---|---|---|---|
 | A (sobe 5%) | 5,25 | +5,0% | +2,5% | **+R$ 6.250** |
 | B (cai 5%) | 4,75 | −5,0% | −7,5% | **−R$ 18.750** |
 
 > **Fórmula Excel (cenário A):** `=250000*((5,25/5,00)-1-0,025)` → `6250`.
 
-**b)** Resultado **físico** $= 50.000 \times (S_{\text{fim}} - 5{,}00)$:
+**b)** Resultado **físico** = `50.000 × (S_fim − 5,00)`:
 
-| Cenário | $S_{\text{fim}}$ | **Resultado físico** |
+| Cenário | S_fim | **Resultado físico** |
 |---|---|---|
-| A | 5,25 | $50.000 \times 0{,}25 =$ **+R$ 12.500** |
-| B | 4,75 | $50.000 \times (-0{,}25) =$ **−R$ 12.500** |
+| A | 5,25 | `50.000 × 0,25` = **+R$ 12.500** |
+| B | 4,75 | `50.000 × (−0,25)` = **−R$ 12.500** |
 
 **c)** Diferença (físico − swap):
 
@@ -85,9 +91,10 @@ $$
 | B | −12.500 | −18.750 | **+6.250** |
 
 A diferença é sempre **R$ 6.250** — e isso é exatamente o **custo do DI** sobre o notional:
-$$
-250.000 \times 0{,}025 = R\$\,6.250
-$$
+
+```
+250.000 × 0,025 = R$ 6.250
+```
 
 **O que isso significa:** o swap te entrega a **mesma variação do dólar** que comprar dólar de verdade, **menos o custo de financiamento (DI)**. É um dólar comprado "a prazo, financiado a juros".
 
