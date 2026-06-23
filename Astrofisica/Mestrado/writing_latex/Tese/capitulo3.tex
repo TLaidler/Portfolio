@@ -197,6 +197,24 @@ Nessas expressões, \(G_i\) é o coeficiente de Gini e \(H_i\) é a \textbf{entr
 
 O Gini tende a isolar a classe mais frequente; a entropia tende a produzir árvores mais equilibradas. A divisão é feita de modo a maximizar a redução da impureza (ganho de informação). Árvores de decisão são instáveis e sensíveis a pequenas variações nos dados; sem restrições, tendem ao sobreajuste. Para regularizar, utilizam-se critérios de parada como profundidade máxima (\textit{max\_depth}) e número mínimo de amostras por nó ou por folha (\textit{min\_samples\_leaf}) \citep{geron2019maos}. A \textbf{poda} (\textit{pruning}) pode ser aplicada após o crescimento completo, removendo ramos que não contribuem significativamente para a capacidade preditiva \citep{Levada2026}.
 
+\vspace{0.3cm}
+\noindent\textbf{Exemplo numérico: redução de impureza de Gini em uma divisão.}
+Considere um nó contendo $8$ curvas de luz de treino, sendo $4$ positivas (com ocultação) e $4$ negativas. Como as classes estão perfeitamente misturadas, a impureza é máxima para o caso binário:
+\[
+G_{\text{nó}} = 1 - \left[\left(\tfrac{4}{8}\right)^2 + \left(\tfrac{4}{8}\right)^2\right] = 1 - 0{,}5 = 0{,}5.
+\]
+A árvore testa então uma divisão candidata --- por exemplo, ``profundidade da queda $> 0{,}5$?'' --- que separa as $8$ curvas em dois nós-filhos:
+\begin{itemize}
+	\item \textbf{Filho da esquerda} ($3$ curvas, todas positivas): $G_{\text{esq}} = 1 - \left[1^2 + 0^2\right] = 0$ (nó \emph{puro}).
+	\item \textbf{Filho da direita} ($5$ curvas, $1$ positiva e $4$ negativas): $G_{\text{dir}} = 1 - \left[\left(\tfrac{1}{5}\right)^2 + \left(\tfrac{4}{5}\right)^2\right] = 1 - 0{,}68 = 0{,}32$.
+\end{itemize}
+A impureza após a divisão é a média \textbf{ponderada} pelo número de exemplos em cada filho:
+\[
+G_{\text{div}} = \frac{3}{8}\times 0 + \frac{5}{8}\times 0{,}32 = 0{,}20,
+\]
+e o \textbf{ganho} (redução de impureza) é $\Delta G = G_{\text{nó}} - G_{\text{div}} = 0{,}50 - 0{,}20 = 0{,}30$. A divisão deixou os nós mais ``puros'' (o da esquerda já decide com certeza pela classe positiva). O algoritmo CART avalia todos os cortes candidatos de todas as \textit{features} e escolhe aquele que produz o \emph{maior} ganho; o processo se repete em cada nó-filho até atingir um critério de parada.
+\vspace{0.3cm}
+
 \subsection{Random Forest (Floresta Aleatória)}
 
 Random Forest é um método de \textbf{ensemble}: em vez de uma única árvore, treina-se um grande número de árvores de decisão (por exemplo, centenas), cada uma em uma \textbf{amostra aleatória} dos dados (amostragem com reposição, ou \textit{bootstrap}) e usando, em cada divisão de nó, apenas um subconjunto aleatório das características \citep{geron2019maos, Levada2026}. A predição final é obtida por \textbf{votação majoritária}: cada árvore "vota" em uma classe e escolhe-se a classe que recebeu mais votos. A força da floresta está na \textbf{descorrelação} entre as árvores. Aqui, \textbf{\textit{bagging}} (de \textit{bootstrap aggregating}) é a técnica de treinar cada árvore em uma amostra distinta dos dados, sorteada com reposição, e depois agregar as predições por votação: como cada árvore vê um conjunto ligeiramente diferente, elas erram em casos diferentes. O \textit{bagging} e a escolha aleatória de atributos em cada nó garantem essa diversidade; ao agregar centenas de árvores, o modelo mantém o baixo viés das árvores individuais e reduz drasticamente a \textbf{variância}. Uma vantagem colateral é a estimativa \textbf{out-of-bag} (OOB): como cada árvore é treinada em aproximadamente 63\% dos dados (amostragem com reposição), cerca de 37\% das instâncias ficam "fora da bolsa"~para cada árvore e podem ser usadas como conjunto de validação interno, permitindo estimar o erro de generalização sem um conjunto de teste separado \citep{geron2019maos}. Uma variante ainda mais aleatória são as \textbf{Extra-Trees} (\textit{Extremely Randomized Trees}): em vez de procurar o melhor ponto de corte em cada atributo, sorteiam limiares ao acaso e ficam com o melhor entre os sorteados. Isso acelera o treinamento e pode reduzir ainda mais a variância, ao custo de um viés ligeiramente maior \citep{geron2019maos}.
