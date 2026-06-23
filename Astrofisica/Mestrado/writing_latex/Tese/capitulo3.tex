@@ -52,7 +52,7 @@ Antes de apresentar os modelos de classificação, convém fixar a ideia de trei
 
 \begin{figure}[htbp]
 \begin{center}
-	\includegraphics[scale=0.85]{pngs/exemplo_regressaoLinear.png}
+	\includegraphics[scale=0.9]{pngs/exemplo_regressaoLinear.png}
 \caption{Exemplo ilustrativo de regressão linear simples (dados genéricos, não referentes a curvas de luz de ocultação) \citep{Levada2026}.}
 \label{fig:linear}
 \end{center}
@@ -100,13 +100,17 @@ Nesse caso, teríamos infinitos valores sob uma reta para a variável de saída.
     \label{fig:reglin_classif_ex2}
 \end{figure}
 
-O que podemos ver é que a reta de regressão se altera significativamente com a adição de novos pontos, de modo que é fácil concluir que haverá erro na classificação em um conjunto de dados muito extenso e rico em informações. Além disso, a regressão linear permite com que a saída possa assumir valores fora do intervalo desejado para uma medida de probabilidade (entre 0 e 1). 
+O que podemos ver é a reta de regressão pode sofrer alterações significativas com a inclusão de novos pontos, evidenciando sua sensibilidade aos dados observados. Além disso, a regressão linear pode gerar valores fora do intervalo [0,1], incompatíveis com a interpretação probabilística. Dessa forma, sua sensibilidade a outliers e a ausência de uma saída naturalmente probabilística fazem da regressão linear uma abordagem inadequada para tarefas de classificação.
 
-Ou seja, a regressão logística funcionará como modelos lineares (saída contínua), mas adaptado como modelo de classificação probabilística: a combinação linear \(\vec{\theta}^\top \vec{x}\) é mapeada pela logística ao intervalo \((0,1)\), interpretado como a probabilidade da classe positiva \citep{Levada2026}. Em notação vetorial, seja \(\vec{\theta}\) o vetor de parâmetros  e \(\vec{x}\) o vetor de atributos; a probabilidade predita é
+Nesse sentido, a regressão logística funcionará de forma similar a modelos lineares (saída contínua), mas será adaptado. O primeiro ponto será a interpretação probabilística: a combinação linear \(\vec{\theta}^\top \vec{x}\) será mapeada pela logística ao intervalo \((0,1)\), permitindo a interpretação como a probabilidade da classe ser positiva \citep{Levada2026}. 
+
+Em notação vetorial, seja \(\vec{\theta}\) o vetor de parâmetros  e \(\vec{x}\) o vetor de atributos; a probabilidade predita é
 \[
 \hat{p} = h_{\vec{\theta}}(\vec{x}) = \sigma(\vec{\theta}^\top \vec{x}) = \frac{1}{1 + e^{-\vec{\theta}^\top \vec{x}}}.
 \]
-A decisão é: classe 1 se \(\hat{p} \geq 0{,}5\), caso contrário classe 0. Vale lembrar que o valor de 0,5 pode ser alterado a depender da calibração do modelo, como discutido no início do capítulo. Para o treinamento, utiliza-se a função de custo de \textbf{entropia cruzada} (ou \textit{log loss}): uma medida que penaliza predições distantes do rótulo real. Por exemplo, se temos uma curva positiva (ocultação presente), e o modelo prediz uma probabilidade baixa de haver ocultação, o custo deverá ser alto. Trata-se, portanto, de uma medida sobre o quão distante da realidade estão as previsões do modelo. 
+A decisão é: classe 1 se \(\hat{p} \geq 0{,}5\), caso contrário classe 0. Isso pois a saída continuará continua, mas dessa vez limitada entre 0 e 1. Vale lembrar, também, que o valor de 0,5 pode ser alterado a depender da calibração do modelo, como discutido no início do capítulo. 
+
+O segundo ponto a ser adaptado será quanto ao treinamento. Nesse sentido, passa-se a utilizar outra função de custo ao invés dos mínimo quadrados: a \textbf{entropia cruzada} (ou \textit{log loss}). Essa medida penaliza predições distantes do rótulo real. Por exemplo, se temos uma curva positiva (ocultação presente), e o modelo prediz uma probabilidade baixa de haver ocultação, o custo deverá ser alto. 
 
 \[
 loss = - [y \log{p} + (1-y) \log{(1-p)}]
@@ -114,11 +118,13 @@ loss = - [y \log{p} + (1-y) \log{(1-p)}]
 \begin{equation}
 J(\vec{\theta}) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(\hat{p}^{(i)}) + (1 - y^{(i)}) \log(1 - \hat{p}^{(i)}) \right].
 \end{equation}
+
+
 A minimização de \(J(\vec{\theta})\) é equivalente à maximização da log-verossimilhança (MLE), de modo que os parâmetros estimados são estatisticamente ótimos sob o modelo probabilístico assumido \citep{geron2019maos, Levada2026}. O ajuste é realizado por gradiente descendente (veremos mais detalhes sobre os algoritmos de otimização na Seção~\ref{sec:otimizacao}). O gradiente de \(J\) em relação a \(\vec{\theta}\) pode ser escrito na forma vetorial
 \[
 \nabla_{\vec{\theta}} J(\vec{\theta}) = \frac{1}{m} X^\top \big( \sigma(X\vec{\theta}) - \vec{y} \big),
 \]
-onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) (análogo ao passo de um método numérico de minimização).
+onde \(X\) é a matriz de dados e \(\vec{y}\) o vetor de rótulos. A atualização dos parâmetros em cada iteração segue a \textbf{direção oposta ao gradiente} (direção de maior descida do custo), com passo controlado pela \textbf{taxa de aprendizado} \(\eta\) (análogo ao passo de um método numérico de minimização).  Trata-se, portanto, de uma medida sobre o quão distante da realidade estão as previsões do modelo.
 
 \vspace{0.3cm}
 \noindent\textbf{Exemplo numérico: uma iteração do gradiente descendente.}
