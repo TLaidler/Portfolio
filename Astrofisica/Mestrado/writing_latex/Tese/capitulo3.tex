@@ -325,7 +325,7 @@ Com isso, o leitor dispõe de uma referência clara sobre o significado das "con
 
 A criação e a seleção de \textbf{características numéricas} (atributos) a partir dos dados brutos são fundamentais para o sucesso do ML \citep{geron2019maos}, uma vez que essas variáveis representam a informação que será efetivamente utilizada pelos algoritmos para identificar padrões e realizar previsões.
 
-Incluem: (i)~escolher ou construir variáveis que capturem informação útil para a tarefa (por exemplo, estatísticas da curva de luz, derivadas, comparações entre segmentos); (ii)~combinar ou transformar variáveis existentes (médias móveis, suavização, testes estatísticos entre quartis, etc.). No Capítulo 4, descreve-se em detalhe o conjunto de features extraídas de cada curva de luz (amplitude, desvio padrão, max drawdown, distância entre centróides do K-means no fluxo, estatísticas de derivadas, \(p\)-valores entre quartis, entre outras). Essas grandezas formam o vetor \(\vec{x}\) de entrada dos classificadores.
+Essa etapa inclui: (i)~escolher ou construir variáveis que capturem informação útil para a tarefa (por exemplo, estatísticas da curva de luz, derivadas, comparações entre segmentos); (ii)~combinar ou transformar variáveis existentes (médias móveis, suavização, testes estatísticos entre quartis, etc.). No Capítulo 4, descreve-se em detalhe o conjunto de features extraídas de cada curva de luz (amplitude, desvio padrão, max drawdown, distância entre centróides do K-means no fluxo, estatísticas de derivadas, \(p\)-valores entre quartis, entre outras). Essas grandezas formam o vetor \(\vec{x}\) de entrada dos classificadores.
 
 \subsection{Métricas de avaliação para classificação binária}
 \label{sec:metricas_avaliacao}
@@ -342,10 +342,14 @@ A avaliação de um classificador binário parte da \textbf{matriz de confusão}
 A partir dessas contagens, as métricas mais utilizadas em classificação binária são:
 
 \textbf{Acurácia} --- fração de predições corretas sobre o total:
+
 \begin{equation}
 \text{Acurácia} = \frac{TP + TN}{TP + TN + FP + FN}.
 \end{equation}
-A acurácia é intuitiva, mas pode ser enganosa em conjuntos desbalanceados. \textbf{Exemplo numérico:} considere 100 curvas de luz, das quais 10 contêm ocultação (positivas) e 90 não (negativas). Um classificador que \textbf{sempre} prediz "negativo" acerta 90 das 100 curvas --- acurácia de 90\% --- mas não detecta \textit{nenhuma} ocultação ($\text{sensibilidade} = 0$). Esse paradoxo evidencia que, em cenários desbalanceados, a acurácia sozinha é insuficiente para avaliar o modelo.
+
+A acurácia é intuitiva, mas pode ser enganosa em conjuntos desbalanceados. 
+
+\textbf{Exemplo numérico:} considere 100 curvas de luz, das quais 10 contêm ocultação (positivas) e 90 não (negativas). Um classificador que \textbf{sempre} prediz "negativo" acerta 90 das 100 curvas --- acurácia de 90\% --- mas não detecta \textit{nenhuma} ocultação ($\text{sensibilidade} = 0$). Esse paradoxo evidencia que, em cenários desbalanceados, a acurácia sozinha é insuficiente para avaliar o modelo.
 
 \textbf{Precisão} (\textit{Precision}) --- entre os exemplos classificados como positivos, qual fração é realmente positiva:
 \begin{equation}
@@ -369,6 +373,8 @@ F_\beta = (1 + \beta^2) \cdot \frac{\text{Precisão} \cdot \text{Sensibilidade}}
 Para $\beta > 1$, o $F_\beta$ penaliza mais os falsos negativos (favorecendo a sensibilidade); para $\beta < 1$, penaliza mais os falsos positivos. Em aplicações de triagem científica, como a detecção de ocultações estelares, $\beta = 2$ é uma escolha natural, pois o custo de perder um evento genuíno (FN) é maior que o de investigar um alarme falso (FP) \citep{Saito2015}.
 
 \textbf{AUC-ROC} (\textit{Area Under the Receiver Operating Characteristic Curve}) --- mede a capacidade discriminativa do modelo ao longo de todos os limiares de decisão possíveis. A curva ROC plota a \textbf{taxa de verdadeiros positivos} (sensibilidade) contra a \textbf{taxa de falsos positivos} ($FP/(FP+TN)$) para cada limiar $\tau$. A área sob essa curva (AUC) varia de 0,5 (classificador aleatório) a 1,0 (classificador perfeito). A AUC-ROC é útil por ser invariante ao limiar escolhido, mas pode ser otimista em conjuntos desbalanceados \citep{Saito2015}.
+
+%GRAFICO AUC-ROC
 
 \textbf{Curva Precisão-Sensibilidade} (\textit{Precision-Recall}) --- alternativa à curva ROC, recomendada quando a classe positiva é rara ou quando o custo dos erros é assimétrico \citep{Saito2015}. Plota a precisão contra a sensibilidade para cada limiar~$\tau$. A área sob a curva PR (AUC-PR) é mais informativa que a AUC-ROC em cenários desbalanceados, pois não é inflada por verdadeiros negativos abundantes.
 
