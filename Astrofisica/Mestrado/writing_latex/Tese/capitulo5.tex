@@ -747,11 +747,11 @@ Os resultados dos seis experimentos indicam que a \textit{pipeline} de detecçã
 
 A análise de redundância (Seção~\ref{sec:features_redundancia}) identificou 15 variáveis redundantes ou com baixo poder discriminativo. A comparação entre os Experimentos 1 (28 \textit{features}) e 4 (14 \textit{features}) demonstra empiricamente que a remoção dessas variáveis não prejudica --- e pode até melhorar --- o desempenho dos classificadores. Isso é consistente com a teoria de \textit{machine learning}: variáveis redundantes aumentam a dimensionalidade do espaço de entrada sem acrescentar informação, podendo elevar a variância dos modelos.
 
-A importância da \textit{feature} \texttt{Feature\_Savgol\_Min} é coerente com a física do problema: em uma ocultação, o fluxo normalizado cai durante o intervalo em que a estrela está atrás do corpo; o mínimo da série suavizada localiza esse patamar e tende a ser mais baixo em curvas com evento do que em curvas ruidosas sem ocultação. A queda de desempenho ao remover essa variável (Experimento 5) reforça seu papel discriminativo.
+A predominância da \textit{feature} \texttt{Feature\_Savgol\_std} no conjunto enxuto (Figura~\ref{fig:feature_importance_enxuto}) é coerente com a física do problema: em uma ocultação, o fluxo normalizado cai durante o intervalo em que a estrela está atrás do corpo, fazendo coexistirem dois patamares (dentro e fora do \textit{dip}); a dispersão da série suavizada cresce nessa situação, ao passo que em curvas ruidosas sem evento o fluxo é aproximadamente homogêneo e a dispersão é baixa. Variáveis correlatas que mediam o mesmo efeito por outra via --- como o mínimo da série suavizada (\texttt{Feature\_Savgol\_Min}) --- mostraram-se redundantes e foram descartadas sem prejuízo de desempenho.
 
 \subsection{Interpretação da importância das \textit{features}}
 
-A concordância entre os quatro modelos quanto às \textit{features} mais importantes --- \texttt{Feature\_Savgol\_Min}, \texttt{Max\_Drawdown}, \texttt{kmeans\_centroid\_dist} e as métricas observacionais de profundidade e SNR --- oferece confiança de que essas variáveis capturam as assinaturas físicas relevantes de uma ocultação: queda de fluxo (profundidade), localização temporal da queda (duração), e separação entre os níveis de fluxo dentro e fora do evento (bimodalidade via K-Means). A coerência entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) reforça a robustez dessa interpretação.
+A concordância entre os quatro modelos quanto às \textit{features} mais importantes do conjunto enxuto --- \texttt{Feature\_Savgol\_std}, \texttt{Max\_Drawdown} e as métricas observacionais de profundidade e duração (\texttt{Occ\_depth}, \texttt{Occ\_duration\_s}) --- oferece confiança de que essas variáveis capturam as assinaturas físicas relevantes de uma ocultação: a magnitude da queda de fluxo, sua localização temporal e a separação entre os níveis de fluxo dentro e fora do evento. A coerência entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) reforça a robustez dessa interpretação.
 
 O estudo de ablação (Seção~\ref{sec:ablation_kmeans}) acrescenta uma nuance importante: embora \texttt{kmeans\_centroid\_dist} seja consistentemente apontada como a \textit{feature} mais importante pelos modelos de árvore --- chegando a 63\% de importância no XGBoost ---, sua remoção não degrada o desempenho. Isso demonstra que a \textbf{importância atribuída por algoritmos baseados em árvore não é sinônimo de insubstituibilidade}: uma \textit{feature} pode concentrar alta importância simplesmente por oferecer um ponto de corte mais eficiente, enquanto outras variáveis colineares podem compensar sua ausência redistribuindo a capacidade preditiva. Esse resultado tem implicação prática direta: o \textit{pipeline} pode ser simplificado pela remoção do passo de K-Means sem perda de qualidade.
 
@@ -759,22 +759,4 @@ O estudo de ablação (Seção~\ref{sec:ablation_kmeans}) acrescenta uma nuance 
 
 Em um cenário real de triagem, o custo de perder uma ocultação genuína (falso negativo) supera amplamente o custo de revisar uma curva sem evento (falso positivo). A Seção~\ref{sec:threshold_tuning} demonstra que essa assimetria pode ser incorporada à \textit{pipeline} sem retreinamento, simplesmente reduzindo o limiar de decisão $\tau$. Essa abordagem explora o fato de que os modelos produzem probabilidades, não apenas rótulos binários, e que a separabilidade elevada entre as classes (AUC-ROC $\geq 0{,}998$) garante que a precisão se mantenha aceitável mesmo em patamares de sensibilidade próximos de 100\%. A possibilidade de ajuste de limiar em pós-processamento é uma vantagem direta da formulação probabilística adotada, e confere à \textit{pipeline} flexibilidade para operar em diferentes cenários de custo sem modificação dos modelos.
 
-\subsection{Limitações}
-
-\begin{enumerate}
-	\item O \textit{ground truth} (rótulos positivo/negativo) provém dos catálogos VizieR e Grupo do Rio; erros ou inconsistências de rotulagem podem afetar treinamento e avaliação.
-	\item Os experimentos individuais utilizam uma única divisão treino/teste fixa por configuração. A validação cruzada estratificada (Seção~\ref{sec:cross_validation}) e o teste de McNemar (Seção~\ref{sec:mcnemar}) fornecem estimativas de variabilidade e testes de significância; uma validação cruzada repetida com múltiplas sementes fortaleceria as conclusões.
-	\item A generalização para outros catálogos, condições de observação ou objetos ocultantes diferentes dos presentes no banco de dados não foi avaliada sistematicamente neste trabalho.
-	\item O \textit{dataset} é parcialmente sintético (cerca de 78\% dos negativos); o Experimento~3 mostra que o desempenho em curvas exclusivamente reais é ligeiramente menor, embora ainda elevado (AUC $> 0{,}995$).
-\end{enumerate}
-
-\subsection{Recomendações para trabalhos futuros}
-
-\begin{itemize}
-	\item Validação em conjuntos de dados independentes (outros catálogos ou campanhas observacionais).
-	\item Análise de significância via validação cruzada repetida, com reporte de média e desvio padrão do F1-score.
-	\item Estudo de \textit{features} baseadas em modelos físicos mais sofisticados (difração de Fresnel, opacidade parcial), que poderiam melhorar a discriminação em eventos de baixo SNR.
-	\item Aplicação da \textit{pipeline} a dados de campanhas observacionais específicas, como as curvas de luz do objeto transnetuniano Quaoar, para validação em cenário real de uso.
-\end{itemize}
-
-A hipótese de pesquisa formulada na Introdução --- de que é possível obter desempenho comparável a abordagens manuais ou baseadas em redes convolucionais usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é corroborada pelos resultados obtidos nos seis experimentos. As análises de ablação da \textit{feature} K-Means (Seção~\ref{sec:ablation_kmeans}) e de generalização em curvas reais (Seção~\ref{sec:generalizacao_real}) reforçam essa conclusão ao demonstrar que o desempenho elevado é robusto à simplificação do conjunto de variáveis (28 $\to$ 11 \textit{features}) e ao teste exclusivo em dados reais, evidenciando que o \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.
+As limitações deste trabalho e as direções de pesquisa que delas decorrem são sintetizadas no Capítulo~\ref{cap:conclusoes}, à luz do conjunto completo dos resultados.
