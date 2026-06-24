@@ -614,59 +614,49 @@ As Figuras~\ref{fig:ROC1} e~\ref{fig:ROC7} apresentam as curvas ROC dos dois cen
 
 \subsection{Análise de importância das \textit{features}}
 
-A Figura~\ref{fig:feature_importance_1} apresenta os gráficos de importância de variáveis para os quatro modelos no Experimento~1 (conjunto completo de 28 \textit{features}); as figuras análogas dos demais experimentos estão no Apêndice~\ref{ap:experimentos}. A interpretação dos valores deve considerar as diferenças metodológicas discutidas na Seção~\ref{sec:feature_importance_metodologia}: o eixo horizontal varia de 0 a $\approx$0,25 no Random Forest (MDI normalizado para soma~1), de 0 a $\approx$0,15 no XGBoost (\textit{weight} normalizado), de 0 a $\approx$30 no CatBoost (\textit{PredictionValuesChange} normalizado para soma~100), e de 0 a $\approx$4 na Regressão Logística ($|\beta_j|$ sem normalização).
+A Figura~\ref{fig:feature_importance_enxuto} apresenta os gráficos de importância de variáveis para os quatro modelos no Experimento~2 (configuração enxuta, 11 \textit{features} úteis após a remoção das redundantes); concentramos a análise nesta configuração porque são justamente essas variáveis que permanecem em uso na \textit{pipeline} final. As figuras análogas das demais configurações estão no Apêndice~\ref{ap:experimentos}. A interpretação dos valores deve considerar as diferenças metodológicas discutidas na Seção~\ref{sec:feature_importance_metodologia}: cada modelo emprega uma métrica própria --- MDI normalizado para soma~1 (Random Forest), \textit{weight} normalizado (XGBoost), \textit{PredictionValuesChange} normalizado para soma~100 (CatBoost) e $|\beta_j|$ sem normalização (Regressão Logística) ---, de modo que as escalas horizontais não são diretamente comparáveis entre os painéis.
 
-Em todos os experimentos e modelos, as variáveis mais relevantes consistentemente incluem:
+Nos modelos de árvore (Random Forest e XGBoost), as variáveis mais relevantes são consistentemente:
 
 \begin{itemize}
-	\item \texttt{Feature\_Savgol\_Min} e \texttt{Max\_Drawdown}: capturam diretamente a magnitude da queda de fluxo, que é a assinatura primária de uma ocultação.
-	\item \texttt{kmeans\_centroid\_dist}: a distância entre os centróides do K-Means identifica a presença de dois regimes no fluxo (dentro e fora do dip), sendo altamente discriminativa.
-	\item \texttt{Occ\_depth} e \texttt{Occ\_SNR\_dip}: quantificam a profundidade e a razão sinal-ruído do evento segundo critérios observacionais.
-	\item \texttt{MinLogP\_Ttest} e \texttt{MinLogP\_KS}: os testes estatísticos entre quartis detectam heterogeneidade no fluxo, que é esperada em curvas com ocultação.
+	\item \texttt{Feature\_Savgol\_std}: a \textit{feature} dominante em ambos os modelos --- isolada, responde por $\approx$0,57 da importância no XGBoost. Mede a dispersão do fluxo suavizado, que cresce quando coexistem dois patamares (dentro e fora do \textit{dip}). Com a remoção de \texttt{kmeans\_centroid\_dist} (Experimento~2), ela absorve o papel discriminativo antes atribuído àquela variável colinear, como antecipado pelo estudo de ablação.
+	\item \texttt{Max\_Drawdown}: captura diretamente a magnitude da maior queda acumulada de fluxo, assinatura primária de uma ocultação.
+	\item \texttt{Occ\_depth} e \texttt{Occ\_duration\_s}: quantificam a profundidade e a duração do evento segundo critérios observacionais.
+	\item \texttt{MinLogP\_Ttest} (e, em menor grau, \texttt{Occ\_chi2\_ratio} e \texttt{MinLogP\_KS}): os testes estatísticos entre quartis detectam a heterogeneidade no fluxo esperada em curvas com ocultação.
 \end{itemize}
 
 \begin{figure}[p]
 \centering
-\noindent\textbf{Experimento 1 (28 \textit{features}).}\\[0.5em]
+\noindent\textbf{Experimento 2 (11 \textit{features} úteis).}\\[0.5em]
 \begin{minipage}[t]{0.48\textwidth}
 	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp1/feature_importance_logistic_regression.png}
+	\includegraphics[width=\linewidth]{Tese/pngs/exp5/feature_importance_logistic_regression.png}
 	\vspace{0.3em}
 	\small (a) Regressão Log.
 \end{minipage}\hfill
 \begin{minipage}[t]{0.48\textwidth}
 	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp1/feature_importance_random_forest.png}
+	\includegraphics[width=\linewidth]{Tese/pngs/exp5/feature_importance_random_forest.png}
 	\vspace{0.3em}
 	\small (b) Random Forest
 \end{minipage}\\[1em]
 \begin{minipage}[t]{0.48\textwidth}
 	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp1/feature_importance_xgboost.png}
+	\includegraphics[width=\linewidth]{Tese/pngs/exp5/feature_importance_xgboost.png}
 	\vspace{0.3em}
 	\small (c) XGBoost
 \end{minipage}\hfill
 \begin{minipage}[t]{0.48\textwidth}
 	\centering
-	\includegraphics[width=\linewidth]{Tese/pngs/exp1/feature_importance_catboost.png}
+	\includegraphics[width=\linewidth]{Tese/pngs/exp5/feature_importance_catboost.png}
 	\vspace{0.3em}
 	\small (d) CatBoost
 \end{minipage}\\[0.5em]
-\caption{Importância de variáveis por modelo --- Experimento 1 (28 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost.}
-\label{fig:feature_importance_1}
+\caption{Importância de variáveis por modelo --- Experimento 2 (configuração enxuta, 11 \textit{features}). (a) Regressão Logística, (b) Random Forest, (c) XGBoost, (d) CatBoost.}
+\label{fig:feature_importance_enxuto}
 \end{figure}
 
-As figuras análogas para os Experimentos 4 e 5, que permitem acompanhar como a importância relativa das variáveis se redistribui à medida que o conjunto é reduzido, estão reunidas no Apêndice~\ref{ap:experimentos}.
-
-A viabilidade da \textit{feature} \texttt{kmeans\_centroid\_dist} como variável discriminativa é corroborada pela análise exploratória dos dados: curvas positivas (com ocultação) concentram-se em valores mais altos de distância entre centróides, enquanto curvas negativas concentram-se em valores menores. A separação entre as duas distribuições confirma que a distância entre centróides captura eficazmente a presença de dois regimes na série temporal.
-% Se disponível nos outputs do pipeline, descomentar a figura abaixo:
-%\begin{figure}[htbp]
-%\begin{center}
-%	\includegraphics[width=0.85\linewidth]{Tese/pngs/exp1/histograma_kmeans_por_classe.png}
-%\caption{Histograma da \textit{feature} \texttt{kmeans\_centroid\_dist} por classe.}
-%\label{fig:histograma_kmeans}
-%\end{center}
-%\end{figure}
+As figuras análogas das configurações com conjuntos maiores de \textit{features} (Experimentos 4 e 5), que permitem acompanhar como a importância relativa das variáveis se redistribui à medida que o conjunto é reduzido, estão reunidas no Apêndice~\ref{ap:experimentos}. Em particular, a alta importância atribuída a \texttt{kmeans\_centroid\_dist} naquelas configurações --- e o fato de sua remoção não degradar o desempenho --- é analisada no estudo de ablação (Seção~\ref{sec:resultados_exp4}).
 
 % -----------------------------------------------------------------------------
 \section{Validação cruzada estratificada}
