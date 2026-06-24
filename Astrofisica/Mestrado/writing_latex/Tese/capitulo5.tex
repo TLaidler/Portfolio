@@ -471,17 +471,7 @@ Este estudo de caso tem três objetivos:
 	\item Demonstrar o uso da \textit{pipeline} como ferramenta de \textbf{recorte interativo}, permitindo isolar segmentos específicos da curva (anel, atmosfera, corpo ocultante) e reaplicar o classificador a cada janela.
 \end{enumerate}
 
-\subsection{Dados utilizados}
-
-Foram utilizadas três curvas de luz fotométricas da mesma ocultação estelar por Quaoar, obtidas em telescópios e bandas distintos e reduzidas com o pacote \texttt{PRAIA}~\citep{AssafinPRAIA}:
-
-\begin{itemize}
-	\item \textbf{CFHT/WIRCam --- banda $K_s$:} infravermelho próximo, 4797 pontos válidos após limpeza.
-	\item \textbf{Gemini-N/'Alopeke --- canal \textit{Blue} (filtro $r$):} visível, 12000 pontos.
-	\item \textbf{Gemini-N/'Alopeke --- canal \textit{Red} (filtro $z$):} visível-vermelho, 12000 pontos.
-\end{itemize}
-
-As três curvas estão originalmente em formato \texttt{.dat} do PRAIA, com colunas para tempo (segundos UTC), fluxo normalizado e diversos diagnósticos fotométricos por ponto --- por exemplo, a relação sinal-ruído individual de cada medida e uma \textit{flag} de qualidade que marca quadros saturados ou contaminados (assinalados com valores extremos como 99{,}999). Os dados foram \textbf{gentilmente cedidos pelo autor principal} de~\citet{Quaoar2023}, no qual a redução fotométrica completa do evento e a caracterização dos dois anéis Q1R e Q2R são apresentadas. Reforçando o que já se mencionou, nenhuma das três curvas figura no banco SQLite usado para treinar os modelos --- não estão no catálogo \texttt{B/occ/asteroid} do VizieR nem no \textit{drive} do Grupo do Rio ---, garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
+Os dados de Quaoar foram \textbf{gentilmente cedidos pelo autor principal} de~\citet{Quaoar2023}, no qual a redução fotométrica completa do evento e a caracterização dos dois anéis Q1R e Q2R são apresentadas. Reforçando o que já se mencionou, a curva de Quaoar não figura no banco SQLite usado para treinar os modelos, garantindo que o teste é, de fato, sobre dados externos à distribuição de treino.
 
 \subsection{Procedimento}
 
@@ -561,7 +551,7 @@ Essa separação é o que torna o \textbf{ajuste de limiar} (Seção~\ref{sec:th
 \begin{figure}[htbp]
 \begin{center}
 	\includegraphics[width=0.95\linewidth]{Tese/pngs/quaoar_recorte_tau_ajustado.png}
-\caption{Recortes da curva Gemini-'Alopeke \textit{Red}-$z$ de Quaoar, com o veredito do XGBoost em cada janela colorida. A legenda indica, por recorte, a probabilidade $\hat{p}$ e a classificação no limiar padrão ($\tau=0{,}5$) e no limiar ajustado ($\tau=0{,}03$). Os anéis finos Q2R, negativos em $\tau=0{,}5$, são recuperados em $\tau=0{,}03$, enquanto o controle e o trecho de ruído permanecem corretamente negativos. Tempo relativo a 2022-08-09 06:34:49,26 UTC.}
+\caption{Recortes da curva Gemini-'Alopeke canal \textit{Red}- filtro $z$ (visível-vermelho) de Quaoar, com o veredito do XGBoost em cada janela colorida. A legenda indica, por recorte, a probabilidade $\hat{p}$ e a classificação no limiar padrão ($\tau=0{,}5$) e no limiar ajustado ($\tau=0{,}03$). Os anéis finos Q2R, negativos em $\tau=0{,}5$, são recuperados em $\tau=0{,}03$, enquanto o controle e o trecho de ruído permanecem corretamente negativos. Tempo relativo a 2022-08-09 06:34:49,26 UTC.}
 \label{fig:quaoar_recortes}
 \end{center}
 \end{figure}
