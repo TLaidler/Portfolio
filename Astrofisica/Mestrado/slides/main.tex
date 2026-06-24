@@ -1,15 +1,14 @@
 % =============================================================================
 % Apresentação de defesa — baseada na dissertação
 % Detecção Automatizada de Ocultações Estelares com Machine Learning
-% Compila em pdfLaTeX (Overleaf-compatível). Imagens em figs/.
-% Filosofia: pouco texto, muito gráfico, explicação verbal do apresentador.
+% Tema: metropolis. Compila no Overleaf (XeLaTeX/LuaLaTeX recomendado p/ fontes
+% Fira; pdfLaTeX também funciona, com fallback de fonte).
+% Filosofia: pouco texto, muito gráfico, números-chave como protagonistas.
 % =============================================================================
 \documentclass[aspectratio=169]{beamer}
 
-\usetheme{Boadilla}
-\usecolortheme{seahorse}
-\setbeamertemplate{navigation symbols}{}      % remove ícones de navegação
-\setbeamertemplate{caption}{\insertcaption}    % legendas limpas
+\usetheme{metropolis}
+\metroset{sectionpage=none, progressbar=foot, numbering=fraction, block=fill}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -21,22 +20,34 @@
 
 \graphicspath{{figs/}}
 
-% Cor de destaque para números/achados
-\definecolor{destaque}{RGB}{176,0,32}
-\newcommand{\hl}[1]{{\color{destaque}\textbf{#1}}}
+% --- Paleta: primário (roxo escuro) + acento (azul claro) ---
+\definecolor{corPrim}{RGB}{58,28,96}    % roxo escuro (estrutura)
+\definecolor{corAcc}{RGB}{72,150,222}   % azul claro (ênfase conceitual)
+\definecolor{corRes}{RGB}{196,30,58}    % vermelho (apenas valores de RESULTADO)
+\setbeamercolor{frametitle}{bg=corPrim}
+\setbeamercolor{progress bar}{fg=corAcc}
+\setbeamercolor{alerted text}{fg=corAcc}
+\setbeamercolor{title separator}{fg=corAcc}
+
+% --- Callout: número grande de RESULTADO (vermelho) + legenda curta ---
+\newcommand{\bignum}[2]{%
+  {\centering
+   {\fontsize{40}{44}\selectfont\color{corRes}\textbf{#1}}\\[0.25em]
+   {\small #2}\par}}
+% --- Ênfase de valor de resultado no corpo do texto (vermelho) ---
+\newcommand{\res}[1]{{\color{corRes}\textbf{#1}}}
 
 % --- Metadados ---
-\title[Detecção de Ocultações com ML]{Pipeline para Detecção Automatizada de\\ Ocultações Estelares em Curvas de Luz\\ com Técnicas de \textit{Machine Learning}}
-\author[T.\ Laidler]{Thiago Laidler Vidal Cunha}
-\institute[ON]{Orientador: Dr.\ Júlio Camargo \\ Observatório Nacional}
+\title{Detecção Automatizada de Ocultações Estelares}
+\subtitle{Curvas de luz e \textit{Machine Learning}}
+\author{Thiago Laidler Vidal Cunha}
+\institute{Orientador: Dr.\ Júlio Camargo \;\textbar\; Observatório Nacional}
 \date{Julho de 2026}
+\titlegraphic{\hfill\includegraphics[height=1.3cm]{on_logo.png}}
 
 \begin{document}
 
-% ---------------------------------------------------------------- TÍTULO
-\begin{frame}[plain]
-  \titlepage
-\end{frame}
+\maketitle
 
 % ---------------------------------------------------------------- ROTEIRO
 \begin{frame}{Roteiro}
@@ -66,14 +77,14 @@
     \begin{itemize}
       \item Um corpo do Sistema Solar cruza a frente de uma estrela.
       \item A \alert{curva de luz} revela tamanho, forma, anéis, atmosfera.
-      \item Precisão de \hl{quilômetros} a dezenas de UA.
+      \item Precisão de quilômetros a dezenas de UA.
     \end{itemize}
     \column{0.48\textwidth}
     \centering
     \includegraphics[width=\linewidth]{ocultacao_ilustracao.png}
   \end{columns}
   \vfill
-  {\footnotesize Crédito: Lucie Maquet (2014) --- sistema de anéis de Chariklo.}
+  {\scriptsize Crédito: Lucie Maquet (2014) --- sistema de anéis de Chariklo.}
 \end{frame}
 
 \begin{frame}{Dois níveis de exigência}
@@ -85,7 +96,7 @@
   \end{block}
   \vfill
   \centering
-  \hl{Os anéis de Quaoar} foram descobertos só em uma \textbf{revisita} dos dados.\\
+  Os \alert{anéis de Quaoar} foram descobertos só em uma \textbf{revisita} dos dados.\\
   {\footnotesize Um alerta automático nesses casos pode salvar uma descoberta.}
 \end{frame}
 
@@ -101,7 +112,7 @@
   \vfill
   \begin{exampleblock}{Formulação}
     \centering
-    \textbf{Classificação binária:} cada curva $\rightarrow$ vetor de \textit{features} $\rightarrow$
+    \textbf{Classificação binária:} curva $\rightarrow$ vetor de \textit{features} $\rightarrow$
     \alert{positiva} (ocultação) ou \alert{negativa}.
   \end{exampleblock}
   \vfill
@@ -109,35 +120,38 @@
 \end{frame}
 
 % ================================================================ 3. PIPELINE
-\section{Pipeline}
+\section{A pipeline}
 
 \begin{frame}{A \textit{pipeline} em cinco etapas}
   \centering
   \includegraphics[width=0.92\linewidth]{pipeline.png}
   \vfill
-  {\footnotesize Aquisição $\to$ normalização $\to$ construção do \textit{dataset} $\to$
+  {\footnotesize Aquisição $\to$ normalização $\to$ \textit{dataset} $\to$
   extração de \textit{features} $\to$ treino/avaliação.}
 \end{frame}
 
 % ================================================================ 4. DADOS
 \section{Dados e características}
 
-\begin{frame}{O conjunto de dados: \hl{1693 curvas}}
-  \centering
-  \begin{tabular}{lc}
-    \toprule
-    \textbf{Fonte} & \textbf{Quantidade} \\
-    \midrule
-    Positivas do banco (VizieR, Grupo do Rio) & 802 \\
-    Sintéticas negativas (simulador físico)   & 702 \\
-    Negativos artificiais (recorte manual)    & 186 \\
-    Negativas do banco                        & 3 \\
-    \midrule
-    \textbf{Total} & \textbf{1693} \quad(802 pos. / 891 neg.) \\
-    \bottomrule
-  \end{tabular}
+\begin{frame}{O conjunto de dados}
+  \begin{columns}[c]
+    \column{0.42\textwidth}
+    \bignum{1693}{curvas de luz\\(802 positivas / 891 negativas)}
+    \column{0.58\textwidth}
+    {\footnotesize
+    \begin{tabular}{lc}
+      \toprule
+      \textbf{Fonte} & \textbf{Qtd.} \\
+      \midrule
+      Positivas do banco        & 802 \\
+      Sintéticas negativas      & 702 \\
+      Negativos artificiais     & 186 \\
+      Negativas do banco        & 3 \\
+      \bottomrule
+    \end{tabular}}
+  \end{columns}
   \vfill
-  \begin{itemize}
+  \begin{itemize}\footnotesize
     \item Divisão estratificada por curva (sem vazamento).
     \item \alert{Limitação assumida:} 78\% das negativas são sintéticas.
   \end{itemize}
@@ -160,7 +174,7 @@
     {\scriptsize Importância (Random Forest, Exp.~1).}
   \end{columns}
   \vfill
-  \centering Quatro classificadores: \textbf{Regressão Logística, Random Forest, XGBoost, CatBoost}.
+  \centering {\footnotesize Quatro classificadores: \textbf{Reg.\ Logística, Random Forest, XGBoost, CatBoost}.}
 \end{frame}
 
 % ================================================================ 5. RESULTADOS
@@ -172,17 +186,17 @@
   \begin{tabular}{lcccccc}
     \toprule
     \textbf{F1-score} & \textbf{Exp.1} & \textbf{Exp.2} & \textbf{Exp.3} & \textbf{Exp.4} & \textbf{Exp.5} & \textbf{Exp.6} \\
-     & \tiny 28 f. & \tiny 11 f. & \tiny teste real & \tiny 14 f. & \tiny 13 f. & \tiny 12 f. \\
+     & 28 f. & 11 f. & real & 14 f. & 13 f. & 12 f. \\
     \midrule
-    Random Forest    & \textbf{0,9937} & 0,9874 & 0,9803 & 0,9874 & \textbf{0,9905} & \textbf{0,9906} \\
-    XGBoost          & 0,9844 & \textbf{0,9906} & \textbf{0,9821} & 0,9875 & 0,9843 & \textbf{0,9906} \\
-    CatBoost         & 0,9906 & 0,9905 & 0,9784 & \textbf{0,9906} & 0,9873 & 0,9874 \\
-    Regressão Log.   & 0,9873 & 0,9841 & 0,9746 & 0,9873 & 0,9873 & 0,9873 \\
+    Random Forest    & \res{0,9937} & 0,9874 & 0,9803 & 0,9874 & \res{0,9905} & \res{0,9906} \\
+    XGBoost          & 0,9844 & \res{0,9906} & \res{0,9821} & 0,9875 & 0,9843 & \res{0,9906} \\
+    CatBoost         & 0,9906 & 0,9905 & 0,9784 & \res{0,9906} & 0,9873 & 0,9874 \\
+    Reg.\ Logística  & 0,9873 & 0,9841 & 0,9746 & 0,9873 & 0,9873 & 0,9873 \\
     \bottomrule
   \end{tabular}}
   \vfill
   \begin{itemize}\footnotesize
-    \item \hl{F1 $\approx$ 0,99} e AUC-ROC $>$ 0,998 em todos os cenários.
+    \item \res{F1 $\approx$ 0,99} e AUC-ROC $>$ 0,998 em todos os cenários.
     \item Reduzir 28 $\to$ 11 \textit{features} \textbf{não} degrada (K-means dispensável).
     \item Exp.~3 (só curvas reais): queda de $\sim$2 pp --- \textbf{generaliza}.
   \end{itemize}
@@ -223,34 +237,36 @@
 \begin{frame}{Teste final: uma curva real de Quaoar}
   \begin{itemize}\footnotesize
     \item Dados \alert{externos ao treino} (Gemini, CFHT) --- cedidos por Pereira et al.\ (2023).
-    \item Corpo principal $+$ anéis Q1R e Q2R numa só série.
+    \item Corpo principal $+$ anéis Q1R e Q2R numa só série temporal.
   \end{itemize}
   \centering
-  \includegraphics[width=0.93\linewidth]{quaoar_curva.png}
+  \includegraphics[width=0.9\linewidth]{quaoar_curva.png}
 \end{frame}
 
-\begin{frame}{Revisitar por recortes: o achado central}
+\begin{frame}{Revisitar por recortes}
   \centering
-  \includegraphics[width=0.82\linewidth]{quaoar_recortes.png}
+  \includegraphics[width=0.8\linewidth]{quaoar_recortes.png}
   \vfill
-  \begin{columns}[T]
-    \column{0.5\textwidth}
-    {\footnotesize O anel fino real recebe $\hat{p}\approx 4$--$8\%$ --- baixo em absoluto, \textbf{mas}\dots}
-    \column{0.5\textwidth}
-    {\footnotesize \dots\ \hl{$\sim$86$\times$} a probabilidade do ruído vizinho ($\sim$0,05\%).}
-  \end{columns}
+  {\footnotesize O anel fino real recebe $\hat{p}\approx 4$--$8\%$ --- baixo em absoluto, mas muito acima do ruído vizinho.}
 \end{frame}
 
-\begin{frame}{A separação é o que importa}
-  \begin{exampleblock}{Com $\tau = 0{,}03$ (em vez de 0,5)}
-    \centering
-    \textit{Recall} sobre os 4 eventos físicos: \hl{50\% $\rightarrow$ 100\%}\\
-    sem \textbf{nenhum} falso alarme nos recortes-controle.
-  \end{exampleblock}
-  \vfill
-  \begin{itemize}\footnotesize
+\begin{frame}[standout]
+  A separação é o que importa
+  \vspace{1.2em}
+
+  \bignum{$\sim$86$\times$}{probabilidade do anel real vs.\ ruído vizinho}
+  \vspace{1em}
+
+  \bignum{50\% $\rightarrow$ 100\%}{\textit{recall} sobre os eventos físicos, com $\tau=0{,}03$}
+  \vspace{0.8em}
+
+  {\footnotesize\itshape sem nenhum falso alarme nos recortes-controle}
+\end{frame}
+
+\begin{frame}{O que Quaoar demonstra}
+  \begin{itemize}
     \item Não é o valor absoluto da probabilidade --- é a \alert{separação} ($\sim$2 ordens de grandeza).
-    \item Demonstra, em dado real, a \textbf{revisita de curvas em busca de eventos sutis}.
+    \item Demonstra, em dado real externo ao treino, a \textbf{revisita de curvas em busca de eventos sutis}.
     \item Janela mais larga \textbf{piora} (causa estrutural: \textit{features} globais) $\to$ trabalho futuro.
   \end{itemize}
 \end{frame}
@@ -260,10 +276,10 @@
 
 \begin{frame}{Conclusões}
   \begin{itemize}
-    \item \textit{Pipeline} interpretável atinge \hl{F1 $\approx$ 0,99}, robusta à simplificação de \textit{features}.
+    \item \textit{Pipeline} interpretável com \res{F1 $\approx$ 0,99}, robusta à simplificação de \textit{features}.
     \item Importância $\neq$ insubstituibilidade (K-means dispensável).
     \item Ajuste de $\tau$ incorpora o custo assimétrico \textbf{sem retreinar}.
-    \item Em Quaoar: separa anel real de ruído por \hl{$\sim$2 ordens de grandeza}.
+    \item Em Quaoar: separa anel real de ruído por \res{$\sim$2 ordens de grandeza}.
   \end{itemize}
   \vfill
   \begin{block}{Trabalhos futuros}
@@ -272,13 +288,29 @@
   \end{block}
 \end{frame}
 
-\begin{frame}[plain]
-  \centering
+\begin{frame}[standout]
+  Obrigado.
+
+  \vspace{1em}
+  {\large Perguntas?}
+\end{frame}
+
+% ================================================================ BACKUP
+\appendix
+
+\begin{frame}{Backup --- Matrizes de confusão}
+  \begin{columns}[c]
+    \column{0.5\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{exp1_confusion.png}\\
+    {\footnotesize Exp.~1 (28 \textit{features}, teste misto).}
+    \column{0.5\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{exp3real_confusion.png}\\
+    {\footnotesize Exp.~3 (só curvas reais).}
+  \end{columns}
   \vfill
-  {\Large Obrigado.}\\[1em]
-  {\large Perguntas?}\\[2em]
-  {\footnotesize Thiago Laidler Vidal Cunha --- Observatório Nacional}
-  \vfill
+  \centering {\footnotesize Erros tipicamente unitários; sem viés sistemático para uma das classes.}
 \end{frame}
 
 \end{document}
