@@ -53,7 +53,7 @@ As principais contribuições deste trabalho são:
 As limitações deste trabalho devem ser explicitadas para contextualizar adequadamente os resultados:
 
 \begin{enumerate}
-	\item \textbf{\textit{Dataset} parcialmente sintético:} das 891 curvas negativas, 702 são sintéticas e 186 são artificiais; apenas 3 são registros reais de detecções negativas. Embora as curvas sintéticas tenham sido geradas com base em propriedades estatísticas de curvas reais, a capacidade de generalização para um cenário puramente observacional não foi validada.
+	\item \textbf{\textit{Dataset} parcialmente sintético:} das 891 curvas negativas, 702 são sintéticas e 186 são negativos por recorte (segmentos reais extraídos de curvas positivas); apenas 3 são detecções negativas nativas. Embora as curvas sintéticas tenham sido geradas com base em propriedades estatísticas de curvas reais, a capacidade de generalização para um cenário puramente observacional não foi validada.
 
 	\item \textbf{\textit{Split} único por experimento:} cada experimento utiliza uma única partição treino/teste. A implementação de validação cruzada estratificada (Seção~5.\ref{sec:cross_validation}) mitiga parcialmente essa limitação; uma validação cruzada repetida com múltiplas sementes fortaleceria as conclusões.
 
@@ -72,7 +72,7 @@ Com base nos resultados e limitações identificados, sugerem-se as seguintes di
 \begin{itemize}
 	\item \textbf{Validação cruzada repetida:} executar a validação cruzada com múltiplas sementes (e.g., 10 repetições $\times$ 5 dobras) para obter intervalos de confiança robustos das métricas.
 
-	\item \textbf{Experimento \textit{real holdout}:} reservar todas as curvas reais (positivas e negativas genuínas) para o conjunto de teste, treinando apenas com curvas sintéticas e artificiais, para avaliar a transferibilidade do modelo.
+	\item \textbf{Experimento \textit{real holdout}:} reservar todas as curvas reais (positivas e negativas genuínas) para o conjunto de teste, treinando apenas com curvas sintéticas e negativos por recorte, para avaliar a transferibilidade do modelo.
 
 	\item \textbf{\textit{Features} baseadas em difração de Fresnel:} incorporar características derivadas de modelos físicos mais sofisticados (escala de Fresnel, opacidade parcial, diâmetro aparente da estrela), que poderiam melhorar a discriminação em eventos de baixo SNR.
 
