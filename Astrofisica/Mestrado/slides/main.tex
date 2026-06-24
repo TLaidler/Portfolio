@@ -17,6 +17,7 @@
 \usepackage{booktabs}
 \usepackage{amsmath}
 \usepackage{xcolor}
+\usepackage{tikz}
 
 \graphicspath{{figs/}}
 
@@ -29,11 +30,11 @@
 \setbeamercolor{alerted text}{fg=corAcc}
 \setbeamercolor{title separator}{fg=corAcc}
 
-% --- Callout: número grande de RESULTADO (vermelho) + legenda curta ---
-\newcommand{\bignum}[2]{%
+% --- Callout: número grande + legenda curta. Cor opcional (padrão: vermelho de resultado) ---
+\newcommand{\bignum}[3][corRes]{%
   {\centering
-   {\fontsize{40}{44}\selectfont\color{corRes}\textbf{#1}}\\[0.25em]
-   {\small #2}\par}}
+   {\fontsize{40}{44}\selectfont\color{#1}\textbf{#2}}\\[0.25em]
+   {\small #3}\par}}
 % --- Ênfase de valor de resultado no corpo do texto (vermelho) ---
 \newcommand{\res}[1]{{\color{corRes}\textbf{#1}}}
 
@@ -43,7 +44,11 @@
 \author{Thiago Laidler Vidal Cunha}
 \institute{Orientador: Dr.\ Júlio Camargo \;\textbar\; Observatório Nacional}
 \date{Julho de 2026}
-\titlegraphic{\hfill\includegraphics[height=1.3cm]{on_logo.png}}
+\titlegraphic{%
+  \begin{tikzpicture}[remember picture, overlay]
+    \node[anchor=south east, xshift=-5mm, yshift=5mm] at (current page.south east)
+      {\includegraphics[height=1.3cm]{on_logo.png}};
+  \end{tikzpicture}}
 
 \begin{document}
 
@@ -136,7 +141,7 @@
 \begin{frame}{O conjunto de dados}
   \begin{columns}[c]
     \column{0.42\textwidth}
-    \bignum{1693}{curvas de luz\\(802 positivas / 891 negativas)}
+    \bignum[corPrim]{1693}{curvas de luz\\(802 positivas / 891 negativas)}
     \column{0.58\textwidth}
     {\footnotesize
     \begin{tabular}{lc}
