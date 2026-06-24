@@ -374,7 +374,14 @@ Para $\beta > 1$, o $F_\beta$ penaliza mais os falsos negativos (favorecendo a s
 
 \textbf{AUC-ROC} (\textit{Area Under the Receiver Operating Characteristic Curve}) --- mede a capacidade discriminativa do modelo ao longo de todos os limiares de decisão possíveis. A curva ROC plota a \textbf{taxa de verdadeiros positivos} (sensibilidade) contra a \textbf{taxa de falsos positivos} ($FP/(FP+TN)$) para cada limiar $\tau$. A área sob essa curva (AUC) varia de 0,5 (classificador aleatório) a 1,0 (classificador perfeito). A AUC-ROC é útil por ser invariante ao limiar escolhido, mas pode ser otimista em conjuntos desbalanceados \citep{Saito2015}.
 
-%GRAFICO AUC-ROC
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.75\textwidth]{pngs/roc_curvas_todas_ref_httpscienciaenegocios.comcurva-roc-e-auc-em-machine-learning.png}
+\caption{Exemplos de curvas ROC para classificadores de diferentes qualidades: quanto mais a curva se aproxima do canto superior esquerdo (maior área sob a curva, AUC), melhor a capacidade discriminativa do modelo; a diagonal corresponde a um classificador aleatório (AUC = 0,5). Um exemplo intuitivo é um teste médico que classifica pacientes como doentes ou saudáveis: a taxa de verdadeiros positivos mede a fração de doentes corretamente identificados, enquanto a taxa de falsos positivos mede a fração de saudáveis erroneamente apontados como doentes. Variar o limiar de decisão move o teste ao longo da curva, negociando a detecção de mais doentes contra um número maior de alarmes falsos. Fonte: adaptado de \emph{Ciência e Negócios}\protect\footnotemark.}
+\label{fig:roc_auc}
+\end{center}
+\end{figure}
+\footnotetext{Disponível em: \url{https://cienciaenegocios.com/curva-roc-e-auc-em-machine-learning}. Acesso em: 6 abr. 2026.}
 
 \textbf{Curva Precisão-Sensibilidade} (\textit{Precision-Recall}) --- alternativa à curva ROC, recomendada quando a classe positiva é rara ou quando o custo dos erros é assimétrico \citep{Saito2015}. Plota a precisão contra a sensibilidade para cada limiar~$\tau$. A área sob a curva PR (AUC-PR) é mais informativa que a AUC-ROC em cenários desbalanceados, pois não é inflada por verdadeiros negativos abundantes.
 
