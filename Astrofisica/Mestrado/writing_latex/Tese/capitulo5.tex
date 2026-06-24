@@ -12,7 +12,7 @@ Este capítulo apresenta os resultados obtidos com a \textit{pipeline} de detec�
 
 As métricas adotadas são: \textbf{acurácia} (fração de acertos no total), \textbf{precisão} (entre as curvas classificadas como positivas, quantas eram realmente positivas), \textbf{sensibilidade} ou \textit{recall} (entre todas as curvas realmente positivas, quantas foram detectadas), \textbf{F1-score} (média harmônica entre precisão e sensibilidade) e \textbf{área sob a curva ROC} (AUC-ROC), que resume a capacidade do modelo de separar as duas classes para diversos limiares de decisão. As \textbf{matrizes de confusão} mostram quantos verdadeiros positivos (TP), verdadeiros negativos (TN), falsos positivos (FP) e falsos negativos (FN) cada modelo produziu.
 
-A montagem de um conjunto de dados equilibrado foi a primeira grande dificuldade do projeto: nos catálogos disponíveis (VizieR, Grupo do Rio), o número de curvas negativas é muito inferior ao de positivas --- o banco dispunha de 802 curvas positivas e apenas 3 negativas. Para contornar esse desbalanceamento, adotaram-se duas estratégias complementares, descritas no Capítulo~4: recorte de segmentos sem ocultação a partir das curvas positivas (com revisão manual), gerando 186 negativos artificiais, e incorporação de 702 curvas sintéticas negativas geradas pelo simulador físico de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. O \textit{dataset} final reúne \textbf{1693 amostras} (802 positivas e 891 negativas), com divisão treino/teste estratificada por curva (80\%/20\%).
+A montagem de um conjunto de dados equilibrado foi a primeira grande dificuldade do projeto: nos catálogos disponíveis (VizieR, Grupo do Rio), o número de curvas negativas é muito inferior ao de positivas --- o banco dispunha de 802 curvas positivas e apenas 3 negativas. Para contornar esse desbalanceamento, adotaram-se duas estratégias complementares, descritas no Capítulo~4: recorte de segmentos sem ocultação a partir das curvas positivas (com revisão manual), gerando 186 negativos por recorte, e incorporação de 702 curvas sintéticas negativas geradas pelo simulador físico de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. O \textit{dataset} final reúne \textbf{1693 amostras} (802 positivas e 891 negativas), com divisão treino/teste estratificada por curva (80\%/20\%).
 
 Ao todo, foram realizados \textbf{seis experimentos}, que variam o conjunto de \textit{features} (de 28 a 11 variáveis) e a composição do conjunto de teste (misto ou exclusivamente real). Como o desempenho se mostrou notavelmente estável entre eles, este capítulo apresenta \textbf{em detalhe os três experimentos mais informativos}, que sintetizam a progressão lógica do trabalho:
 
@@ -209,7 +209,7 @@ Regressão Logística & $|\beta_j|$ (coeficientes) & Sem normalização & 0 a $\
 \section{Configuração experimental}
 \label{sec:config_experimental}
 
-Para os experimentos foram processadas \textbf{802 curvas positivas} do banco de dados (VizieR e Grupo do Rio); a partir delas, foram obtidos \textbf{186 negativos artificiais} por recorte manual de segmentos sem ocultação. Além disso, foram utilizadas \textbf{3 curvas negativas} do próprio banco e \textbf{702 curvas sintéticas negativas} geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. A Tabela~\ref{tab:dataset_fonte} resume a composição do \textit{dataset}.
+Para os experimentos foram processadas \textbf{802 curvas positivas} do banco de dados (VizieR e Grupo do Rio); a partir delas, foram obtidos \textbf{186 negativos por recorte} manual de segmentos sem ocultação. Além disso, foram utilizadas \textbf{3 curvas negativas} do próprio banco e \textbf{702 curvas sintéticas negativas} geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}. A Tabela~\ref{tab:dataset_fonte} resume a composição do \textit{dataset}.
 
 \begin{table}[htbp]
 \centering
@@ -221,7 +221,7 @@ Para os experimentos foram processadas \textbf{802 curvas positivas} do banco de
 \hline
 Curvas positivas do banco (db\_positive)   & 802 \\
 Curvas sintéticas negativas (synthetic)    & 702 \\
-Negativos artificiais (recorte manual)    & 186 \\
+Negativos por recorte (manual)            & 186 \\
 Curvas negativas do banco (db\_negative)  & 3 \\
 \hline
 \textbf{Total} & 1693 \\
