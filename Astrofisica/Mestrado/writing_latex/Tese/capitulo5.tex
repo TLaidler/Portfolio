@@ -8,7 +8,7 @@
 \section{Visão geral dos experimentos}
 \label{sec:visao_geral_resultados}
 
-Este capítulo apresenta os resultados obtidos com a \textit{pipeline} de detecção automatizada de ocultações estelares em curvas de luz, descrita no Capítulo~4. O problema é formulado como \textbf{classificação binária}: cada curva é rotulada como \textbf{positiva} (evento de ocultação presente) ou \textbf{negativa} (ausência de evento). Foram treinados e avaliados quatro classificadores --- Regressão Logística, Random Forest, XGBoost e CatBoost --- cujo desempenho foi medido exclusivamente no \textbf{conjunto de teste}, isto é, em dados que não participaram do treinamento.
+Este capítulo apresenta os resultados obtidos com a \textit{pipeline} de detecção automatizada de ocultações estelares em curvas de luz, descrita no Capítulo~4. O problema é formulado como \textbf{classificação binária} em que foram treinados e avaliados quatro classificadores --- Regressão Logística, Random Forest, XGBoost e CatBoost --- cujo desempenho foi medido exclusivamente no \textbf{conjunto de teste}, isto é, em dados que não participaram do treinamento.
 
 As métricas adotadas são: \textbf{acurácia} (fração de acertos no total), \textbf{precisão} (entre as curvas classificadas como positivas, quantas eram realmente positivas), \textbf{sensibilidade} ou \textit{recall} (entre todas as curvas realmente positivas, quantas foram detectadas), \textbf{F1-score} (média harmônica entre precisão e sensibilidade) e \textbf{área sob a curva ROC} (AUC-ROC), que resume a capacidade do modelo de separar as duas classes para diversos limiares de decisão. As \textbf{matrizes de confusão} mostram quantos verdadeiros positivos (TP), verdadeiros negativos (TN), falsos positivos (FP) e falsos negativos (FN) cada modelo produziu.
 
@@ -146,7 +146,7 @@ Uma das vantagens de modelos baseados em árvores e de modelos lineares é a pos
 
 \subsection{Random Forest --- \textit{Mean Decrease in Impurity} (MDI)}
 
-O Random Forest é um \textit{ensemble} de árvores de decisão. Cada nó de cada árvore realiza uma divisão (\textit{split}) em uma variável, e essa divisão reduz a impureza (medida pelo índice de Gini) dos subconjuntos resultantes. Para uma \textit{feature} $x_j$, a importância MDI é definida como a \textbf{média}, sobre todas as árvores e todos os nós, da redução de impureza atribuída a $x_j$:
+No caso do Random Forest, cada nó de cada árvore realiza uma divisão (\textit{split}) em uma variável, e essa divisão reduz a impureza (medida pelo índice de Gini) dos subconjuntos resultantes. Para uma \textit{feature} $x_j$, a importância MDI é definida como a \textbf{média}, sobre todas as árvores e todos os nós, da redução de impureza atribuída a $x_j$:
 %
 \[
 \text{MDI}(x_j) \;=\; \frac{1}{T}\sum_{t=1}^{T}\sum_{n \in \mathcal{N}_t(x_j)} \Delta I(n),
@@ -414,13 +414,13 @@ O ajuste de limiar foi aplicado aos quatro modelos do Experimento~5 (13 \textit{
 \multirow{3}{*}{Random Forest}
 & $\tau = 0{,}50$ (padrão) & 1,0000 & 0,9813 & 0,9905 & 0,9849 & 0 / 3 \\
 & $\tau = 0{,}45$ (sensível) & 0,9938 & 0,9938 & 0,9938 & 0,9938 & 1 / 1 \\
-& $\tau = 0{,}01$ (máx. sensibilidade) & 0,7921 & 1,0000 & 0,8840 & 0,9501 & 42 / 0 \\
+& $\tau = 0{,}01$ (máx. sens.) & 0,7921 & 1,0000 & 0,8840 & 0,9501 & 42 / 0 \\
 \hline
-Regressão Log. (ótimo) & $\tau = 0{,}16$ & 0,9938 & 1,0000 & 0,9969 & 0,9988 & 1 / 0 \\
+Regressão Log. & $\tau = 0{,}16$ & 0,9938 & 1,0000 & 0,9969 & 0,9988 & 1 / 0 \\
 \hline
-XGBoost (ótimo) & $\tau = 0{,}30$ & 0,9875 & 0,9875 & 0,9875 & 0,9875 & 2 / 2 \\
+XGBoost & $\tau = 0{,}30$ & 0,9875 & 0,9875 & 0,9875 & 0,9875 & 2 / 2 \\
 \hline
-CatBoost (ótimo) & $\tau = 0{,}37$ & 0,9875 & 0,9875 & 0,9875 & 0,9875 & 2 / 2 \\
+CatBoost & $\tau = 0{,}37$ & 0,9875 & 0,9875 & 0,9875 & 0,9875 & 2 / 2 \\
 \hline
 \end{tabular}
 \end{table}
