@@ -656,7 +656,17 @@ Nos modelos de árvore (Random Forest e XGBoost), as variáveis mais relevantes 
 \label{fig:feature_importance_enxuto}
 \end{figure}
 
-As figuras análogas das configurações com conjuntos maiores de \textit{features} (Experimentos 4 e 5), que permitem acompanhar como a importância relativa das variáveis se redistribui à medida que o conjunto é reduzido, estão reunidas no Apêndice~\ref{ap:experimentos}. Em particular, a alta importância atribuída a \texttt{kmeans\_centroid\_dist} naquelas configurações --- e o fato de sua remoção não degradar o desempenho --- é analisada no estudo de ablação (Seção~\ref{sec:resultados_exp4}).
+As figuras análogas das configurações com conjuntos maiores de \textit{features} (Experimentos 4 e 5), que permitem acompanhar como a importância relativa das variáveis se redistribui à medida que o conjunto é reduzido, estão reunidas no Apêndice~\ref{ap:experimentos}.
+
+Naquelas configurações, a \textit{feature} \texttt{kmeans\_centroid\_dist} figura entre as mais importantes, e isso não é um artefato dos modelos: a análise exploratória dos dados confirma que ela é, por si só, discriminativa. A Figura~\ref{fig:histograma_kmeans} mostra que as curvas negativas se concentram em valores baixos de distância entre centróides --- coerente com um fluxo de regime único, em que o K-Means não encontra dois agrupamentos distintos ---, enquanto as curvas positivas se espalham por valores altos, refletindo a coexistência dos dois patamares (dentro e fora do \textit{dip}). A \textit{feature}, portanto, não foi um algoritmo solto encaixado no vetor de entrada: ela captura uma propriedade física real do evento. É justamente por parecer tão promissora que o resultado do estudo de ablação --- sua remoção não degrada o desempenho, pois \texttt{Feature\_Savgol\_std} é colinear e a substitui (Seção~\ref{sec:resultados_exp4}) --- se torna um achado relevante, e não uma simplificação trivial.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.85\linewidth]{Tese/pngs/resultado3/histograma_kmeans_por_classe.png}
+\caption{Distribuição da \textit{feature} \texttt{kmeans\_centroid\_dist} por classe (1--99 percentil). As curvas negativas concentram-se em valores baixos (regime único) e as positivas em valores altos (dois patamares), evidenciando o poder discriminativo da variável.}
+\label{fig:histograma_kmeans}
+\end{center}
+\end{figure}
 
 % -----------------------------------------------------------------------------
 \section{Validação cruzada estratificada}
