@@ -413,10 +413,21 @@ Na \textit{pipeline} desta dissertação, as features não são padronizadas ant
 
 As \textbf{curvas de aprendizado} mostram o desempenho do modelo (por exemplo, acurácia ou erro) em função do tamanho do conjunto de treino (ou do número de épocas). Se o erro de treino é baixo e o erro de validação permanece alto (ou sobe) à medida que se adiciona mais dados, isso sugere overfitting; se ambos são altos e próximos (platô alto), pode haver underfitting ou dados insuficientes. Essas curvas auxiliam na decisão de coletar mais dados ou de alterar a complexidade do modelo.
 
+A Figura~\ref{fig:learning_curves} ilustra o conceito com curvas de aprendizado reais de três classificadores (XGBoost, Random Forest e Árvore de Decisão) em uma tarefa de classificação. Em cada painel, a curva superior é o desempenho no \textbf{treino} e a inferior o desempenho em \textbf{validação cruzada}, ambos em função do número de amostras de treino. Dois padrões didáticos aparecem: (i)~a curva de validação \textbf{sobe} à medida que mais dados ficam disponíveis e tende a um \textbf{platô}, ponto a partir do qual coletar mais exemplos pouco acrescenta; (ii)~o \textbf{intervalo} (\textit{gap}) entre a curva de treino (quase perfeita) e a de validação mede o \textbf{sobreajuste} --- quanto maior o vão, mais o modelo decorou o treino em vez de generalizar. Um modelo bem ajustado é aquele cujas duas curvas convergem para um patamar alto com vão pequeno.
+
+\begin{figure}[h!]
+\begin{center}
+	\includegraphics[width=0.8\textwidth]{pngs/Learning-curves-of-models-with-training-data-A-XGBoost-B-Random-Forest-C.png}
+\caption{Exemplo de curvas de aprendizado (dados genéricos, não referentes a curvas de luz de ocultação) para três classificadores: (A)~XGBoost, (B)~Random Forest e (C)~Árvore de Decisão. Em cada painel, compara-se o desempenho no conjunto de treino com o obtido em validação cruzada, em função do número de amostras de treino; o vão entre as duas curvas indica o grau de sobreajuste, e o platô da curva de validação indica a partir de quando mais dados deixam de melhorar o modelo. Fonte: adaptado de \emph{ResearchGate}\protect\footnotemark.}
+\label{fig:learning_curves}
+\end{center}
+\end{figure}
+\footnotetext{Disponível em: \url{https://www.researchgate.net/figure/Learning-curves-of-models-with-training-data-A-XGBoost-B-Random-Forest-C_fig2_374986649}. Acesso em: 6 abr. 2026.}
+
 \subsection{Validação de modelos}
 \label{sec:validacao_modelos}
 
-Para estimar o desempenho em dados não vistos e evitar otimismo, é essencial separar os dados usados no treino daqueles usados na avaliação \citep{geron2019maos}. Imagine que treinamos o modelo usando todas as curvas de luz disponíveis e depois o avaliamos nessas mesmas curvas. O resultado seria enganosamente bom --- como julgar a qualidade de uma previsão de efeméride comparando-a com as próprias observações usadas para ajustá-la. Para estimar honestamente o desempenho, é preciso reservar dados que o modelo nunca viu. A \textbf{validação cruzada} sistematiza esse processo: em vez de uma única divisão treino/teste (que pode ser sortuda ou azarada), roda-se o experimento $k$ vezes, cada vez deixando uma fatia diferente de fora. A média dos $k$ resultados é uma estimativa muito mais robusta do erro de generalização.
+Para estimar o desempenho em dados não vistos e evitar otimismo, é essencial separar os dados usados no treino daqueles usados na avaliação \citep{geron2019maos}. Imagine que treinamos o modelo usando todas as curvas de luz disponíveis e depois o avaliamos nessas mesmas curvas. O resultado seria enganosamente bom. Para estimar honestamente o desempenho, é preciso reservar dados que o modelo nunca viu. A \textbf{validação cruzada} sistematiza esse processo: em vez de uma única divisão treino/teste (que pode ser sortuda ou azarada), roda-se o experimento $k$ vezes, cada vez deixando uma fatia diferente de fora. A média dos $k$ resultados é uma estimativa muito mais robusta do erro de generalização.
 
 \begin{figure}[htbp]
 \begin{center}
