@@ -29,6 +29,8 @@
 \setbeamercolor{progress bar}{fg=corAcc}
 \setbeamercolor{alerted text}{fg=corAcc}
 \setbeamercolor{title separator}{fg=corAcc}
+% fundo dos frames [standout] (separação, Obrigado) em azul-noite
+\setbeamercolor{palette primary}{bg=corPrim, fg=white}
 
 % --- Callout: número grande + legenda curta. Cor opcional (padrão: vermelho de resultado) ---
 \newcommand{\bignum}[3][corRes]{%
@@ -47,7 +49,7 @@
 \titlegraphic{%
   \begin{tikzpicture}[remember picture, overlay]
     \node[anchor=south east, xshift=-5mm, yshift=5mm] at (current page.south east)
-      {\includegraphics[height=1.3cm]{on_logo.png}};
+      {\includegraphics[height=2.3cm]{on_logo.png}};
   \end{tikzpicture}}
 
 \begin{document}
@@ -199,11 +201,12 @@
     Reg.\ Logística  & 0,9873 & 0,9841 & 0,9746 & 0,9873 & 0,9873 & 0,9873 \\
     \bottomrule
   \end{tabular}}
+
   \vfill
   \begin{itemize}\footnotesize
     \item \res{F1 $\approx$ 0,99} e AUC-ROC $>$ 0,998 em todos os cenários.
     \item Reduzir 28 $\to$ 11 \textit{features} \textbf{não} degrada (K-means dispensável).
-    \item Exp.~3 (só curvas reais): queda de $\sim$2 pp --- \textbf{generaliza}.
+    \item Exp.~3 mostra queda de só $\sim$2 pp --- \textbf{generaliza} para o cenário real.
   \end{itemize}
 \end{frame}
 
@@ -241,7 +244,7 @@
 
 \begin{frame}{Teste final: uma curva real de Quaoar}
   \begin{itemize}\footnotesize
-    \item Dados \alert{externos ao treino} (Gemini, CFHT) --- cedidos por Pereira et al.\ (2023).
+    \item Dados \res{externos ao treino} (Gemini, CFHT) --- cedidos por Pereira et al.\ (2023).
     \item Corpo principal $+$ anéis Q1R e Q2R numa só série temporal.
   \end{itemize}
   \centering
