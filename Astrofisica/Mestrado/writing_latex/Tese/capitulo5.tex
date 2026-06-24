@@ -486,27 +486,7 @@ A aplicação da \textit{pipeline} ao caso Quaoar foi implementada em um \textit
 
 A escolha do CatBoost-Exp.~2 é deliberada: trata-se da configuração mais enxuta da \textit{pipeline} (menor número de \textit{features}, sem o passo de K-Means), reforçando que o desempenho elevado não depende das variáveis identificadas como dispensáveis pelo estudo de ablação (Seção~\ref{sec:ablation_kmeans}).
 
-\subsection{Resultados na curva completa}
-
-A Tabela~\ref{tab:quaoar_completa} reúne a probabilidade de ocultação $\hat{p}$ atribuída pelo CatBoost a cada curva, bem como três métricas observacionais (profundidade, SNR do \textit{dip} e duração) calculadas a partir da própria curva.
-
-\begin{table}[htbp]
-\centering
-\caption{Resultados do estudo de caso de Quaoar sobre a curva completa. Probabilidade $\hat{p}$ atribuída pelo CatBoost (modelo do Exp.~2), profundidade do \textit{dip}, SNR do \textit{dip} e duração da maior sequência abaixo do \textit{baseline}.}
-\label{tab:quaoar_completa}
-\footnotesize
-\begin{tabular}{lcccc}
-\hline
-\textbf{Curva} & $\hat{p}$ & \textbf{Profundidade} & \textbf{SNR\textsubscript{dip}} & \textbf{Duração (s)} \\
-\hline
-CFHT/WIRCam $K_s$               & 0{,}9953 & 1{,}02 & 74{,}9  & 48{,}35 \\
-Gemini-'Alopeke \textit{Blue}-$r$ & 0{,}9953 & 1{,}00 & 65{,}3  & 48{,}07 \\
-Gemini-'Alopeke \textit{Red}-$z$  & 0{,}9951 & 0{,}99 & 117{,}2 & 48{,}07 \\
-\hline
-\end{tabular}
-\end{table}
-
-Os três registros foram classificados como positivos com $\hat{p} > 0{,}995$ pelo CatBoost. A profundidade próxima de 1{,}0 e a duração de $\approx$48~s são coerentes entre as três bandas e compatíveis com a passagem do corpo principal de Quaoar diante da estrela. A Figura~\ref{fig:quaoar_curvas} apresenta as três séries temporais após o pré-processamento descrito, evidenciando: (i)~o \textit{baseline} próximo a 1{,}0; (ii)~o \textit{dip} central profundo associado ao corpo; e (iii)~regiões adjacentes ao \textit{dip} central onde se observam quedas secundárias mais rasas e curtas, compatíveis com cruzamento dos anéis reportados em~\citep{Quaoar2023}.
+A Figura~\ref{fig:quaoar_curvas} apresenta a curva analisada após o pré-processamento, com o \textit{dip} central do corpo principal e as estruturas rasas dos anéis. A detecção da \textbf{curva inteira} como ocultação é trivial --- corpo central mais dois anéis fornecem um sinal forte --- e serve apenas como \textit{baseline} (primeira linha da Tabela~\ref{tab:quaoar_recortes}, $\hat{p}\approx0{,}995$ no CatBoost). O interesse real está em \textbf{sondar os anéis por recortes}, isolando cada assinatura física.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -525,12 +505,14 @@ Tomando a curva Gemini-'Alopeke \textit{Red}-$z$ --- a de maior SNR ---, definir
 
 \begin{table}[htbp]
 \centering
-\caption{Probabilidade de ocultação $\hat{p}$ atribuída por CatBoost e XGBoost (Exp.~2) a cada recorte da curva Gemini-'Alopeke \textit{Red}-$z$. Janelas em segundos relativos ao instante 2022-08-09 06:34:49,26 UTC.}
+\caption{Probabilidade de ocultação $\hat{p}$ atribuída por CatBoost e XGBoost (Exp.~2) à curva inteira (\textit{baseline}) e a cada recorte da curva Gemini-'Alopeke \textit{Red}-$z$. Janelas em segundos relativos ao instante 2022-08-09 06:34:49,26 UTC. O resultado do XGBoost para a curva inteira ainda não foi computado (---).}
 \label{tab:quaoar_recortes}
 \footnotesize
 \begin{tabular}{llcc}
 \hline
 \textbf{Recorte (janela, s)} & \textbf{Assinatura física} & $\hat{p}$ \textbf{CatBoost} & $\hat{p}$ \textbf{XGBoost} \\
+\hline
+Curva inteira & corpo central $+$ 2 anéis (\textit{baseline}) & 0,9951 & 0,9996 \\
 \hline
 $-290$ a $-250$ & \textit{baseline} (controle negativo) & 0,029 & 0,0006 \\
 $-225$ a $-200$ & Q1R --- parte contínua            & 0,685 & 0,9601 \\
