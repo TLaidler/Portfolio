@@ -8,11 +8,11 @@ A \textit{pipeline} desenvolvida neste trabalho demonstrou que a detecção auto
 Os seis experimentos realizados permitiram identificar os seguintes padrões:
 
 \begin{enumerate}
-	\item \textbf{O \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.} A redução de 28 para 13--14 \textit{features} (remoção de variáveis redundantes) não degradou --- e em alguns casos melhorou --- o desempenho, indicando que um conjunto compacto de variáveis fisicamente motivadas é suficiente.
+	\item \ia{\textbf{O \textit{feature engineering} baseado em domínio é o fator determinante da qualidade da classificação.}} A redução de 28 para 13--14 \textit{features} (remoção de variáveis redundantes) não degradou --- e em alguns casos melhorou --- o desempenho, indicando que um conjunto compacto de variáveis fisicamente motivadas é suficiente.
 
-	\item \textbf{A \textit{feature} \texttt{kmeans\_centroid\_dist} é dispensável apesar de sua alta importância atribuída pelos modelos de árvore.} O estudo de ablação (Experimento~6) mostrou que a remoção dessa variável causa degradação desprezível ($\leq$0,3~pp em F1), demonstrando que importância de \textit{feature} não é sinônimo de insubstituibilidade: outras variáveis colineares (sobretudo \texttt{Feature\_Savgol\_std}) compensam sua ausência.
+	\item \ia{\textbf{A \textit{feature} \texttt{kmeans\_centroid\_dist} é dispensável apesar de sua alta importância atribuída pelos modelos de árvore.}} O estudo de ablação (Experimento~6) mostrou que a remoção dessa variável causa degradação desprezível ($\leq$0,3~pp em F1), demonstrando que importância de \textit{feature} não é sinônimo de insubstituibilidade: outras variáveis colineares (sobretudo \texttt{Feature\_Savgol\_std}) compensam sua ausência.
 
-	\item \textbf{O ajuste do limiar de decisão permite operar a \textit{pipeline} em regime de alta sensibilidade} (minimização de falsos negativos) sem retreinamento, explorando a separabilidade elevada entre as classes. O estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) demonstrou, em dados reais, que essa alavanca recupera anéis finos que passariam despercebidos no limiar padrão.
+	\item \ia{\textbf{O ajuste do limiar de decisão permite operar a \textit{pipeline} em regime de alta sensibilidade}} (minimização de falsos negativos) sem retreinamento, explorando a separabilidade elevada entre as classes. O estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) demonstrou, em dados reais, que essa alavanca recupera anéis finos que passariam despercebidos no limiar padrão.
 \end{enumerate}
 
 Como verificação complementar, as 67 curvas do banco com $\mathrm{Occ\_SNR\_dip} < 3$ foram submetidas aos modelos treinados; todas foram corretamente classificadas como positivas pelos três \textit{ensembles} de árvores (67/67), e 66 das 67 pela Regressão Logística. Embora essas curvas tenham participado do treinamento e o teste não inclua negativos de baixo SNR, o resultado indica que os modelos não descartam sistematicamente eventos ruidosos --- condição necessária (embora não suficiente) para a aplicabilidade da \textit{pipeline} em cenários de baixa relação sinal-ruído.
@@ -20,7 +20,7 @@ Como verificação complementar, as 67 curvas do banco com $\mathrm{Occ\_SNR\_di
 % -----------------------------------------------------------------------------
 \section{Resposta à hipótese de pesquisa}
 
-A hipótese formulada na Introdução --- de que é possível obter desempenho comparável a abordagens baseadas em redes convolucionais ou inspeção manual usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é \textbf{corroborada} pelos resultados obtidos. Os quatro modelos testados atingiram desempenho elevado e consistente; a concordância entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) quanto à importância das variáveis reforça a interpretabilidade do sistema e a solidez das conclusões.
+A hipótese formulada na Introdução --- de que é possível obter desempenho comparável a abordagens baseadas em redes convolucionais ou inspeção manual usando \textit{features} clássicas e \textit{ensembles} de árvores, com vantagem de interpretabilidade --- é \textbf{corroborada} pelos resultados obtidos. Os quatro modelos testados atingiram desempenho \ia{elevado e consistente}; a concordância entre modelos de naturezas distintas (linear vs.\ árvores, \textit{bagging} vs.\ \textit{boosting}) quanto à importância das variáveis reforça a interpretabilidade do sistema e a solidez das conclusões.
 
 % -----------------------------------------------------------------------------
 \section{Contribuições originais}
@@ -32,7 +32,7 @@ As principais contribuições deste trabalho são:
 
 	\item \textbf{Conjunto de \textit{features} baseado em domínio:} 13--14 variáveis que capturam assinaturas físicas de ocultações (estatísticas de Savitzky-Golay, \textit{Max Drawdown}, métricas observacionais de profundidade e SNR, testes estatísticos entre quartis), selecionadas por análise de redundância e validadas experimentalmente.
 
-	\item \textbf{Estudo de ablação da \textit{feature} K-Means:} demonstração empírica de que a importância atribuída por algoritmos de árvore não implica insubstituibilidade, com implicação prática para simplificação do \textit{pipeline}.
+	\item \textbf{Estudo de ablação da \textit{feature} K-Means:} \ia{demonstração empírica de que a importância atribuída por algoritmos de árvore não implica insubstituibilidade, com implicação prática para simplificação do \textit{pipeline}.} \ia{[Repete o achado n.º 2 acima, na mesma página --- unificar os dois itens.]}
 
 	\item \textbf{Análise de sensibilidade ao volume de treino:} evidência de saturação da curva de aprendizado, orientando futuras decisões sobre coleta de dados.
 
