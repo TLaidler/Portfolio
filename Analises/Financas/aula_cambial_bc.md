@@ -342,3 +342,68 @@ No fim do ano você reconverte os R$ 571,25 para dólar ao câmbio **realizado**
 **c)** Compare o breakeven do item (b) com o forward `F = 5,50` do Exercício 4. Eles ficam quase colados — **por quê?** E numa frase: **qual risco você está correndo para ganhar esse carry?**
 
 > 💡 *Reflexão final:* repare que o cenário B (real cai exatamente o que o forward previu) te deixa **quase no zero a zero**. O forward é a "linha d'água" da aposta. Acima dela você perde; abaixo, ganha. É a mesma linha que a arbitragem usaria para travar lucro zero — só que o carry-trader **escolhe não travar**.
+
+---
+
+## Exercício 6 — Hedge cambial com swap (zerando a exposição de um fundo)
+
+**Contexto:** um fundo tem **US$ 100.000** aplicados lá fora (digamos, em treasuries). Em reais, ele está **comprado em dólar**: se o dólar **cair**, ele **perde** em reais. Ele quer **zerar essa exposição** por 1 ano, **sem vender** os ativos. A solução é entrar num **swap cambial** ficando na ponta que **paga a variação do dólar e recebe DI** — um "dólar sintético vendido" que cancela o "dólar comprado" do ativo.
+
+**Dados (1 ano — os mesmos do Exercício 4):**
+
+```
+S_ini       = 5,00
+DI (ano)    = 14,25%  (0,1425)   ->  juros em real no período
+Notional R$ = 100.000 × 5,00 = R$ 500.000
+```
+
+A liquidação (em reais) para quem está **vendido em dólar** via swap é, de forma simplificada (mesma convenção do Ex.3):
+
+```
+Resultado_swap = Notional_R$ × ( DI − variação do dólar )
+
+onde   variação do dólar = (S_fim / S_ini) − 1
+```
+
+> *(Para focar no câmbio, ignore o juro em dólar do próprio ativo.)*
+
+**a)** Calcule o **Resultado_swap** em três cenários: `S_fim = 5,00` ; `5,50` ; `6,00`.
+
+**b)** Calcule o resultado do **ativo** — a variação em reais dos US$ 100.000: `100.000 × (S_fim − 5,00)`.
+
+**c)** Some **ativo + swap** em cada cenário. O total muda com o dólar? **Quanto sobra, e o que esse número representa?**
+
+> 💡 *Dica:* o total tem que ficar **constante** nos três cenários. Se oscilar, você trocou o sinal da variação na ponta do swap.
+
+---
+
+## Exercício 7 — Hedge cambial com futuros (WDO) e a diferença para o swap
+
+**Contexto:** mesmo fundo, mesma meta (zerar US$ 100.000). Agora via **futuro de dólar**. O **mini dólar (WDO)** vale **US$ 10.000 por contrato** (o cheio, **DOL**, vale US$ 50.000). Para anular um "comprado" de US$ 100.000, o fundo **vende** futuro.
+
+**Dados:**
+
+```
+Tamanho WDO      = US$ 10.000 / contrato
+S_ini            = 5,00
+F (futuro 1 ano) = 5,50          [do Exercício 4]
+```
+
+**a)** Quantos contratos **WDO** o fundo precisa **vender** para hedgear US$ 100.000? (E quantos **DOL** cheios dariam o mesmo hedge?)
+
+**b)** O resultado de uma posição **vendida** em futuro, carregada até o vencimento, é:
+
+```
+Resultado_fut = N_contratos × 10.000 × (F − S_fim)
+              = 100.000 × (5,50 − S_fim)
+```
+
+Calcule para `S_fim = 5,00` ; `5,50` ; `6,00`.
+
+**c)** Some **ativo (do Ex.6b) + futuro**. O total é constante? **Quanto sobra, e o que ele representa?**
+
+**d)** **A grande pergunta.** Compare o valor travado pelo **swap** (Ex.6c) com o travado pelo **futuro** (7c). São iguais? Calcule a **diferença**, expresse-a como **% do notional de R$ 500.000**, e diga **que taxa da Seção 7 é essa**.
+
+**e)** Liste, em células de texto, **três diferenças de mecânica** entre hedgear por swap e por futuro (pense em: fluxo de caixa no meio do caminho, tamanho do contrato, e com quem você está negociando).
+
+> 💡 *Dica:* o item (d) cai certinho numa taxa que você **já calculou** no Exercício 4.
