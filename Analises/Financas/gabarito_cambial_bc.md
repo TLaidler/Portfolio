@@ -166,3 +166,97 @@ Fecha. O cupom e o forward premium são as duas peças que, multiplicadas, recon
 **c)** O breakeven (`5,5113`) está **quase colado** no forward (`5,50`). Por quê? Porque o forward é, por construção, o câmbio que faz a operação **travada** dar lucro zero — e a operação não-travada vira a mesma coisa quando o câmbio realizado cai exatamente no forward. A diferencinha (`5,5113` vs `5,50`) é justamente o **prêmio do cupom** (aqueles ~0,2% a mais do dólar onshore) que sobra a seu favor.
 
 **Risco que você corre:** o câmbio futuro `S_fim`. Se o real se desvalorizar **mais** que ~10% (passar de 5,51), você perde — e numa crise cambial ele pode disparar bem além disso. O carry paga ~10,6% nos anos calmos e devolve tudo de uma vez no ano ruim: **prêmio de risco, não arbitragem.** 🎯
+
+---
+
+## Exercício 6 — Hedge cambial com swap
+
+**Dados:** `Notional R$ = 500.000` ; `S_ini = 5,00` ; `DI = 0,1425`.
+
+**a)** Resultado_swap = `500.000 × (0,1425 − variação)`:
+
+| Cenário | S_fim | Variação do dólar | DI − variação | **Resultado swap** |
+|---|---|---|---|---|
+| 1 | 5,00 | 0,0% | +14,25% | **+R$ 71.250** |
+| 2 | 5,50 | +10,0% | +4,25% | **+R$ 21.250** |
+| 3 | 6,00 | +20,0% | −5,75% | **−R$ 28.750** |
+
+> **Fórmula Excel (cenário 2):** `=500000*(0,1425-((5,50/5,00)-1))` → `21250`.
+
+**b)** Resultado do **ativo** = `100.000 × (S_fim − 5,00)`:
+
+| Cenário | S_fim | **Resultado ativo** |
+|---|---|---|
+| 1 | 5,00 | **R$ 0** |
+| 2 | 5,50 | **+R$ 50.000** |
+| 3 | 6,00 | **+R$ 100.000** |
+
+**c)** Soma **ativo + swap**:
+
+| Cenário | Ativo | Swap | **Total** |
+|---|---|---|---|
+| 1 | 0 | +71.250 | **+71.250** |
+| 2 | +50.000 | +21.250 | **+71.250** |
+| 3 | +100.000 | −28.750 | **+71.250** |
+
+O total é **constante: +R$ 71.250** = `500.000 × 14,25%` = **a DI sobre o notional**. O dólar **sumiu** do resultado — o fundo, na prática, virou um aplicador em DI. O swap converteu o "dólar comprado" do ativo num "real aplicado a juros".
+
+---
+
+## Exercício 7 — Hedge cambial com futuros (WDO)
+
+**Dados:** `Tamanho WDO = US$ 10.000` ; `S_ini = 5,00` ; `F = 5,50`.
+
+**a)** Número de contratos:
+
+```
+WDO:  100.000 / 10.000 = 10 contratos vendidos
+DOL:  100.000 / 50.000 =  2 contratos vendidos
+```
+
+**b)** Resultado_fut = `100.000 × (5,50 − S_fim)`:
+
+| Cenário | S_fim | **Resultado futuro** |
+|---|---|---|
+| 1 | 5,00 | **+R$ 50.000** |
+| 2 | 5,50 | **R$ 0** |
+| 3 | 6,00 | **−R$ 50.000** |
+
+> **Fórmula Excel (cenário 1):** `=100000*(5,50-5,00)` → `50000`.
+
+**c)** Soma **ativo + futuro**:
+
+| Cenário | Ativo | Futuro | **Total** |
+|---|---|---|---|
+| 1 | 0 | +50.000 | **+50.000** |
+| 2 | +50.000 | 0 | **+50.000** |
+| 3 | +100.000 | −50.000 | **+50.000** |
+
+Total **constante: +R$ 50.000** = `100.000 × (5,50 − 5,00)` = notional × **casado**. O futuro **trava o preço forward**: é como vender seus US$ 100.000 a termo a 5,50. O que sobra é o **forward premium** (10% sobre R$ 500.000).
+
+**d)** Diferença entre os dois hedges:
+
+```
+71.250 (swap) − 50.000 (futuro) = R$ 21.250
+como % do notional:  21.250 / 500.000 = 4,25%
+                     = DI − forward premium = 14,25% − 10% = 4,25%
+```
+
+Essa taxa é o **cupom cambial** (em aproximação linear; o valor exato multiplicativo do Ex.4 foi **3,86%**). Ou seja: **a diferença entre hedgear por swap e por futuro é, exatamente, o cupom cambial sobre o notional.**
+
+**Por que diferem?**
+- O **swap** (na convenção simplificada — ponta do dólar = só variação) remunera o notional à **DI cheia** (14,25%).
+- O **futuro** trava o **forward F**, que embute o cupom, então remunera só ao **casado / forward premium** (10%).
+- O degrau entre os dois é o cupom cambial.
+
+> **Nota honesta (não-arbitragem):** o swap **real** da B3 paga, na ponta do dólar, **variação + cupom cambial** — não só a variação, como simplificamos no Ex.3. Com o cupom embutido, o swap também passa a travar perto do forward, e os dois hedges **praticamente coincidem em valor** — é a não-arbitragem da Seção 2 em ação. O "extra" de R$ 21.250 do nosso swap didático é só o cupom que a fórmula simplificada deixou de cobrar. Na vida real, swap e futuro entregam **quase o mesmo resultado financeiro**; a escolha entre eles é de **mecânica**, não de valor.
+
+**e)** Três diferenças de mecânica:
+
+| Aspecto | Futuro (WDO / DOL) | Swap |
+|---|---|---|
+| **Fluxo de caixa** | **Ajuste diário** (mark-to-market): ganhos e perdas pingam na conta **todo dia**; precisa de caixa para aguentar chamadas de margem | **Liquida no vencimento**: um único acerto no fim, sem sobe-e-desce diário |
+| **Tamanho / granularidade** | Padronizado: WDO = US$ 10.000 (mini), DOL = US$ 50.000 → permite hedge **fino** | Notional **flexível** (balcão) ou US$ 50.000 (swap do BC) |
+| **Contraparte / vencimento** | **Bolsa (B3)**, com câmara que zera o risco de contraparte; vencimentos **padronizados** (todo mês) | **Bilateral / balcão**: dá para **customizar** o vencimento e casar com o seu fluxo, mas carrega risco de contraparte |
+
+> **A sacada final:** os dois **zeram igualmente a direção do dólar** (variância → 0). A diferença não está em *proteger ou não* — está em **o que sobra travado** (DI vs forward, separados pelo cupom) e em **como o dinheiro se move no caminho** (margem diária vs acerto no fim). É a mesma física da Seção 0: mexer na pressão sem entregar moléculas — só que agora do ponto de vista de **quem compra** a proteção, não de quem a vende. 🎯
