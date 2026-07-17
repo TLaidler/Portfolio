@@ -184,3 +184,59 @@ não é outro split — é um conjunto de **negativos reais difíceis**.
 
 > Reprodução: `scratchpad/rerun_experiments.py` (fora do repositório); hiperparâmetros e
 > lógica de split idênticos a `pipeline/model_training/train_model.py`.
+
+---
+
+## Réplica do autor e correção de Feynman (o teste adversarial já existia)
+
+O autor contestou — com razão — a afirmação de Feynman de que "os modelos nunca foram
+postos contra o inimigo de verdade". O **estudo de recortes de Quaoar** (Seção
+`sec:estudo_caso_quaoar`) *é* esse teste adversarial, em curva **real** externa ao treino, e
+inclui de propósito um recorte de **ruído que imita uma ocultação**. O modelo passou:
+
+- anel fino **real** Q2R_1: $\hat p = 0{,}0434$; ruído-sósia adjacente: $\hat p = 0{,}0005$
+  → **~86×** de separação (XGBoost); controle de baseline: $6\times10^{-4}$.
+- com $\tau = 0{,}03$, os dois anéis Q2R são recuperados sem nenhum falso positivo.
+
+E a ausência de negativas reais difíceis **em catálogo** é uma limitação da fase atual do
+campo (ninguém cataloga a curva de "quando nada aconteceu"), não uma falha de metodologia. O
+desenho com sintéticas + recortes é o bootstrap correto para mostrar que treinar vale a pena.
+**Feynman concedeu o ponto e reconheceu o erro factual.**
+
+### O teste decisivo que fica pendente (por falta de dado)
+
+Resta uma pergunta afiada, proposta pelo autor: o XGBoost separa o anel real do ruído
+(86×) por combinar *features*, ou uma **única feature de profundidade** (`Occ_depth`,
+`Max_Drawdown`, `Feature_Savgol_Min`) já reproduziria isso — sendo "apenas física"?
+
+**Previsão falseável:**
+- `Occ_depth(anel real) ≫ Occ_depth(ruído)` e o baseline sozinho separa → é física, a régua basta;
+- profundidades parecidas e **só o ML** separa → o *ensemble* agrega valor no evento sutil.
+
+Este teste **não pôde ser executado**: a curva bruta `Gemini-Alopeke_Red-z.dat` (cedida por
+Pereira et al. 2023) **não está versionada no repositório** — sem ela não há como calcular as
+*features* por recorte, e inventar números seria o autoengano que a epígrafe condena. O
+script está pronto e versionado em `pipeline/model_in_practice/quaoar_baseline_vs_ml.py`;
+basta colocar o `.dat` em `pipeline/model_in_practice/quaoar/` e rodar.
+
+### Revisão das notas (após o debate)
+
+**Feynman: 7,5 → 8,0.** "Subo porque a minha maior dedução vinha de um **erro meu**: o
+modelo foi, sim, testado contra um negativo real que imita evento, e passou por 86×. E não se
+pune um aluno porque o campo ainda não catalogou negativas difíceis. O que ainda me segura em
+8,0 e não mais é que o teste da régua-nos-recortes não pôde rodar — sem ele não *certifico*
+que o ML bate um `if Occ_depth` no evento sutil; e no conjunto misto a régua já fazia F1 0,90.
+Honestidade e execução: 8,0. O 8,5 espera aquele `.dat`."
+
+**Sagan: 8,0 → 8,5.** "Eu subo porque passei a pesar melhor o que o estudo de Quaoar é:
+validação externa, adversarial, em dado real — exatamente o padrão-ouro que eu cobrava. Some-se
+a estabilidade entre splits (robustez confirmada) e a franqueza sobre os limites do dado. Para
+um mestrado, isso é um trabalho de 8,5. O meio ponto que falta é escopo: o regime raso,
+negativo-pesado, que só um novo conjunto de dados poderá interrogar."
+
+**Consenso revisado: ≈ 8,25** (era 7,75). A revisão para cima é legítima — corrige uma
+dedução baseada em leitura equivocada e reconhece a validação externa real — e o teto em ~8,5
+permanece honesto: falta rodar o baseline-nos-recortes e ampliar o teste ao regime difícil.
+
+> Evolução das notas — Feynman: 7,0 → 7,5 (baseline) → 7,5 (limitação) → **8,0** (debate).
+> Sagan: 8,0 → 8,0 → 8,0 → **8,5**. Consenso: 7,5 → 7,75 → **8,25**.
