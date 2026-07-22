@@ -27,7 +27,7 @@ def _md_table(df: pd.DataFrame, float_fmt: str = "{:.1f}") -> str:
             return float_fmt.format(v) if pd.notna(v) else "—"
         return str(v)
 
-    header = "| " + " | ".join(df.columns) + " |"
+    header = "| " + " | ".join(str(c) for c in df.columns) + " |"
     sep = "|" + "|".join(["---"] * len(df.columns)) + "|"
     rows = ["| " + " | ".join(fmt(v) for v in row) + " |" for row in df.itertuples(index=False)]
     return "\n".join([header, sep, *rows])
