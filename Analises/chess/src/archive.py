@@ -147,8 +147,10 @@ class WaybackClient:
             )
         # dedup por urlkey (o mesmo jogador pode aparecer em 2 padrões)
         unique = {r.urlkey + r.timestamp: r for r in rows}
+        # seed determinística entre processos (hash() nativo é randomizado)
+        gt_code = sum(ord(c) for c in game_type)
         sampled = seeded_sample(sorted(unique.values(), key=lambda r: r.urlkey),
-                                target, seed=year * 7 + hash(game_type) % 1000)
+                                target, seed=year * 7 + gt_code)
         log.info("%s/%d: %d snapshots no CDX, %d amostrados",
                  game_type, year, len(unique), len(sampled))
         return sampled

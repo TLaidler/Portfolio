@@ -246,8 +246,14 @@ def parse_free_text(
 #   {"freq":[...],"myRating":null,...}                         (JSON moderno)
 _LICHESS_FREQ_RE = re.compile(r'"?freq"?\s*:\s*\[([\d,\s]+)\]')
 
-LICHESS_BUCKET_START = 600   # primeiro bucket da distribuição
 LICHESS_BUCKET_WIDTH = 25    # largura de cada bucket
+# O primeiro bucket acompanhou o piso de rating da Lichess: 800 até jul/2019,
+# 600 depois (lila commit 67637670e8, 2019-07-01, "update min rating").
+_LICHESS_FLOOR_CHANGE = date(2019, 7, 1)
+
+
+def lichess_bucket_start(snapshot_date: date) -> int:
+    return 600 if snapshot_date >= _LICHESS_FLOOR_CHANGE else 800
 
 
 def parse_lichess_distribution(
@@ -269,11 +275,12 @@ def parse_lichess_distribution(
     if total < 1000:  # página quebrada / distribuição vazia
         return []
 
+    start = lichess_bucket_start(snapshot_date)
     out: list[Observation] = []
     cum = 0
     for i, count in enumerate(freq):
         cum += count
-        upper = LICHESS_BUCKET_START + (i + 1) * LICHESS_BUCKET_WIDTH
+        upper = start + (i + 1) * LICHESS_BUCKET_WIDTH
         pct = 100.0 * cum / total
         if pct >= 100.0 and count == 0:
             continue

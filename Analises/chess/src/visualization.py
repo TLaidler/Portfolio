@@ -46,6 +46,21 @@ def _ordered_colors(n: int) -> list[str]:
     return [SEQ_BLUE[i] for i in idx]
 
 
+def _spread_positions(values: list[float], min_gap: float) -> list[float]:
+    """Afasta posições verticais de rótulos para não colidirem.
+
+    Mantém a ordem relativa; empurra para baixo a partir do maior valor.
+    """
+    order = np.argsort(values)[::-1]
+    out = list(values)
+    prev = None
+    for i in order:
+        if prev is not None and out[i] > prev - min_gap:
+            out[i] = prev - min_gap
+        prev = out[i]
+    return out
+
+
 def _style_axes(ax: plt.Axes) -> None:
     ax.set_facecolor(SURFACE)
     ax.grid(True, color=GRID, linewidth=0.8)
@@ -89,16 +104,20 @@ def plot_year_curves(
     colors = dict(zip(years, _ordered_colors(len(years))))
 
     fig, ax = _new_fig()
+    line_ends: list[tuple[int, float, float]] = []
     for year in years:
         g = df[df.year == year].sort_values("rating")
         suffix = " *" if g.low_confidence.iloc[0] else ""
         ax.plot(g.rating, g.percentile, color=colors[year], linewidth=2,
                 label=f"{year}{suffix}", solid_capstyle="round")
-        # rótulo direto no fim da linha (identidade nunca só pela cor)
-        ax.annotate(str(year), (g.rating.iloc[-1], g.percentile.iloc[-1]),
-                    xytext=(6, 0), textcoords="offset points",
-                    color=colors[year], fontsize=8, fontweight="bold",
-                    va="center")
+        line_ends.append((year, g.rating.iloc[-1], g.percentile.iloc[-1]))
+    # rótulos diretos no fim das linhas (identidade nunca só pela cor),
+    # com espaçamento vertical anticolisão
+    spread = _spread_positions([e[2] for e in line_ends], min_gap=3.2)
+    for (year, x_end, y_end), y_label in zip(line_ends, spread):
+        ax.annotate(str(year), (x_end, y_end), xytext=(x_end + 25, y_label),
+                    textcoords="data", color=colors[year], fontsize=8,
+                    fontweight="bold", va="center")
     ax.set_xlabel("Rating")
     ax.set_ylabel("Percentil (% de jogadores abaixo)")
     ax.set_title(f"Chess.com {GAME_TYPE_LABEL.get(game_type, game_type)} — "
@@ -125,6 +144,7 @@ def plot_percentile_targets(
     colors = dict(zip(shares, _ordered_colors(len(shares))))
 
     fig, ax = _new_fig()
+    line_ends: list[tuple[float, float, float]] = []
     for share in shares:
         g = df[df.top_share == share].sort_values("year")
         ax.plot(g.year, g.rating_est, color=colors[share], linewidth=2,
@@ -132,8 +152,12 @@ def plot_percentile_targets(
         if g.rating_lo.notna().any():
             ax.fill_between(g.year, g.rating_lo, g.rating_hi,
                             color=colors[share], alpha=0.15, linewidth=0)
-        ax.annotate(f"Top {share:g}%", (g.year.iloc[-1], g.rating_est.iloc[-1]),
-                    xytext=(8, 0), textcoords="offset points",
+        line_ends.append((share, g.year.iloc[-1], g.rating_est.iloc[-1]))
+    gap = (df.rating_est.max() - df.rating_est.min()) * 0.05 or 1.0
+    spread = _spread_positions([e[2] for e in line_ends], min_gap=gap)
+    for (share, x_end, y_end), y_label in zip(line_ends, spread):
+        ax.annotate(f"Top {share:g}%", (x_end, y_end),
+                    xytext=(x_end + 0.15, y_label), textcoords="data",
                     color=colors[share], fontsize=8, fontweight="bold",
                     va="center")
     ax.set_xlabel("Ano")
@@ -160,6 +184,7 @@ def plot_fixed_ratings(
     colors = dict(zip(ratings, _ordered_colors(len(ratings))))
 
     fig, ax = _new_fig()
+    line_ends: list[tuple[int, float, float]] = []
     for rating in ratings:
         g = df[df.rating == rating].sort_values("year")
         ax.plot(g.year, g.percentile_est, color=colors[rating], linewidth=2,
@@ -167,10 +192,12 @@ def plot_fixed_ratings(
         if g.pctl_lo.notna().any():
             ax.fill_between(g.year, g.pctl_lo, g.pctl_hi,
                             color=colors[rating], alpha=0.15, linewidth=0)
-        ax.annotate(str(rating), (g.year.iloc[-1], g.percentile_est.iloc[-1]),
-                    xytext=(8, 0), textcoords="offset points",
-                    color=colors[rating], fontsize=8, fontweight="bold",
-                    va="center")
+        line_ends.append((rating, g.year.iloc[-1], g.percentile_est.iloc[-1]))
+    spread = _spread_positions([e[2] for e in line_ends], min_gap=3.2)
+    for (rating, x_end, y_end), y_label in zip(line_ends, spread):
+        ax.annotate(str(rating), (x_end, y_end), xytext=(x_end + 0.15, y_label),
+                    textcoords="data", color=colors[rating], fontsize=8,
+                    fontweight="bold", va="center")
     ax.set_xlabel("Ano")
     ax.set_ylabel("Percentil (% de jogadores abaixo)")
     ax.set_ylim(0, 100)
