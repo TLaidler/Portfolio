@@ -1,0 +1,46 @@
+======================================================================
+DIAGNÓSTICO DO RESÍDUO  y = log(open 9:00) - log(dolar_cc 8:50)   [bps]
+======================================================================
+N = 154 dias | 2023-12-26 -> 2024-08-08
+média = +5.1 | sd = 16.3 | mediana = +5.8
+IQR = [-3.5, +16.5] | min/max = -56.2/+52.7
+
+--- ACF do resíduo (lags 1-5) ---
+lag 1: +0.230  <-- significativo
+lag 2: +0.182  <-- significativo
+lag 3: +0.225  <-- significativo
+lag 4: +0.005
+lag 5: -0.016
+(IC 95% = ±0.158)
+
+--- Resíduo por dia da semana (bps) ---
+     mean   std  count
+seg   2.1  15.2     30
+ter  10.3  16.7     32
+qua   8.1  15.1     30
+qui   0.9  17.2     32
+sex   4.3  15.8     30
+
+--- Dias de evento macro vs normais ---
+evento  (n=38): média=+9.2, sd=14.2, |y|média=13.3
+normal  (n=116): média=+3.8, sd=16.7, |y|média=13.2
+
+--- Convergência da basis por horário do snapshot ---
+(recalcula dolar_cc com o último tick do 6L <= cada horário; cupom do dia)
+08:00: n=152  média=+4.6  sd=21.7  MAE=15.9
+08:20: n=151  média=+4.7  sd=21.2  MAE=16.0
+08:40: n=152  média=+4.9  sd=17.6  MAE=14.3
+08:50: n=154  média=+5.1  sd=16.3  MAE=13.3
+08:55: n=154  média=+5.1  sd=16.4  MAE=13.4
+=> menor sd/MAE define o snapshot; diferenças <1bp não justificam mudança.
+
+--- Teste de 3 passos: retorno overnight USDT/BRL ---
+(sem série USDT/USD no histórico -> teste roda SEM ajuste de peg; documentado)
+passo 1 (preditividade): beta=+0.0369 bps/bps, t=+1.41 FALHA (|t|<2)
+passo 2 (sinal): PASSA (beta>0)
+passo 3 (estabilidade): corr 1ª metade=+0.014, 2ª metade=+0.165 FALHA
+
+--- Gate de parada (consenso, item 8) ---
+sd(erro b1 = basis zero) = 16.3 bps vs bid-ask típico = 8 bps
+=> SEGUE: há variância acima do custo; modelagem do resíduo se justifica.
+média(basis) = +5.1 bps -> b2 (dolar_cc + média móvel) é benchmark obrigatório.
