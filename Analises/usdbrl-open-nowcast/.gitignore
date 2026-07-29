@@ -1,0 +1,8 @@
+# licensed raw tick data — never commit
+data/raw/
+
+# runtime logs and caches
+results/predictions_log.csv
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

@@ -1,0 +1,21 @@
+{
+  "feats": [
+    "ret_fut_on",
+    "ret_dxy_on",
+    "vol_6l_on",
+    "event_day",
+    "basis_lag1"
+  ],
+  "regime_feats": [
+    "vol_6l_on",
+    "event_day",
+    "abs_ret_fut_on",
+    "abs_basis_lag1"
+  ],
+  "thresh_bps": 8.0,
+  "alpha": 10.0,
+  "trained_through": "2024-08-08",
+  "n_train": 151,
+  "basis_mean_bps": 5.050345461805496,
+  "veredito_walkforward": "NO-GO"
+}
