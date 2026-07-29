@@ -3,3 +3,9 @@
 *.csv
 *.html
 *.zip
+
+# Python/Jupyter junk
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+catboost_info/
