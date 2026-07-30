@@ -15,7 +15,7 @@ Os seis experimentos realizados permitiram identificar os seguintes padrões:
 	\item \textbf{O ajuste do limiar de decisão permite operar a \textit{pipeline} em regime de alta sensibilidade} (minimização de falsos negativos) sem retreinamento, explorando a separabilidade elevada entre as classes. O estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) demonstrou, em dados reais, que essa alavanca recupera anéis finos que passariam despercebidos no limiar padrão.
 \end{enumerate}
 
-Como verificação complementar, as 67 curvas do banco com $\mathrm{Occ\_SNR\_dip} < 3$ foram submetidas aos modelos treinados; todas foram corretamente classificadas como positivas pelos três \textit{ensembles} de árvores (67/67), e 66 das 67 pela Regressão Logística. Embora essas curvas tenham participado do treinamento e o teste não inclua negativos de baixo SNR, o resultado indica que os modelos não descartam sistematicamente eventos ruidosos. Essa é uma condição necessária (embora não suficiente) para a aplicabilidade da \textit{pipeline} em cenários de baixa relação sinal-ruído.
+Como verificação complementar, as 67 curvas do banco com $\mathrm{Occ\_SNR\_dip} < 3$ foram submetidas aos modelos treinados; todas foram corretamente classificadas como positivas pelos três \textit{ensembles} de árvores (67/67), e 66 das 67 pela Regressão Logística. Embora essas curvas tenham participado do treinamento e o teste não inclua negativos de baixo SNR, o resultado indica que os modelos não descartam sistematicamente eventos ruidosos. Essa é uma condição necessária para a aplicabilidade da \textit{pipeline} em cenários de baixa relação sinal-ruído.
 
 % -----------------------------------------------------------------------------
 \section{Resposta à hipótese de pesquisa}
@@ -34,7 +34,7 @@ As principais contribuições deste trabalho são:
 
 	\item \textbf{Estudo de ablação da \textit{feature} K-Means:} demonstração empírica de que a importância atribuída por algoritmos de árvore não implica insubstituibilidade, com implicação prática para simplificação do \textit{pipeline}.
 
-	\item \textbf{Análise de sensibilidade ao volume de treino:} evidência de saturação da curva de aprendizado, orientando futuras decisões sobre coleta de dados.
+	\item \textbf{Análise de curvas de aprendizado:} evidência de saturação em suas duas dimensões, a do volume de treino (ablação 65/35, Apêndice~\ref{ap:experimentos}) e a da convergência do \textit{logloss} por iteração de \textit{boosting} (Seção~\ref{sec:curvas_aprendizado_exp}), orientando futuras decisões sobre coleta de dados.
 
 	\item \textbf{Análise de ajuste de limiar:} demonstração de que a assimetria de custo entre falsos negativos e falsos positivos pode ser incorporada em pós-processamento, sem retreinamento.
 
