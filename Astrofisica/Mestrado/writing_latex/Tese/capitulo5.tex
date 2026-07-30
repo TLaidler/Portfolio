@@ -19,10 +19,10 @@ Ao todo, foram realizados \textbf{seis experimentos}, que variam o conjunto de \
 \begin{itemize}
 	\item \textbf{Experimento 1:} conjunto completo de 28 \textit{features}, divisão 80\%/20\%. É a \textbf{linha de base} de desempenho, com todas as variáveis disponíveis.
 	\item \textbf{Experimento 2:} 11 \textit{features} (sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans\_centroid\_dist}), divisão 80\%/20\%. É a \textbf{configuração enxuta} adotada como referência operacional --- a mais simples sem perda de desempenho, e a usada no estudo de caso de Quaoar.
-	\item \textbf{Experimento 3:} 11 \textit{features}, porém com \textbf{teste somente em curvas reais} (excluindo as sintéticas). É o teste de \textbf{generalização} mais próximo do uso real.
+	\item \textbf{Experimento 3:} 11 \textit{features}, porém com \textbf{teste somente em curvas reais} (as sintéticas permanecem no treino). É o teste de \textbf{generalização} mais próximo do uso real.
 \end{itemize}
 
-Os demais três experimentos --- a redução intermediária de \textit{features} para 14 (Experimento 4) e 13 variáveis (Experimento 5) e a ablação isolada da \textit{feature} \texttt{kmeans\_centroid\_dist} (Experimento 6) --- conduzem às mesmas conclusões e estão documentados em detalhe no Apêndice~\ref{ap:experimentos}. Suas métricas são consolidadas, ao lado das dos três experimentos-destaque, na Tabela~\ref{tab:comparacao_f1} (Seção~\ref{sec:comparacao}).
+Os demais três experimentos --- a redução intermediária de \textit{features} para 14 (Experimento 4) e 13 variáveis (Experimento 5) e a ablação isolada da \textit{feature} \texttt{kmeans\_centroid\_dist} (Experimento 6) --- conduzem às mesmas conclusões e estão documentados em detalhe no Apêndice~\ref{ap:experimentos}, que reúne ainda uma variante do Experimento~3 com divisão 65\%/35\%, usada como ablação do tamanho do conjunto de treino. Suas métricas são consolidadas, ao lado das dos três experimentos-destaque, na Tabela~\ref{tab:comparacao_f1} (Seção~\ref{sec:comparacao}).
 
 Em todos os experimentos, o mesmo protocolo foi aplicado: divisão treino/teste estratificada, preenchimento de valores faltantes pela mediana calculada no treino, e padronização das características (média zero, desvio unitário) apenas para a Regressão Logística, conforme detalhado no Capítulo~4.
 
@@ -304,7 +304,7 @@ XGBoost e CatBoost mantêm F1 $\geq 0{,}990$, confirmando que a ablação combin
 
 \subsection{Motivação}
 
-No \textit{dataset} utilizado, cerca de 78\% das curvas negativas são \textbf{sintéticas} (geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}). Assim, o conjunto de teste padrão mistura curvas reais e sintéticas. Para avaliar se o desempenho se mantém em cenários onde apenas curvas \textbf{reais} são classificadas --- situação típica de uso em campanhas observacionais --- foi realizado o Experimento~3: os modelos são treinados com 11 \textit{features} e divisão 65\%/35\% (uma fração de teste maior amplia o número de curvas reais disponíveis para avaliação), porém a avaliação é feita \textbf{somente em curvas reais} (excluindo as sintéticas do conjunto de teste).
+No \textit{dataset} utilizado, cerca de 78\% das curvas negativas são \textbf{sintéticas} (geradas pelo simulador de Gomes-Ferrante \& Braga-Ribas~\citep{Simulator}). Assim, o conjunto de teste padrão mistura curvas reais e sintéticas. Para avaliar se o desempenho se mantém em cenários onde apenas curvas \textbf{reais} são classificadas --- situação típica de uso em campanhas observacionais --- foi realizado o Experimento~3: os modelos são treinados com 11 \textit{features} e a avaliação é feita \textbf{somente em curvas reais}. A divisão adotada é a mesma dos demais experimentos (80\%/20\%, estratificada por curva), de modo que os resultados sejam diretamente comparáveis; a fração aplica-se às curvas elegíveis para o teste (positivas reais, negativos por recorte e negativas nativas), enquanto as curvas sintéticas são alocadas integralmente ao treino. O conjunto de teste resultante contém 198 curvas reais (160 positivas e 38 negativas). Uma variante com divisão 65\%/35\%, que amplia o número de curvas reais avaliadas ao custo de reduzir o treino, é analisada no Apêndice~\ref{ap:experimentos} como ablação do tamanho do conjunto de treino.
 
 \subsection{Resultados do Experimento 3}
 \label{sec:resultados_exp7}
@@ -313,33 +313,27 @@ A Tabela~\ref{tab:metricas_7} apresenta as métricas no conjunto de teste restri
 
 \begin{table}[htbp]
 \centering
-\caption{Métricas de desempenho no conjunto de teste --- Experimento 3. Teste somente em curvas reais (11 \textit{features}, treino com divisão 65\%/35\%).}
+\caption{Métricas de desempenho no conjunto de teste --- Experimento 3. Teste somente em curvas reais (11 \textit{features}, divisão 80\%/20\%; teste com 198 curvas: 160 positivas e 38 negativas).}
 \label{tab:metricas_7}
 \begin{tabular}{lccccc}
 \hline
 \textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
 \hline
-XGBoost         & \textbf{0,9712} & 0,9892 & 0,9751 & \textbf{0,9821} & 0,9968 \\
-Random Forest   & 0,9683 & 0,9891 & 0,9715 & 0,9803 & 0,9950 \\
-CatBoost        & 0,9654 & 0,9891 & 0,9680 & 0,9784 & 0,9967 \\
-Regressão Log.  & 0,9597 & 0,9926 & 0,9573 & 0,9746 & 0,9959 \\
+XGBoost         & \textbf{0,9848} & 0,9937 & 0,9875 & \textbf{0,9906} & 0,9984 \\
+Random Forest   & 0,9798 & 0,9937 & 0,9812 & 0,9874 & 0,9965 \\
+CatBoost        & 0,9798 & 0,9937 & 0,9812 & 0,9874 & 0,9980 \\
+Regressão Log.  & 0,9646 & 0,9935 & 0,9625 & 0,9778 & 0,9974 \\
 \hline
 \end{tabular}
 \end{table}
 
-A Figura~\ref{fig:confusao_7} apresenta as matrizes de confusão no Experimento~3.
-
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[width=0.85\textwidth]{Tese/pngs/exp7/confusion_matrices.png}
-\caption{Matrizes de confusão dos quatro modelos no Experimento 3 (teste somente em curvas reais).}
-\label{fig:confusao_7}
-\end{center}
-\end{figure}
+% TODO (autor): regenerar as figuras do Experimento 3 (matrizes de confusão e ROC) com
+% TEST_SIZE = 0.20 e TEST_ON_REAL_ONLY = True em train_model.py. As figuras da variante
+% 65/35 foram movidas para o Apêndice (fig:confusao_7 e fig:ROC7).
 
 \subsection{Interpretação}
 
-Em relação ao teste misto (Experimento~2), há uma \textbf{queda de aproximadamente 2 pontos percentuais} em F1 (de $\approx$0,99 para $\approx$0,97--0,98). Essa queda é modesta e esperada: as curvas sintéticas seguem um modelo físico controlado, enquanto as curvas reais apresentam ruído e variabilidade adicionais. O fato de a AUC-ROC permanecer acima de 0,995 em todos os modelos indica que as \textit{features} capturam sinal discriminativo real e não apenas artefatos da distribuição sintética. O Experimento~3 reforça que a \textit{pipeline} é adequada para triagem em dados observacionais reais.
+O desempenho em teste exclusivamente real é \textbf{essencialmente preservado}: o melhor F1 (XGBoost, 0,9906) coincide com o obtido no teste misto do Experimento~2, e a AUC-ROC permanece $\geq 0{,}9965$ em todos os modelos. Isso indica que as \textit{features} capturam sinal discriminativo real e não apenas artefatos da distribuição sintética. Vale registrar que a queda de $\approx$2 pontos percentuais observada na variante 65\%/35\% (Apêndice~\ref{ap:experimentos}) decorre, em parte, da redução do conjunto de treino, e não apenas da composição do teste. Como ressalva, o teste desta configuração contém apenas 38 curvas negativas reais, de modo que as métricas ligadas a falsos positivos possuem maior incerteza amostral. O Experimento~3 reforça que a \textit{pipeline} é adequada para triagem em dados observacionais reais.
 
 % -----------------------------------------------------------------------------
 \section{Ajuste do limiar de decisão para minimização de falsos negativos}
@@ -563,19 +557,19 @@ A Tabela~\ref{tab:comparacao_f1} permite uma visão comparativa do F1-score por 
 
 \begin{table}[htbp]
 \centering
-\caption{Comparação do F1-score entre os seis experimentos, por modelo. Exp.~1: 28 \textit{features}; Exp.~2: 11 \textit{features} (ablação combinada); Exp.~3: teste somente em curvas reais; Exp.~4: 14 \textit{features}; Exp.~5: 13 \textit{features}; Exp.~6: 12 \textit{features} (sem \texttt{kmeans}). Todos com divisão 80/20, exceto o Exp.~3 (treino 65/35, teste real).}
+\caption{Comparação do F1-score entre os seis experimentos, por modelo. Exp.~1: 28 \textit{features}; Exp.~2: 11 \textit{features} (ablação combinada); Exp.~3: teste somente em curvas reais (198 curvas: 160 positivas e 38 negativas; sintéticas alocadas ao treino); Exp.~4: 14 \textit{features}; Exp.~5: 13 \textit{features}; Exp.~6: 12 \textit{features} (sem \texttt{kmeans}).}
 \label{tab:comparacao_f1}
 \footnotesize
 \begin{tabular}{lcccccc}
 \hline
 \textbf{Modelo} & \textbf{Exp. 1} & \textbf{Exp. 2} & \textbf{Exp. 3} & \textbf{Exp. 4} & \textbf{Exp. 5} & \textbf{Exp. 6} \\
  & \scriptsize{28 f.} & \scriptsize{11 f.} & \scriptsize{teste real} & \scriptsize{14 f.} & \scriptsize{13 f.} & \scriptsize{12 f.} \\
- & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{65/35} & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{80/20} \\
+ & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{80/20} & \scriptsize{80/20} \\
 \hline
-Random Forest   & \textbf{0,9937} & 0,9874 & 0,9803 & 0,9874 & \textbf{0,9905} & \textbf{0,9906} \\
-XGBoost         & 0,9844 & \textbf{0,9906} & \textbf{0,9821} & 0,9875 & 0,9843 & \textbf{0,9906} \\
-CatBoost        & 0,9906 & 0,9905 & 0,9784 & \textbf{0,9906} & 0,9873 & 0,9874 \\
-Regressão Log.  & 0,9873 & 0,9841 & 0,9746 & 0,9873 & 0,9873 & 0,9873 \\
+Random Forest   & \textbf{0,9937} & 0,9874 & 0,9874 & 0,9874 & \textbf{0,9905} & \textbf{0,9906} \\
+XGBoost         & 0,9844 & \textbf{0,9906} & \textbf{0,9906} & 0,9875 & 0,9843 & \textbf{0,9906} \\
+CatBoost        & 0,9906 & 0,9905 & 0,9874 & \textbf{0,9906} & 0,9873 & 0,9874 \\
+Regressão Log.  & 0,9873 & 0,9841 & 0,9778 & 0,9873 & 0,9873 & 0,9873 \\
 \hline
 \end{tabular}
 \end{table}
@@ -589,12 +583,12 @@ Cinco observações principais emergem da análise conjunta:
 
 	\item \textbf{Dispensabilidade do K-Means.} Nos Experimentos 6 e 2, a remoção de \texttt{kmeans\_centroid\_dist} (e, no Exp.~2, também de \texttt{Feature\_Savgol\_Min}) não degrada o desempenho: XGBoost e CatBoost mantêm F1 $\geq 0{,}990$. A colinearidade funcional com \texttt{Feature\_Savgol\_std} explica essa redundância.
 
-	\item \textbf{Generalização em curvas reais.} O Experimento 3 (teste somente em curvas reais) mostra queda de $\approx$2~pp em F1, com AUC-ROC ainda acima de 0,995, indicando que as \textit{features} capturam sinal real e não apenas artefatos da distribuição sintética.
+	\item \textbf{Generalização em curvas reais.} O Experimento 3 (teste somente em curvas reais) preserva o melhor F1 do teste misto (XGBoost, 0,9906) e mantém AUC-ROC $\geq 0{,}9965$, indicando que as \textit{features} capturam sinal real e não apenas artefatos da distribuição sintética. A queda de $\approx$2~pp observada na variante 65/35 (Apêndice~\ref{ap:experimentos}) decorre, em parte, da redução do conjunto de treino.
 
-	\item \textbf{AUC-ROC.} Em todos os experimentos com teste misto (todos exceto o Experimento 3), a AUC-ROC permanece $\geq 0{,}9995$; no Experimento 3, $\geq 0{,}9959$.
+	\item \textbf{AUC-ROC.} Em todos os experimentos com teste misto (todos exceto o Experimento 3), a AUC-ROC permanece $\geq 0{,}9995$; no Experimento 3, $\geq 0{,}9965$.
 \end{enumerate}
 
-As Figuras~\ref{fig:ROC1} e~\ref{fig:ROC7} apresentam as curvas ROC dos dois cenários mais informativos --- a linha de base em dados mistos (Experimento~1) e o teste exclusivamente em curvas reais (Experimento~3) ---, ilustrando o contraste entre a separação quase perfeita no primeiro e a degradação leve, porém ainda excelente, no segundo. As curvas ROC dos demais experimentos estão reunidas no Apêndice~\ref{ap:experimentos}.
+A Figura~\ref{fig:ROC1} apresenta as curvas ROC da linha de base em dados mistos (Experimento~1), com separação quase perfeita entre as classes. As curvas ROC dos demais experimentos --- incluindo a variante 65/35 do Experimento~3 (Figura~\ref{fig:ROC7}) --- estão reunidas no Apêndice~\ref{ap:experimentos}.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -604,13 +598,6 @@ As Figuras~\ref{fig:ROC1} e~\ref{fig:ROC7} apresentam as curvas ROC dos dois cen
 \end{center}
 \end{figure}
 
-\begin{figure}[htbp]
-\begin{center}
-	\includegraphics[width=0.7\textwidth]{Tese/pngs/exp7/roc_curves.png}
-\caption{Curvas ROC --- Experimento 3 (teste somente em curvas reais).}
-\label{fig:ROC7}
-\end{center}
-\end{figure}
 
 \subsection{Análise de importância das \textit{features}}
 
