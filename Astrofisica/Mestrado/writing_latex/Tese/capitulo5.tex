@@ -327,10 +327,6 @@ Regressão Log.  & 0,9646 & 0,9935 & 0,9625 & 0,9778 & 0,9974 \\
 \end{tabular}
 \end{table}
 
-% TODO (autor): regenerar as figuras do Experimento 3 (matrizes de confusão e ROC) com
-% TEST_SIZE = 0.20 e TEST_ON_REAL_ONLY = True em train_model.py. As figuras da variante
-% 65/35 foram movidas para o Apêndice (fig:confusao_7 e fig:ROC7).
-
 \subsection{Interpretação}
 
 O desempenho em teste exclusivamente real é \textbf{essencialmente preservado}: o melhor F1 (XGBoost, 0,9906) coincide com o obtido no teste misto do Experimento~2, e a AUC-ROC permanece $\geq 0{,}9965$ em todos os modelos. Isso indica que as \textit{features} capturam sinal discriminativo real e não apenas artefatos da distribuição sintética. Vale registrar que a queda de $\approx$2 pontos percentuais observada na variante 65\%/35\% (Apêndice~\ref{ap:experimentos}) decorre, em parte, da redução do conjunto de treino, e não apenas da composição do teste. Como ressalva, o teste desta configuração contém apenas 38 curvas negativas reais, de modo que as métricas ligadas a falsos positivos possuem maior incerteza amostral. O Experimento~3 reforça que a \textit{pipeline} é adequada para triagem em dados observacionais reais.
