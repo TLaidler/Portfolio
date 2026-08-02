@@ -49,5 +49,15 @@
       </td>
     </tr>
    <tr><td><b>Todos os projetos podem ser encontrados nas pastas deste repositório.</b></td></tr>
+   <tr>
+      <td>
+        <b>Projetos em destaque:</b>
+        <ul>
+          <li><a href="./Analises/c9_equity_strategy_case_study/README.md">Estratégia sistemática em ações BR — case study de processo</a> (pré-registro, ~43 trials, vieses medidos, PSR/Deflated Sharpe)</li>
+          <li><a href="./Analises/regime_detection_study">Detecção de regimes BTC/USDT — metodologia López de Prado (AFML)</a></li>
+          <li><a href="./Analises/ml_pipeline_for_trading">Pipeline modular de ML para trading — validação com resultado nulo documentado</a></li>
+        </ul>
+      </td>
+   </tr>
   </tbody>
 </table>
