@@ -4,7 +4,7 @@
 \chapter{Resultados experimentais complementares}
 \label{ap:experimentos}
 
-O Capítulo~5 apresenta em detalhe três experimentos --- a linha de base com o conjunto completo de \textit{features} (Experimento~1), a configuração enxuta de 11 \textit{features} usada como referência operacional (Experimento~2) e o teste de generalização exclusivamente em curvas reais (Experimento~3) ---, além de sintetizar todos os resultados na Tabela~\ref{tab:comparacao_f1}. Este apêndice reúne os \textbf{experimentos intermediários} cujas conclusões já foram incorporadas àquela síntese, mas que se documentam aqui por completude: a redução progressiva do conjunto de \textit{features} para 14 (Experimento~4) e 13 variáveis (Experimento~5) e a ablação isolada da \textit{feature} \texttt{kmeans\_centroid\_dist} (Experimento~6). Todas as métricas referem-se ao conjunto de teste e seguem o protocolo descrito na Seção~\ref{sec:config_experimental}.
+O Capítulo~5 apresenta em detalhe três experimentos --- a linha de base com o conjunto completo de \textit{features} (Experimento~1), a configuração enxuta de 11 \textit{features} usada como referência operacional (Experimento~2) e o teste de generalização exclusivamente em curvas reais (Experimento~3) ---, além de sintetizar todos os resultados na Tabela~\ref{tab:comparacao_f1}. Este apêndice reúne os \textbf{experimentos intermediários} cujas conclusões já foram incorporadas àquela síntese, mas que se documentam aqui por completude: a redução progressiva do conjunto de \textit{features} para 14 (Experimento~4) e 13 variáveis (Experimento~5), a ablação isolada da \textit{feature} \texttt{kmeans\_centroid\_dist} (Experimento~6) e uma variante do Experimento~3 com divisão 65\%/35\%, utilizada como ablação do tamanho do conjunto de treino. Todas as métricas referem-se ao conjunto de teste e seguem o protocolo descrito na Seção~\ref{sec:config_experimental}.
 
 % -----------------------------------------------------------------------------
 \section{Experimento 4: subconjunto de 14 \textit{features}}
@@ -60,7 +60,7 @@ XGBoost         & 0,9853 & 0,9874 & 0,9813 & 0,9843 & 0,9997 \\
 \end{tabular}
 \end{table}
 
-O \textbf{Random Forest} lidera com F1 = 0,9905. Em relação ao Experimento 4, a remoção de \texttt{Feature\_Savgol\_Min} causa queda moderada em alguns modelos, mas o desempenho global permanece elevado, indicando que as demais \textit{features} absorvem parte da informação. As matrizes de confusão estão na Figura~\ref{fig:confusao_3}. \ia{Vale notar que} a análise de ajuste de limiar e a validação cruzada apresentadas no Capítulo~5 (Seções~\ref{sec:threshold_tuning} e~\ref{sec:cross_validation}) foram conduzidas sobre esta configuração de 13 \textit{features}.
+O \textbf{Random Forest} lidera com F1 = 0,9905. Em relação ao Experimento 4, a remoção de \texttt{Feature\_Savgol\_Min} causa queda moderada em alguns modelos, mas o desempenho global permanece elevado, indicando que as demais \textit{features} absorvem parte da informação. As matrizes de confusão estão na Figura~\ref{fig:confusao_3}. Vale notar que a análise de ajuste de limiar e a validação cruzada apresentadas no Capítulo~5 (Seções~\ref{sec:threshold_tuning} e~\ref{sec:cross_validation}) foram conduzidas sobre esta configuração de 13 \textit{features}.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -133,10 +133,50 @@ Por fim, a Figura~\ref{fig:confusao_5} apresenta as matrizes de confusão da con
 \end{figure}
 
 % -----------------------------------------------------------------------------
+\section{Variante do Experimento 3 com divisão 65/35: ablação do tamanho do treino}
+\label{sec:exp3_6535}
+
+O Experimento~3 do Capítulo~5 avalia a generalização para curvas exclusivamente reais sob a mesma divisão 80\%/20\% dos demais experimentos. Esta seção documenta uma variante com divisão 65\%/35\%, que cumpre dois papéis: (i)~ampliar o conjunto de teste real avaliado (347 curvas: 281 positivas e 66 negativas, contra 198 na configuração principal), reduzindo a incerteza amostral das métricas; e (ii)~servir de \textbf{ablação do tamanho do conjunto de treino}. Ao remover cerca de 15\% dos dados de treinamento, mede-se a sensibilidade do desempenho à quantidade de exemplos disponíveis.
+
+\begin{table}[htbp]
+\centering
+\caption{Métricas de desempenho no conjunto de teste --- variante do Experimento 3 com divisão 65\%/35\% (teste somente em curvas reais: 347 curvas, 281 positivas e 66 negativas).}
+\label{tab:metricas_exp3_6535}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Modelo} & \textbf{Acurácia} & \textbf{Precisão} & \textbf{Sensibilidade} & \textbf{F1-score} & \textbf{AUC-ROC} \\
+\hline
+XGBoost         & \textbf{0,9741} & 0,9928 & 0,9751 & \textbf{0,9838} & 0,9968 \\
+Random Forest   & 0,9683 & 0,9856 & 0,9751 & 0,9803 & 0,9956 \\
+CatBoost        & 0,9654 & 0,9891 & 0,9680 & 0,9784 & 0,9967 \\
+Regressão Log.  & 0,9597 & 0,9926 & 0,9573 & 0,9746 & 0,9959 \\
+\hline
+\end{tabular}
+\end{table}
+
+A comparação com a configuração principal (Tabela~\ref{tab:metricas_7}, Capítulo~5) é direta: com 15\% menos dados de treino, o melhor F1 recua de 0,9906 para 0,9838 (queda de apenas $\approx$0,7~ponto percentual) e a AUC-ROC permanece $\geq 0{,}9956$ em todos os modelos. Essa estabilidade indica que a curva de aprendizado dos modelos está \textbf{saturada} na região de operação: o desempenho depende fracamente do volume de treino, comportamento incompatível com sobreajuste dominante (um modelo sobreajustado degradaria de forma acentuada ao perder dados de ajuste). O resultado converge com a validação cruzada estratificada (Seção~\ref{sec:cross_validation}), que apresenta desvios padrão pequenos entre dobras. As Figuras~\ref{fig:confusao_7} e~\ref{fig:ROC7} apresentam as matrizes de confusão e as curvas ROC desta variante.
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.85\textwidth]{Tese/pngs/exp7/confusion_matrices.png}
+\caption{Matrizes de confusão dos quatro modelos na variante 65/35 do Experimento 3 (teste somente em curvas reais).}
+\label{fig:confusao_7}
+\end{center}
+\end{figure}
+
+\begin{figure}[htbp]
+\begin{center}
+	\includegraphics[width=0.7\textwidth]{Tese/pngs/exp7/roc_curves.png}
+\caption{Curvas ROC --- variante 65/35 do Experimento 3 (teste somente em curvas reais).}
+\label{fig:ROC7}
+\end{center}
+\end{figure}
+
+% -----------------------------------------------------------------------------
 \section{Curvas ROC dos experimentos complementares}
 \label{sec:roc_complementares}
 
-As curvas ROC dos Experimentos 1 e 3 são apresentadas no Capítulo~5 (Figuras~\ref{fig:ROC1} e~\ref{fig:ROC7}). Para completude, as Figuras~\ref{fig:ROC2}--\ref{fig:ROC5} reúnem as curvas ROC dos demais experimentos (2, 4, 5 e 6). Em todos os casos a AUC permanece acima de 0,999, confirmando a elevada separabilidade das classes no conjunto de teste misto.
+As curvas ROC do Experimento 1 são apresentadas no Capítulo~5 (Figura~\ref{fig:ROC1}); as da variante 65/35 do Experimento~3 estão na Seção~\ref{sec:exp3_6535} (Figura~\ref{fig:ROC7}). Para completude, as Figuras~\ref{fig:ROC2}--\ref{fig:ROC5} reúnem as curvas ROC dos demais experimentos (2, 4, 5 e 6). Em todos os casos a AUC permanece acima de 0,999, confirmando a elevada separabilidade das classes no conjunto de teste misto.
 
 \begin{figure}[htbp]
 \begin{center}

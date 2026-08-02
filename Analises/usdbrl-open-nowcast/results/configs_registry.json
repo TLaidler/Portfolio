@@ -1,0 +1,93 @@
+{
+  "nota": "Registro de todas as configurações avaliadas (freio PBO/DSR do consenso: qualquer variante testada e descartada deve constar aqui).",
+  "atuais": {
+    "b1_basis_zero": {
+      "n_oos": 91.0,
+      "MAE": 13.537,
+      "RMSE": 17.307,
+      "MAE_1a_metade": 14.953,
+      "MAE_2a_metade": 12.15,
+      "dias_acionaveis": 0.0,
+      "direcional_acionavel": null
+    },
+    "b2_media_movel_20d": {
+      "n_oos": 91.0,
+      "MAE": 13.677,
+      "RMSE": 17.41,
+      "MAE_1a_metade": 14.83,
+      "MAE_2a_metade": 12.549,
+      "dias_acionaveis": 12.0,
+      "direcional_acionavel": 0.417
+    },
+    "ridge_default": {
+      "n_oos": 91.0,
+      "MAE": 12.58,
+      "RMSE": 16.866,
+      "MAE_1a_metade": 12.243,
+      "MAE_2a_metade": 12.91,
+      "dias_acionaveis": 29.0,
+      "direcional_acionavel": 0.759
+    },
+    "ridge_com_usdt": {
+      "n_oos": 91.0,
+      "MAE": 13.091,
+      "RMSE": 17.111,
+      "MAE_1a_metade": 13.138,
+      "MAE_2a_metade": 13.046,
+      "dias_acionaveis": 27.0,
+      "direcional_acionavel": 0.704
+    }
+  },
+  "dm_tests": {
+    "ridge_default_vs_b1": {
+      "dm": -1.122,
+      "p": 0.265
+    },
+    "ridge_default_vs_b2": {
+      "dm": -1.312,
+      "p": 0.1928
+    },
+    "ridge_com_usdt_vs_b2": {
+      "dm": -0.813,
+      "p": 0.4184
+    },
+    "ridge_com_usdt_vs_ridge_default": {
+      "dm": 1.007,
+      "p": 0.3165
+    }
+  },
+  "params": {
+    "init_train": 60,
+    "step": 5,
+    "embargo": 2,
+    "thresh_bps": 8.0,
+    "alphas": [
+      1.0,
+      10.0,
+      100.0
+    ],
+    "feats_default": [
+      "ret_fut_on",
+      "ret_dxy_on",
+      "vol_6l_on",
+      "event_day",
+      "basis_lag1"
+    ],
+    "feats_usdt": [
+      "ret_fut_on",
+      "ret_dxy_on",
+      "vol_6l_on",
+      "event_day",
+      "basis_lag1",
+      "ret_usdt_on",
+      "usdt_premium_snap"
+    ]
+  },
+  "go_no_go": {
+    "MAE >=15% melhor que b2": false,
+    "DM p<0.10 vs b2": false,
+    "direcional >58% (acionáveis)": true,
+    "estável nas 2 metades": false
+  },
+  "veredito": "NO-GO"
+}
