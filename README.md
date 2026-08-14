@@ -19,12 +19,13 @@
 
 ---
 
-## Quem sou eu, em uma frase
+## Sobre mim
 
-Passei a formação acadêmica detectando **sinais fracos e raros enterrados em ruído**
-(ocultações estelares — inclusive com [artigo no MNRAS](https://academic.oup.com/mnras)
-medindo a lua Umbriel com precisão de quilômetros) e hoje aplico exatamente o mesmo
-problema — separar sinal de ruído sem se autoenganar — ao mercado financeiro.
+Sou bacharel em Astronomia/Astrofísica pela UFRJ e mestre pelo Observatório Nacional (MCTI),
+onde trabalhei com detecção de ocultações estelares — ainda na iniciação científica, fui coautor
+de [artigo no MNRAS](https://academic.oup.com/mnras) medindo a lua Umbriel com precisão de
+quilômetros. Hoje sou analista quantitativo na Transfero Asset Management, aplicando estatística,
+programação e machine learning a dados de mercado.
 
 **Stack principal:** Python · SQL · Estatística · ML (scikit-learn, XGBoost, CatBoost) · Azure · Excel/VBA
 
@@ -41,6 +42,7 @@ Se você tem 10 minutos, veja os ⭐ abaixo. Se tem 2, leia só esta tabela:
 | Projeto | O que é | Por que vale ler |
 |---|---|---|
 | [Pipeline do Mestrado](./Astrofisica/Mestrado/) | ML (RF/XGBoost/CatBoost) para detectar ocultações estelares em curvas de luz | Validação adversarial em dado real (anéis de Quaoar, separação de 86× entre anel e ruído-sósia) + [auditoria crítica do próprio pipeline](./Astrofisica/Mestrado/AUDITORIA_PIPELINE.md) |
+| [Case study — estratégia sistemática em ações BR](./Analises/c9_equity_strategy_case_study/) | Research de fatores na B3 (qualidade + valor + momentum), documentado como estudo de processo | ~43 trials pré-registrados, vieses medidos **contra o próprio resultado** (20,0% → 14,8% a.a.), PSR/Deflated Sharpe — o processo, não a receita |
 | [USDBRL Open Nowcast](./Analises/usdbrl-open-nowcast/) | Nowcast do dólar de abertura (9:00 BRT) a partir do futuro da CME, via paridade coberta de juros | Pipeline point-in-time à prova de lookahead, validação walk-forward honesta |
 | [ML Pipeline for Trading](./Analises/ml_pipeline_for_trading/) | Pesquisa de estratégias no padrão *Advances in Financial ML* (triple-barrier, purged CV, Deflated Sharpe) | Termina num **resultado nulo documentado com orgulho** — "when it says no, it means no" |
 | [Regime Detection Study](./Analises/regime_detection_study/) | Detecção de regimes de mercado com features causais | Null models duplos + feature-placebo de controle; caça um falso positivo do PSR |
