@@ -11,14 +11,16 @@
 \usepackage[utf8]{inputenc}
 \usepackage{xcolor}
 \usepackage{soul}
+\usepackage{upquote} % aspas retas em \texttt (ex.: strategy='median')
 \setstcolor{red} % Sets the strikethrough color to red
 % para mostrar os links coloridos
 \usepackage{hyperref}
 \hypersetup{%unicode=true,bookmarks=false,backref=false,
 colorlinks,linkcolor=blue,citecolor=red,urlcolor=magenta,menucolor=cyan}   
 
-%\usepackage{indentfirst}
+\usepackage{indentfirst} % recuo também no primeiro parágrafo de cada seção
 %\usepackage{parskip}
+\raggedbottom % evita espaços em branco esticados entre parágrafos (a classe usa twoside -> \flushbottom)
 
 % modifca as margens padrao
 %\usepackage{geometry}  
@@ -120,9 +122,9 @@ colorlinks,linkcolor=blue,citecolor=red,urlcolor=magenta,menucolor=cyan}
 \begin{flushright}
 {\normalsize 
 
-\textit{"O primeiro princípio é que você não deve enganar a si mesmo - e você é a pessoa mais fácil de se enganar."}
+\textit{``O primeiro princípio é que você não deve enganar a si mesmo --- e você é a pessoa mais fácil de enganar.''}
 
-- Richard Feynman
+--- Richard Feynman
 
 }
 \end{flushright}
@@ -133,12 +135,12 @@ colorlinks,linkcolor=blue,citecolor=red,urlcolor=magenta,menucolor=cyan}
 
 %%%%
 \begin{abstract}
-Entre as técnicas disponíveis para a caracterização física de asteroides, Centauros e objetos transnetunianos, as ocultações estelares destacam-se pela elevada precisão. Nesses eventos, um corpo do Sistema Solar bloqueia temporariamente a luz de uma estrela distante para um dado observador. A análise da curva de luz resultante permite inferir tamanho, forma projetada e, em casos favoráveis, atmosfera e anéis do corpo ocultante, com resolução espacial da ordem de quilômetros. O crescimento do volume de dados produzido por redes de telescópios e catálogos como o Gaia, no entanto, tornou a triagem manual de todas as curvas um problema relevante e motivou o desenvolvimento de métodos automatizados de detecção. Esta dissertação apresenta uma \textit{pipeline} completa para detecção automatizada de ocultações estelares em curvas de luz, baseada em técnicas de aprendizado de máquina. O problema é formulado como classificação binária: cada curva é descrita por um vetor de características numéricas (\textit{features}) e classificada como positiva (ocultação presente) ou negativa (ausência de evento). Quatro classificadores foram treinados e comparados: Regressão Logística, Random Forest, XGBoost e CatBoost. O conjunto de dados reúne 1693 curvas (802 positivas e 891 negativas). Seis experimentos avaliaram o impacto da seleção de \textit{features} e a generalização para dados exclusivamente reais. Os resultados demonstram desempenho elevado e consistente: F1-score entre 0,978 e 0,994 e AUC-ROC superior a 0,995 no conjunto de teste. A \textit{pipeline} permite ainda o ajuste do limiar de decisão em pós-processamento, operando em regime de alta sensibilidade sem necessidade de retreinamento. Nesse contexto, o custo de perder um evento genuíno (falso negativo) supera o de revisar um alarme falso (falso positivo). Como validação em dados reais, utilizou-se a ocultação pelo objeto transnetuniano (50000) Quaoar, não incluída no conjunto de treinamento. A aplicação da ferramenta permitiu avaliar a identificação de ocultações em uma curva de luz complexa. Embora os sinais produzidos pelos anéis finos apresentem probabilidades absolutas baixas, estas são cerca de duas ordens de grandeza superiores às atribuídas a trechos de ruído semelhantes. Como consequência, um ajuste simples do limiar é suficiente para recuperar esses eventos sutis sem introduzir falsos alarmes. Os resultados demonstram o potencial da ferramenta para revisitar curvas de luz complexas em busca de eventos mais sutis ainda não identificados numa primeira análise. Assim, este trabalho contribui com uma ferramenta reproduzível para a triagem e priorização de curvas de luz em estudos de ocultações estelares.
+Entre as técnicas disponíveis para a caracterização física de asteroides, Centauros e objetos transnetunianos, as ocultações estelares destacam-se pela elevada precisão. Nesses eventos, um corpo do Sistema Solar bloqueia temporariamente a luz de uma estrela distante para um dado observador. A análise da curva de luz resultante permite inferir tamanho, forma projetada e, em casos favoráveis, atmosfera e anéis do corpo ocultante, com resolução espacial da ordem de quilômetros. O número crescente de curvas obtidas por redes de telescópios --- impulsionado pela astrometria do catálogo Gaia, que permite prever esses eventos com mais precisão --- tornou, no entanto, a triagem manual de todas as curvas um problema relevante e motivou o desenvolvimento de métodos automatizados de detecção. Esta dissertação apresenta uma \textit{pipeline} completa para detecção automatizada de ocultações estelares em curvas de luz, baseada em técnicas de aprendizado de máquina. O problema é formulado como classificação binária: cada curva é descrita por um vetor de características numéricas (\textit{features}) e classificada como positiva (ocultação presente) ou negativa (ausência de evento). Quatro classificadores foram treinados e comparados: Regressão Logística, Random Forest, XGBoost e CatBoost. O conjunto de dados reúne 1693 curvas (802 positivas e 891 negativas). Seis experimentos avaliaram o impacto da seleção de \textit{features} e a generalização para dados exclusivamente reais. Os resultados demonstram desempenho elevado e consistente: F1-score entre 0,978 e 0,994 e AUC-ROC superior a 0,995 no conjunto de teste. Como, na triagem, o custo de perder um evento genuíno (falso negativo) supera o de revisar um alarme falso (falso positivo), a \textit{pipeline} permite ajustar o limiar de decisão em pós-processamento e operar em regime de alta sensibilidade, sem necessidade de retreinamento. Como validação em dados reais, utilizou-se a ocultação pelo objeto transnetuniano (50000) Quaoar, não incluída no conjunto de treinamento. A aplicação da ferramenta permitiu avaliar a identificação de ocultações em uma curva de luz complexa. Embora os sinais produzidos pelos anéis finos apresentem probabilidades absolutas baixas, estas são cerca de duas ordens de grandeza superiores às atribuídas a trechos de ruído semelhantes. Como consequência, um ajuste simples do limiar é suficiente para recuperar esses eventos sutis sem introduzir falsos alarmes. Esses resultados indicam o potencial da ferramenta para revisitar curvas de luz complexas em busca de eventos mais sutis ainda não identificados numa primeira análise. Assim, este trabalho contribui com uma ferramenta reproduzível para a triagem e priorização de curvas de luz em estudos de ocultações estelares.
 \end{abstract}
 
 %%%%
 \begin{foreignabstract}
-Among the techniques available for the physical characterization of asteroids, Centaurs and trans-Neptunian objects, stellar occultations stand out for their high precision. In such events, a Solar System body temporarily blocks the light of a distant star as seen by a given observer. Analysis of the resulting light curve allows one to infer the size, projected shape and, in favorable cases, the atmosphere and rings of the occulting body, with spatial resolution on the order of kilometers. The growing data volume produced by telescope networks and catalogs such as Gaia has, however, made the manual screening of all light curves a relevant problem and motivated the development of automated detection methods. This dissertation presents a complete pipeline for the automated detection of stellar occultations in light curves, based on machine learning techniques. The problem is cast as binary classification: each curve is described by a vector of numerical features and classified as positive (occultation present) or negative (no event). Four classifiers were trained and compared: Logistic Regression, Random Forest, XGBoost and CatBoost. The dataset comprises 1693 light curves (802 positive and 891 negative). Six experiments assessed the impact of feature selection and the generalization to exclusively real data. The results demonstrate high and consistent performance: F1-scores between 0.978 and 0.994 and AUC-ROC above 0.995 on the test set. The pipeline also supports decision-threshold tuning as a post-processing step, operating in a high-recall regime without the need for retraining. In this context, the cost of missing a genuine event (false negative) outweighs that of reviewing a false alarm (false positive). As a validation on real data, the occultation by the trans-Neptunian object (50000) Quaoar, not included in the training set, was used. Applying the tool made it possible to assess the identification of occultations in a complex light curve. Although the signals produced by the thin rings have low absolute probabilities, these are about two orders of magnitude higher than those assigned to similar noise segments. As a consequence, a simple threshold adjustment is enough to recover these subtle events without introducing false alarms. The results demonstrate the potential of the tool to revisit complex light curves in search of subtler events that a first analysis leaves unidentified. This work thus contributes a reproducible tool for the screening and prioritization of light curves in stellar-occultation studies.
+Among the techniques available for the physical characterization of asteroids, Centaurs and trans-Neptunian objects, stellar occultations stand out for their high precision. In such events, a Solar System body temporarily blocks the light of a distant star as seen by a given observer. Analysis of the resulting light curve allows one to infer the size, projected shape and, in favorable cases, the atmosphere and rings of the occulting body, with spatial resolution on the order of kilometers. The growing number of light curves obtained by telescope networks --- driven by Gaia astrometry, which allows these events to be predicted more precisely --- has, however, made the manual screening of all light curves a relevant problem and motivated the development of automated detection methods. This dissertation presents a complete pipeline for the automated detection of stellar occultations in light curves, based on machine learning techniques. The problem is cast as binary classification: each curve is described by a vector of numerical features and classified as positive (occultation present) or negative (no event). Four classifiers were trained and compared: Logistic Regression, Random Forest, XGBoost and CatBoost. The dataset comprises 1693 light curves (802 positive and 891 negative). Six experiments assessed the impact of feature selection and the generalization to exclusively real data. The results demonstrate high and consistent performance: F1-scores between 0.978 and 0.994 and AUC-ROC above 0.995 on the test set. Since, in screening, the cost of missing a genuine event (false negative) outweighs that of reviewing a false alarm (false positive), the pipeline allows the decision threshold to be tuned as a post-processing step, operating in a high-recall regime without the need for retraining. As a validation on real data, the occultation by the trans-Neptunian object (50000) Quaoar, not included in the training set, was used. Applying the tool made it possible to assess the identification of occultations in a complex light curve. Although the signals produced by the thin rings have low absolute probabilities, these are about two orders of magnitude higher than those assigned to similar noise segments. As a consequence, a simple threshold adjustment is enough to recover these subtle events without introducing false alarms. These results indicate the potential of the tool to revisit complex light curves in search of subtler events that a first analysis leaves unidentified. This work thus contributes a reproducible tool for the screening and prioritization of light curves in stellar-occultation studies.
 \end{foreignabstract}
 
 %%%%
@@ -159,11 +161,11 @@ Among the techniques available for the physical characterization of asteroids, C
 
 \input{capitulo2}
 
-\chapter{Modelos e algoritmos para Machine Learning}
+\chapter{Modelos e algoritmos para \texorpdfstring{\textit{Machine Learning}}{Machine Learning}}
 
 \input{capitulo3}
 
-\chapter{Metodologia: Pipeline de Detecção}
+\chapter{Metodologia: \texorpdfstring{\textit{Pipeline}}{Pipeline} de Detecção}
 
 \input{capitulo4}
 
@@ -229,7 +231,7 @@ Among the techniques available for the physical characterization of asteroids, C
 
 \bibitem[Morgado et al. (2023)]{Morgado2023} MORGADO, B. E.; SICARDY, B.; BRAGA-RIBAS, F.; ORTIZ, J. L.; SALO, H.; VACHIER, F.; DESMARS, J.; PEREIRA, C. L.; SANTOS-SANZ, P.; SFAIR, R.; DE SANTANA, T.; et al. ``A dense ring of the trans-Neptunian object Quaoar outside its Roche limit''. \emph{Nature}, 614(7947), 239--243, 2023. \url{https://doi.org/10.1038/s41586-022-05629-6}.
 
-\bibitem[Gomes-Ferrante \& Braga-Ribas (2023)]{Simulator} GOMES-FERRANTE, Wellington; BRAGA-RIBAS, Felipe. ``Stellar Occultation Simulator: application to Planet 9''. \emph{Eur. Phys. J. Spec. Top.}, 232(18-19), 3113--3118, 2023. \url{https://www.springernature.com/gp/researchers/text-and-data-mining}.
+\bibitem[Gomes-Ferrante \& Braga-Ribas (2023)]{Simulator} GOMES-FERRANTE, W.; BRAGA-RIBAS, F. ``Stellar Occultation Simulator: application to Planet 9''. \emph{The European Physical Journal Special Topics}, v. 232, n. 18-19, p. 3113--3118, 2023. DOI: \href{https://doi.org/10.1140/epjs/s11734-023-01031-z}{10.1140/epjs/s11734-023-01031-z}.
 
 \bibitem[Fornasier et al. (2013)]{Fornasier2013} FORNASIER, Sonia; LELLOUCH, Emmanuel; MÜLLER, Thomas G.; SANTOS-SANZ, Pablo; PANUZZO, Pasquale; KISS, Csaba; LIM, Taeho; MOMMERT, Michael; BOCKELÉE-MORVAN, Dominique; VILENIUS, Essi; STANSBERRY, John; TOZZI, Gian Paolo; MOTTOLA, Stefano; DELSANTI, Audrey; CROVISIER, Jacques; DUFFARD, René; HENRY, Frédéric; LACERDA, Pedro; BARUCCI, Antonella; GICQUEL, Arnaud. \textit{TNOs are Cool: A survey of the trans-Neptunian region VIII. Combined Herschel PACS and SPIRE observations of nine bright targets at 70--500 $\mu$m}. Astronomy \& Astrophysics, v. 555, p. A15, jul. 2013. DOI: 10.1051/0004-6361/201321329.
 
@@ -282,6 +284,50 @@ SMITH, Matilda; RUXTON, Graeme. ``Effective use of the McNemar test''. \emph{Beh
 %\url{https://www.doi.org/10.1007/978-94-009-5400-7_17}
 
 \bibitem[Saito \& Rehmsmeier (2015)]{Saito2015} SAITO, Takaya; REHMSMEIER, Marc. ``The Precision-Recall Plot Is More Informative than the ROC Plot When Evaluating Binary Classifiers on Imbalanced Datasets''. \emph{PLOS ONE}, 10(3), e0118432, 2015. DOI: 10.1371/journal.pone.0118432.
+
+% - Referências acrescentadas na revisão pós-defesa (carta da banca) -
+% Ocultações, Gaia e dados
+\bibitem[Ortiz et al. (2020)]{Ortiz2020} ORTIZ, J. L.; SICARDY, B.; CAMARGO, J. I. B.; SANTOS-SANZ, P.; BRAGA-RIBAS, F. ``Stellar occultations by Trans-Neptunian objects: from predictions to observations and prospects for the future''. In: PRIALNIK, D.; BARUCCI, M. A.; YOUNG, L. A. (Ed.). \emph{The Trans-Neptunian Solar System}. Amsterdam: Elsevier, 2020. p. 413--437. DOI: 10.1016/B978-0-12-816490-7.00019-9.
+
+\bibitem[Gaia Collaboration et al. (2016)]{Gaia2016} GAIA COLLABORATION; PRUSTI, T.; DE BRUIJNE, J. H. J.; et al. ``The Gaia mission''. \emph{Astronomy \& Astrophysics}, 595, A1, 2016. DOI: 10.1051/0004-6361/201629272.
+
+\bibitem[Gaia Collaboration et al. (2023)]{GaiaDR3} GAIA COLLABORATION; VALLENARI, A.; BROWN, A. G. A.; PRUSTI, T.; et al. ``Gaia Data Release 3: Summary of the content and survey properties''. \emph{Astronomy \& Astrophysics}, 674, A1, 2023. DOI: 10.1051/0004-6361/202243940.
+
+\bibitem[Herald et al. (2016)]{HeraldBocc2016} HERALD, D.; BREIT, D.; DUNHAM, D.; FRAPPA, E.; et al. \textit{Occultation lights curves}. VizieR On-line Data Catalog: B/occ. Strasbourg: CDS, 2016. DOI: 10.26093/cds/vizier.102033. Disponível em: \url{https://cdsarc.cds.unistra.fr/viz-bin/cat/B/occ}.
+
+% Algoritmos de ML e métodos estatísticos
+\bibitem[Breiman (2001)]{Breiman2001} BREIMAN, Leo. ``Random Forests''. \emph{Machine Learning}, 45(1), 5--32, 2001. \url{https://doi.org/10.1023/A:1010933404324}.
+
+\bibitem[Chen \& Guestrin (2016)]{Chen2016} CHEN, Tianqi; GUESTRIN, Carlos. ``XGBoost: A Scalable Tree Boosting System''. In: \emph{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}. San Francisco: ACM, 2016. p. 785--794. \url{https://doi.org/10.1145/2939672.2939785}.
+
+\bibitem[Prokhorenkova et al. (2018)]{Prokhorenkova2018} PROKHORENKOVA, Liudmila; GUSEV, Gleb; VOROBEV, Aleksandr; DOROGUSH, Anna Veronika; GULIN, Andrey. ``CatBoost: unbiased boosting with categorical features''. In: \emph{Advances in Neural Information Processing Systems 31 (NeurIPS 2018)}, p. 6639--6649, 2018. arXiv:1706.09516.
+
+\bibitem[Strobl et al. (2007)]{Strobl2007} STROBL, Carolin; BOULESTEIX, Anne-Laure; ZEILEIS, Achim; HOTHORN, Torsten. ``Bias in random forest variable importance measures: Illustrations, sources and a solution''. \emph{BMC Bioinformatics}, 8, 25, 2007. \url{https://doi.org/10.1186/1471-2105-8-25}.
+
+\bibitem[Zhong et al. (2023)]{Zhong2023} ZHONG, Xugang; LIN, Yanze; ZHANG, Wei; BI, Qing. ``Predicting diagnosis and survival of bone metastasis in breast cancer using machine learning''. \emph{Scientific Reports}, 13, 18301, 2023. \url{https://doi.org/10.1038/s41598-023-45438-z}.
+
+\bibitem[Condorcet (1785)]{Condorcet1785} CONDORCET, Marie Jean Antoine Nicolas de Caritat, marquis de. \textit{Essai sur l'application de l'analyse à la probabilité des décisions rendues à la pluralité des voix}. Paris: Imprimerie Royale, 1785.
+
+\bibitem[Cali\'{n}ski \& Harabasz (1974)]{Calinski1974} CALI\'{N}SKI, T.; HARABASZ, J. ``A dendrite method for cluster analysis''. \emph{Communications in Statistics}, 3(1), 1--27, 1974. \url{https://doi.org/10.1080/03610927408827101}.
+
+\bibitem[Nocedal \& Wright (2006)]{Nocedal2006} NOCEDAL, Jorge; WRIGHT, Stephen J. \textit{Numerical Optimization}. 2. ed. New York: Springer, 2006. (Springer Series in Operations Research and Financial Engineering). \url{https://doi.org/10.1007/978-0-387-40065-5}.
+
+\bibitem[Savitzky \& Golay (1964)]{SavitzkyGolay1964} SAVITZKY, A.; GOLAY, M. J. E. ``Smoothing and differentiation of data by simplified least squares procedures''. \emph{Analytical Chemistry}, v. 36, n. 8, p. 1627--1639, 1964. DOI: 10.1021/ac60214a047.
+
+\bibitem[Welch (1947)]{Welch1947} WELCH, B. L. ``The generalization of `Student's' problem when several different population variances are involved''. \emph{Biometrika}, v. 34, n. 1-2, p. 28--35, 1947. DOI: 10.1093/biomet/34.1-2.28.
+
+\bibitem[Kolmogorov (1933)]{Kolmogorov1933} KOLMOGOROV, A. N. ``Sulla determinazione empirica di una legge di distribuzione''. \emph{Giornale dell'Istituto Italiano degli Attuari}, v. 4, p. 83--91, 1933.
+
+\bibitem[Smirnov (1948)]{Smirnov1948} SMIRNOV, N. ``Table for estimating the goodness of fit of empirical distributions''. \emph{Annals of Mathematical Statistics}, v. 19, n. 2, p. 279--281, 1948. DOI: 10.1214/aoms/1177730256.
+
+% Software científico
+\bibitem[Virtanen et al. (2020)]{SciPy2020} VIRTANEN, P.; GOMMERS, R.; OLIPHANT, T. E.; et al. ``SciPy 1.0: fundamental algorithms for scientific computing in Python''. \emph{Nature Methods}, v. 17, p. 261--272, 2020. DOI: 10.1038/s41592-019-0686-2.
+
+\bibitem[Astropy Collaboration et al. (2022)]{Astropy2022} ASTROPY COLLABORATION; PRICE-WHELAN, A. M.; LIM, P. L.; et al. ``The Astropy Project: Sustaining and Growing a Community-oriented Open-source Project and the Latest Major Release (v5.0) of the Core Package''. \emph{The Astrophysical Journal}, v. 935, n. 2, 167, 2022. DOI: 10.3847/1538-4357/ac7c74.
+
+\bibitem[Ginsburg et al. (2019)]{Astroquery2019} GINSBURG, A.; SIP\H{O}CZ, B. M.; BRASSEUR, C. E.; et al. ``astroquery: An Astronomical Web-querying Package in Python''. \emph{The Astronomical Journal}, v. 157, n. 3, 98, 2019. DOI: 10.3847/1538-3881/aafc33.
+
+\bibitem[McKinney (2010)]{McKinney2010} McKINNEY, W. ``Data Structures for Statistical Computing in Python''. In: \emph{Proceedings of the 9th Python in Science Conference}, p. 56--61, 2010. DOI: 10.25080/Majora-92bf1922-00a.
 
 % exemplo livro
 %\bibitem[]{key-1}AARSETH, S. J. (2003) ``Gravitational N-body Simulations:

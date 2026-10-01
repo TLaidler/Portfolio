@@ -71,7 +71,7 @@ O \textbf{Random Forest} lidera com F1 = 0,9905. Em relação ao Experimento 4, 
 \end{figure}
 
 % -----------------------------------------------------------------------------
-\section{Experimento 6: ablação isolada do K-Means}
+\section{Experimento 6: ablação isolada do K-means}
 \label{sec:resultados_exp4}
 
 No Experimento 6 foi removida \texttt{kmeans\_centroid\_dist}, mantendo 12 \textit{features} (sem \texttt{Feature\_Savgol\_Min}), com divisão 80\%/20\%. A pergunta investigada é se a alta importância atribuída a essa variável pelos modelos de árvore reflete uma contribuição insubstituível ou se as demais \textit{features} absorvem sua capacidade preditiva. A Tabela~\ref{tab:metricas_4} apresenta as métricas.
@@ -92,7 +92,7 @@ Regressão Log.  & 0,9882 & 1,0000 & 0,9750 & 0,9873 & 1,0000 \\
 \end{tabular}
 \end{table}
 
-Random Forest e XGBoost empatam com F1 = 0,9906 --- desempenho igual ou superior ao da configuração que mantém o K-Means. A Figura~\ref{fig:confusao_4} apresenta as matrizes de confusão.
+Random Forest e XGBoost empatam com F1 = 0,9906 --- desempenho igual ou superior ao da configuração que mantém o K-means. A Figura~\ref{fig:confusao_4} apresenta as matrizes de confusão.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -102,7 +102,7 @@ Random Forest e XGBoost empatam com F1 = 0,9906 --- desempenho igual ou superior
 \end{center}
 \end{figure}
 
-A Tabela~\ref{tab:ablation_comparacao} confronta os F1-scores do Experimento~5 (13 \textit{features}, com \texttt{kmeans}), do Experimento~6 (12 \textit{features}, sem \texttt{kmeans}) e do Experimento~2 (11 \textit{features}, sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans}), evidenciando que a remoção da \textit{feature} de K-Means não degrada o desempenho global.
+A Tabela~\ref{tab:ablation_comparacao} confronta os F1-scores do Experimento~5 (13 \textit{features}, com \texttt{kmeans}), do Experimento~6 (12 \textit{features}, sem \texttt{kmeans}) e do Experimento~2 (11 \textit{features}, sem \texttt{Feature\_Savgol\_Min} e sem \texttt{kmeans}), evidenciando que a remoção da \textit{feature} de K-means não degrada o desempenho global.
 
 \begin{table}[htbp]
 \centering
@@ -120,7 +120,7 @@ Regressão Log.  & 0,9873 & 0,9873 & 0,9841 \\
 \end{tabular}
 \end{table}
 
-A importância antes concentrada em \texttt{kmeans\_centroid\_dist} é redistribuída entre variáveis como \texttt{Feature\_Savgol\_std}, \texttt{Occ\_depth}, \texttt{Occ\_duration\_s} e \texttt{MinLogP\_Ttest}. Esse resultado sustenta a conclusão discutida no Capítulo~5: \texttt{kmeans\_centroid\_dist} e \texttt{Feature\_Savgol\_std} capturam o mesmo fenômeno físico (a dispersão do fluxo causada pelos dois patamares dentro e fora do \textit{dip}), de modo que a alta importância atribuída ao K-Means não reflete informação insubstituível. Na prática, isso permite simplificar a \textit{pipeline} eliminando o passo de K-Means sem perda de desempenho.
+A importância antes concentrada em \texttt{kmeans\_centroid\_dist} é redistribuída entre variáveis como \texttt{Feature\_Savgol\_std}, \texttt{Occ\_depth}, \texttt{Occ\_duration\_s} e \texttt{MinLogP\_Ttest}. Esse resultado sustenta a conclusão discutida no Capítulo~5: \texttt{kmeans\_centroid\_dist} e \texttt{Feature\_Savgol\_std} capturam o mesmo fenômeno físico (a dispersão do fluxo causada pelos dois patamares dentro e fora do \textit{dip}), de modo que a alta importância atribuída ao K-means não reflete informação insubstituível. Na prática, isso permite simplificar a \textit{pipeline} eliminando o passo de K-means sem perda de desempenho.
 
 Por fim, a Figura~\ref{fig:confusao_5} apresenta as matrizes de confusão da configuração enxuta de 11 \textit{features} (Experimento~2), discutida em detalhe na Seção~\ref{sec:resultados_exp5} do Capítulo~5.
 
