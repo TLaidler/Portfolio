@@ -1,26 +1,38 @@
 % =============================================================================
-% Apêndice B — Ambiente de software e reprodutibilidade
+% Apêndice B --- Ambiente de software e reprodutibilidade
 % =============================================================================
 \chapter{Ambiente de software e versões}
 \label{ap:ambiente}
 
-Para reprodutibilidade dos experimentos, segue a lista das principais ferramentas e bibliotecas utilizadas no projeto. As versões abaixo referem-se ao ambiente em que a \textit{pipeline} de treinamento (\texttt{train\_model.py}) e a construção do \textit{dataset} foram executadas, conforme arquivo \texttt{requirements.txt} (ou \texttt{requirements\_frozen.txt}) do repositório do projeto.
+O código da \textit{pipeline} está disponível em \url{https://github.com/TLaidler/pipeline_occ_ml}. Para reprodutibilidade dos experimentos, segue a lista das principais ferramentas e bibliotecas utilizadas no projeto, em dois ambientes: o da construção do \textit{dataset} e dos experimentos da versão apresentada à banca (\textit{script} \texttt{train\_model.py}), conforme o arquivo \texttt{requirements.txt} (ou \texttt{requirements\_frozen.txt}) do repositório, e o da reanálise do Capítulo~5 (\textit{script} \texttt{reanalise\_banca.py}).
 
-\textbf{Pacotes principais:}
+\textbf{Construção do \textit{dataset} e experimentos da versão apresentada à banca:}
 \begin{itemize}
-	\item Python: 3.x (recomenda-se 3.10 ou superior para compatibilidade com as bibliotecas listadas).
-	\item numpy — 1.26.4
-	\item pandas — 2.2.2
-	\item scikit-learn — 1.4.2
-	\item xgboost — 2.0.3
-	\item catboost — 1.2.5
-	\item matplotlib — 3.8.4
-	\item seaborn — 0.13.2
-	\item joblib — 1.4.2
-	\item astropy — 5.3.1
-	\item scipy — 1.13.1
+	\item Python 3.10 ou superior.
+	\item numpy --- 1.26.4
+	\item pandas --- 2.2.2
+	\item scikit-learn --- 1.4.2
+	\item xgboost --- 2.0.3
+	\item catboost --- 1.2.5
+	\item matplotlib --- 3.8.4
+	\item seaborn --- 0.13.2
+	\item joblib --- 1.4.2
+	\item astropy --- 5.3.1
+	\item scipy --- 1.13.1
+\end{itemize}
+
+\textbf{Reanálise do Capítulo~5:}
+\begin{itemize}
+	\item Python --- 3.14.6
+	\item numpy --- 2.4.6
+	\item pandas --- 2.3.3
+	\item scikit-learn --- 1.9.0
+	\item xgboost --- 3.3.0
+	\item catboost --- 1.2.10
+	\item scipy --- 1.18.0
+	\item matplotlib --- 3.11.0
 \end{itemize}
 
 \textbf{Outras dependências} (aquisição de dados, persistência, testes): SQLAlchemy 2.0.31, requests 2.32.3, python-dotenv 1.0.1, pyyaml 6.0.1, pytest 7.4.3. A aquisição de curvas de luz a partir do VizieR e do Grupo do Rio pode utilizar ainda \texttt{astroquery} e \texttt{aiohttp}; nesse caso, as versões devem ser registradas com \texttt{pip freeze} no ambiente em que os \textit{scripts} de ingestão forem executados.
 
-Para replicar o ambiente de treinamento, recomenda-se criar um ambiente virtual (venv ou conda) e instalar as dependências com \texttt{pip install -r requirements.txt} (ou \texttt{pip install -r requirements\_frozen.txt} para versões fixas). A data de geração do ambiente utilizado nos experimentos do Capítulo 5 deve ser registrada pelo autor ao finalizar a dissertação.
+Para replicar o ambiente de treinamento, recomenda-se criar um ambiente virtual (venv ou conda) e instalar as dependências com \texttt{pip install -r requirements.txt} (ou \texttt{pip install -r requirements\_frozen.txt} para versões fixas). A reanálise é reproduzida executando \texttt{python reanalise\_banca.py} no diretório \texttt{pipeline/model\_training}: o \textit{script} lê o \textit{dataset} e o banco de dados, grava as tabelas de resultados em \texttt{outputs/reanalise\_banca} e as figuras do Capítulo~5 em \texttt{writing\_latex/Tese/pngs/reanalise}. A partição do conjunto de teste depende da ordem dos rótulos de grupo (no formato \texttt{objeto\_AAAA-MM-DD}) e da versão do \texttt{scikit-learn}; com outra versão, a partição pode mudar.
