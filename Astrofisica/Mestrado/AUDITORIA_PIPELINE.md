@@ -5,6 +5,14 @@
 **Escopo:** `pipeline/` (Python) + `writing_latex/Tese/` (dissertação)
 **Status deste documento:** registro técnico de referência. Não dispara ações imediatas.
 
+> **Nota (2026-08-20):** este documento tem duas rodadas. A **primeira rodada** (abaixo) foi
+> obtida por leitura de código e enumera 10 achados críticos de natureza estatística.
+> A **segunda rodada** ([ir para a seção](#segunda-rodada--verificação-empírica-2026-08-20))
+> mediu empiricamente cada hipótese da primeira contra o dataset e o banco, **refutou uma
+> delas com números** (C3), **resolveu outra** (C9) e acrescentou 9 achados novos — entre eles
+> dois que a primeira rodada não podia enxergar por serem de *construção do benchmark*,
+> não de estatística (V1 e V2).
+
 ---
 
 ## Sumário executivo
@@ -391,3 +399,484 @@ Estes itens **fortalecem a defesa** ao demonstrar consciência metodológica.
 | `pipeline/model_training/occ_features.py` | C4 (sem ruído correlacionado) |
 | `pipeline/model_training/train_model.py` | C5/C6/C7 (regularização/tuning), C8 (CI), **C9 (sementes)**, **C10 (validação)** |
 | `pipeline/model_in_practice/test_low_snr.py` | OK (já validado em sessão anterior) |
+
+---
+---
+
+# Segunda rodada — verificação empírica (2026-08-20)
+
+**Método.** A primeira rodada foi leitura de código; esta rodada **mediu** cada hipótese contra
+`pipeline/model_training/outputs/dataset_final.csv` (1693 amostras, 28 features),
+`pipeline/data_warehouse/stellar_occultations.db` (931 observações, 462.738 pontos) e os
+artefatos salvos em `outputs/resultado*/`. Onde uma hipótese admitia teste destrutivo, o teste
+foi feito: o conjunto negativo foi **reconstruído** por um critério independente e o resultado
+comparado. Todo número abaixo é reprodutível a partir dos dados versionados.
+
+**Resultado em uma frase.** O pipeline é mais robusto do que a primeira rodada sugeria em
+estatística (C9 resolvido, C3 refutado), e menos robusto do que a tese sugere em
+**construção do benchmark** — mas o desvio é pequeno em magnitude e, quando corrigido,
+**favorece** a tese em vez de enfraquecê-la (ver V1 e o reenquadramento na Parte III).
+
+| | CRÍTICO | IMPORTANTE | MENOR |
+|---|:---:|:---:|:---:|
+| Achados novos (segunda rodada) | 4 | 3 | 2 |
+
+---
+
+## Parte I — Status dos achados da primeira rodada
+
+| Achado | Status após medição | Evidência |
+|---|---|---|
+| **C3** — vazamento de positiva original | ❌ **REFUTADO** | 186 recortes, 125 curvas-mãe distintas, **0 mães permanecem na classe positiva**; 0 `curve_name` duplicados. O filtro de exclusão funciona. Substituído por **V7**, que é o problema real e mais fino. |
+| **C9** — semente única | ✅ **RESOLVIDO** | 10 sementes, 11 features, dataset completo: **F1 = 0,985 ± 0,005** (RF) e **0,986 ± 0,005** (boosting). O F1 de 0,9906 está dentro de 1σ. Pode ir para a defesa hoje. |
+| **C1** — baseline contaminado pelo dip | ✅ Corroborado | Ver **V2**: além da contaminação, `normalize_flux` produz fluxo normalizado negativo em 25% das positivas. |
+| **C2** — outlier removal descarta o dip | ✅ Corroborado e **agravado** | Ver **V4**: `remove_outliers` é chamado em **um único ponto do pipeline**, e só na classe negativa. |
+| **C4** — ruído correlacionado | ✅ Corroborado (não medido) | Permanece válido como limitação. |
+| **C5/C6/C7** — regularização e tuning | ✅ Corroborado | Ver **V9** para a contradição adicional texto↔código na ponderação de classes do XGBoost. |
+| **C8** — métricas sem CI | ✅ Corroborado | Parcialmente endereçado pelos ±σ multi-semente acima; bootstrap ainda pendente. |
+| **C10** — sem conjunto de validação | ✅ Corroborado | O ajuste de τ e a escolha entre modelos ocorrem no teste. Válido. |
+| **I1/I6** — Savgol e independência do KS | ✅ Corroborado | Sem alteração. |
+
+---
+
+## Parte II — Achados novos
+
+### V1. Circularidade da fronteira do recorte (limiar 0,78) — CRÍTICO ⚠️ DETALHADO
+
+**Arquivo:** `pipeline/model_training/build_dataset.py:117-139`
+
+#### O mecanismo
+
+Os negativos por recorte têm as **bordas** definidas pelo limiar, não pelo revisor humano:
+
+```python
+ocultando  = flux_clean < threshold        # threshold = 0.78
+inicio_occ = np.where(ocultando)[0][0]     # 1º ponto abaixo de 0,78
+fim_occ    = np.where(ocultando)[0][-1]    # último ponto abaixo de 0,78
+segments.append(('antes',  flux_clean[:inicio_occ]))
+segments.append(('depois', flux_clean[fim_occ+1:]))
+```
+
+O segmento `antes` é, por definição, tudo que precede o **primeiro** ponto abaixo de 0,78 —
+logo nenhum ponto dele pode estar abaixo de 0,78. Idem para `depois`. O revisor responde
+`s`/`n`/`skip`: aceita ou rejeita, **mas não move as bordas**. Aprovação manual é operação de
+**subconjunto**, e qualquer invariante válida para todos os candidatos vale para os aprovados.
+
+**Importante:** isto **não** é um problema de rotulagem. Os rótulos estão corretos — um trecho
+fora da ocultação é, de fato, sem ocultação. O problema é que as duas classes ficam
+analiticamente disjuntas ao longo de um eixo do espaço de features.
+
+Medido:
+
+| fonte | n | fração com `flux_min` < 0,78 | fração com `Savgol_Min` < 0,78 |
+|---|---|---|---|
+| `db_positive` | 802 | 0,9813 | 0,9613 |
+| `artificial_negative` | 186 | **0,0000** | **0,0000** |
+| `synthetic` | 702 | 0,1895 | 0,0427 |
+| `db_negative` | 3 | 0,6667 | 0,0000 |
+
+O `0,0000` é invariante do fatiamento, não coincidência amostral.
+
+#### Efeito colateral de seleção
+
+Em `build_dataset.py:119-121`:
+
+```python
+if not np.any(ocultando):
+    print("  -> Nenhuma ocultação detectada nesta curva, pulando...")
+    continue
+```
+
+As **31 positivas de dip raso** (3,9% de 802; nenhum ponto abaixo de 0,78) foram puladas
+*antes* da revisão — nunca foram oferecidas ao revisor. A classe negativa portanto não contém
+nenhum recorte proveniente de noites de dip raso. Efeito de seleção que a revisão manual não
+tinha como corrigir, pois não viu essas curvas.
+
+#### Consequência mensurável
+
+Separabilidade univariada no dataset (AUC de uma única feature):
+
+| feature | AUC |
+|---|---|
+| `Feature_Savgol_Min` | **0,9892** |
+| `kmeans_centroid_dist` | 0,9817 |
+| `Occ_flux_min` | 0,9813 |
+| `Feature_Savgol_std` | 0,9755 |
+| `Occ_depth` | 0,9690 |
+| `Occ_SNR_dip` | 0,8115 |
+| `Occ_chi2_constant` | 0,7658 |
+| `Occ_chi2_square_well` | 0,5404 |
+
+Uma árvore de decisão de **profundidade 1** treinada em `Feature_Savgol_Min` aprende o corte em
+**0,78137** — redescobre a constante do `build_dataset.py` — e atinge F1 = 0,953.
+
+#### Teste de falsificação
+
+O conjunto negativo foi **reconstruído** com bordas definidas sem qualquer referência a nível de
+fluxo: janela = fração fixa do comprimento (primeiros ou últimos 40% dos pontos), dip localizado
+por critério **estatístico** (maior run abaixo de mediana − 5·σ_MAD, que se adapta ao ruído de
+cada curva e não impõe fronteira em valor constante), curva descartada se o dip invadir a janela
+com guarda de 5%. Mesmo pré-processamento nas duas classes, para isolar o efeito de fronteira do
+efeito de **V4**. Executado também sem os dois χ² somados sobre N, para não trocar um artefato
+por outro (**V5**). 10 sementes, split 80/20.
+
+| | (A) original, borda = 0,78 | (B) sem limiar, borda = fração do comprimento |
+|---|---|---|
+| n (positivas / negativas) | 988 (802 / 186) | 1136 (898 / 238) |
+| negativos com `flux_min` < 0,78 | **0 / 186 (0,0%)** | **174 / 238 (73,1%)** |
+| Boosting, 11 features | 0,9888 ± 0,0056 | **0,9727 ± 0,0064** |
+| Boosting, 9 features (sem χ² somados) | 0,9839 ± 0,0041 | 0,9694 ± 0,0051 |
+| Random Forest, 11 features | 0,9901 ± 0,0057 | 0,9703 ± 0,0094 |
+| regra trivial `min < 0,78` | 0,9794 ± 0,0053 | **0,9161 ± 0,0106** |
+| **vantagem do ML sobre a regra** | **+0,94 pp** | **+5,66 pp** |
+
+#### Interpretação — e registro de uma correção do próprio auditor
+
+A hipótese inicial desta rodada foi que a circularidade explicava a maior parte do F1 = 0,99.
+**A hipótese está errada, e o teste é que mostra isso.** Removida a circularidade, o F1 dos
+modelos cai apenas **1,6 pp** (0,989 → 0,973): os modelos não estavam redescobrindo o limiar,
+estavam lendo estrutura de dip. O que a circularidade inflava era a **regra trivial**
+(0,979 → 0,916) — isto é, a muleta fazia a contribuição do ML parecer *menor* do que é. A
+vantagem real sobre a heurística é ~6× maior que a comparação ingênua sugere.
+
+Os 1,6 pp são um **limite superior**: os negativos de (B) não passaram por revisão humana e
+carregam nuvem e sistemáticos que teriam sido rejeitados, então parte da queda é sujeira e não
+fronteira. Critério de leitura declarado *antes* de rodar o teste: "se o F1 se mantiver em
+0,98–0,99, a circularidade é irrelevante na prática". Ficou em 0,973 — logo o efeito existe,
+é real e é pequeno.
+
+**Ressalvas do teste (B):** 660 de 898 curvas descartadas (dip invadindo a janela ou não
+detectado pelo critério de 5σ), o que introduz seleção própria; janelas de 40% são mais longas
+que os recortes originais. É teste de sanidade, não substituto do conjunto revisado à mão.
+
+#### Regime difícil — o número que realmente importa
+
+Restringindo às positivas em que a heurística falha por construção (sem nenhum ponto abaixo de
+0,78):
+
+| regime difícil | n positivas | n negativas | Boosting | regra trivial |
+|---|---|---|---|---|
+| com negativos originais | 31 | 891 (inclui as 702 sintéticas) | 0,833 ± 0,071 | **0,000** |
+| com negativos sem limiar | 30 | 238 (janela por fração) | 0,641 ± 0,111 | **0,000** |
+
+Os dois conjuntos negativos diferem em tamanho e composição, portanto as duas linhas **não são
+diretamente comparáveis entre si** — cada uma deve ser lida contra a sua própria regra trivial
+(0,000 em ambos os casos). A comparação limpa entre construções é a da tabela anterior.
+
+A barra de erro é grande e o corte em 0,78 é arbitrário, mas o contraste qualitativo é
+inequívoco: onde a heurística vale exatamente zero, o modelo recupera a maioria dos eventos.
+Este é o mesmo regime do anel fino Q2R no estudo de caso de Quaoar (Cap. 5, Seção 5.7.2) — e
+hoje os dois resultados estão desconectados no texto.
+
+#### Mitigação
+
+1. Reportar a regra trivial na tabela principal do Cap. 5, ao lado do F1 dos modelos.
+2. Criar seção "regime difícil" com os números acima.
+3. Para o artigo: refazer o recorte com bordas independentes de nível de fluxo (critério em σ_MAD,
+   ou tempos de imersão/emersão publicados quando disponíveis) e reportar o F1 resultante.
+
+---
+
+### V2. Fluxo normalizado não-físico entrando nas features — CRÍTICO
+
+**Arquivos:** `pipeline/model_training/astro_data_access.py:221-281` (`normalize_flux`) e
+`pipeline/model_training/build_dataset.py:456-475`
+
+O pipeline de treino não aplica nenhum clip físico ao fluxo. Distribuição de `Occ_flux_min` nas
+802 positivas do dataset da tese:
+
+```
+count = 802     mean = -89,87     std = 2547,39
+min = -72141    p01 = -1,385   p05 = -0,498   p25 = -0,103
+med = 0,032     p95 =  0,696   p99 =  0,835   max =  0,917
+```
+
+- **204 de 802 positivas (25%)** têm fluxo normalizado mínimo abaixo de −0,1, o que não é físico.
+- Pior caso: `Hera_2005-04-01_BAllen` entra no treino com `flux_min = −72141`,
+  `Feature_Amp = 81664` e `Occ_depth = 55344`. É *flag* de qualidade do PRAIA ou quadro
+  corrompido passando direto para as features.
+- Outros: `Desiderata_2016-02-01_ARPratt` (−3,61), `Jiangxi_2020-12-01_Unknown` (−2,54),
+  `2002KX14_2018-09-01_WHanna` (−1,96), `Oceana_2012-03-01_MForbes` (−1,82),
+  `Pretoria_2005-10-01_Unknown` (−1,69).
+
+**Inconsistência de projeto:** `pipeline/model_in_practice/test_quaoar.py` **faz** o clip físico
+em `[-2, 5]` (descrito no Cap. 5, linha 465), justamente para remover valores extremos do PRAIA.
+O script de **inferência** é mais cuidadoso que o de **treinamento**.
+
+Isso corta nos dois sentidos: valores extremos tornam algumas positivas trivialmente separáveis
+por motivo errado, e `Feature_Amp` / `Max_Drawdown` / `Occ_depth` dessas curvas são lixo.
+
+**Mitigação:** aplicar em `build_dataset.py` o mesmo clip já usado em `test_quaoar.py`, e registrar
+quantas curvas foram afetadas. É uma linha e é a correção de maior retorno por esforço de toda
+esta auditoria — vale rodar antes da defesa e reportar o F1 resultante.
+
+---
+
+### V3. `Occ_SNR_dip` tem distribuição nula centrada em ~4–5, não em 0 — CRÍTICO
+
+**Arquivo:** `pipeline/model_training/occ_features.py:157` e `occ_features.py:98`
+
+Duas causas que se somam na mesma direção:
+
+1. `depth = baseline − min(flux)` usa o **mínimo**, uma estatística de valor extremo: para ruído
+   gaussiano puro, cresce como σ·√(2 ln N). Nunca é ≈ 0.
+2. `baseline_std = std(flux[flux >= mediana])` usa apenas a **metade superior** da distribuição,
+   subestimando σ em ~40%.
+
+Logo `SNR_dip = depth / baseline_std` não é significância de detecção. Medido:
+
+| fonte | mediana `SNR_dip` | p90 | fração > 3 |
+|---|---|---|---|
+| `synthetic` (ruído puro por construção) | 4,68 | 5,81 | **0,996** |
+| `db_negative` | 4,28 | 4,34 | 1,000 |
+| `artificial_negative` | 3,31 | 5,05 | 0,586 |
+| `db_positive` | 7,35 | 14,81 | 0,928 |
+
+Uma curva de ruído puro tira "SNR > 3" em 99,6% dos casos.
+
+**Consequência para a tese.** O parágrafo do Cap. 6 (linha 18) e o script
+`pipeline/model_in_practice/test_low_snr.py` selecionam curvas com `Occ_SNR_dip < 3` e as tratam
+como "curvas difíceis / de baixo SNR". Não são: `SNR_dip < 3` está **abaixo da mediana do ruído
+puro**, então as 67 curvas selecionadas são uma cauda atípica, não os casos fisicamente difíceis.
+O teste não mede o que o texto afirma que mede (e, como se reconhece no próprio parágrafo, é
+in-sample).
+
+**Mitigação:** cortar a afirmação do Cap. 6 ou trocar o estimador por um com nulo em ≈ 0, por
+exemplo `Occ_depth / (σ_MAD · √n_frames_no_dip)`, e verificar a distribuição nula nas sintéticas
+antes de usar.
+
+---
+
+### V4. Pré-processamento assimétrico entre as classes — CRÍTICO
+
+**Arquivo:** `pipeline/model_training/build_dataset.py:110`
+
+`remove_outliers` é chamado em **exatamente um lugar** de todo o pipeline: dentro de
+`recortar_negativos_interativo`. As positivas que entram no dataset (`build_dataset.py:464`) usam
+a curva crua do banco.
+
+Ou seja: **a classe negativa levou clipping de 3σ e a positiva não.** Medianas por fonte:
+
+| fonte | `Feature_Flux_std` | `Feature_Amp` | `Feature_Savgol_Max` |
+|---|---|---|---|
+| `db_positive` | 0,2891 | 1,3667 | 1,2499 |
+| `artificial_negative` | 0,0939 | 0,4212 | 1,1985 |
+| `synthetic` | 0,0357 | 0,2001 | 1,0550 |
+
+Parte dessa diferença é física (o dip infla a dispersão), mas parte é o degrau de tratamento.
+`Feature_Flux_std`, `Feature_Amp`, `Max_Drawdown` e `Occ_baseline_std` — todas no conjunto final —
+são afetadas.
+
+**Mitigação:** mesmo pré-processamento nas duas classes, e trocar média/σ por MAD no
+`remove_outliers` (já apontado em C2).
+
+---
+
+### V5. `Occ_chi2_constant` e `Occ_chi2_square_well` são proxies de comprimento — IMPORTANTE
+
+**Arquivo:** `pipeline/model_training/occ_features.py:233-291`
+
+Ambos são somas de resíduos quadráticos sobre N pontos, **sem redução por graus de liberdade**.
+Logo escalam com o comprimento da curva. Medianas:
+
+| fonte | `Occ_chi2_constant` |
+|---|---|
+| `db_positive` | 1220,1 |
+| `db_negative` | 976,9 |
+| `synthetic` | 593,7 |
+| `artificial_negative` | **140,0** |
+
+Fator ~9 entre positivas e recortes, porque o recorte é por construção mais curto que a curva-mãe.
+As duas features estão no conjunto final de 11 e codificam **proveniência**, não física.
+Confirmação independente: no teste de falsificação (**V1**), remover essas duas features muda o
+resultado em menos de 0,5 pp — elas contribuem pouco além do comprimento.
+
+**Mitigação:** dividir por N (χ² reduzido). `Occ_chi2_ratio` já é adimensional e pode ficar.
+
+---
+
+### V6. Distribution shift entre sintéticas e reais, dentro da mesma classe — IMPORTANTE
+
+Treinando um discriminador `synthetic` vs. `artificial_negative` — **ambas rótulo 0**:
+
+| feature | AUC |
+|---|---|
+| `Feature_Savgol_std` | **0,9425** |
+| `kmeans_centroid_dist` | 0,9411 |
+| `Occ_chi2_square_well` | 0,9336 |
+| `Occ_chi2_constant` | 0,9304 |
+| `Deriv_Std` | 0,9186 |
+
+As 702 sintéticas são uma subpopulação reconhecível e são **78% da classe negativa**. Parte do que
+o modelo aprende é "isto é sintético → negativo", que não transfere para dado observacional.
+
+Confirmação pelo caminho oposto: removendo as sintéticas e treinando só em dado real
+(802 positivas vs. 189 negativas), o F1 **sobe** — RF 0,9886 ± 0,0063, boosting 0,9882 ± 0,0057,
+contra 0,985/0,986 no dataset completo. As sintéticas não estão ajudando a generalização medida.
+
+O Experimento 3 é a mitigação correta, mas seu teste tem 38 negativas reais.
+
+**Mitigação:** reportar esse AUC de 0,94 como *adversarial validation* explícita no Cap. 5. É um
+número honesto, barato de calcular e demonstra domínio metodológico.
+
+---
+
+### V7. Split por curva, não por evento — IMPORTANTE (substitui C3)
+
+**Arquivo:** `pipeline/model_training/train_model.py:279-320` (`split_by_curve`)
+
+O split é feito por `curve_name` = `objeto_data_observador`. Mas uma mesma ocultação física é
+frequentemente registrada por vários observadores:
+
+- 765 eventos (objeto + data) distintos entre as 988 curvas reais;
+- **164 eventos têm mais de uma curva**, envolvendo **387 das 988 curvas (39%)**;
+- simulando 20 sementes, em média **59,8 eventos ficam partidos entre treino e teste**.
+
+Nesses casos o modelo vê uma corda da mesma ocultação — mesma estrela, mesma noite, mesma escala
+de profundidade e duração — no treino, e é testado em outra corda do mesmo evento. Viés otimista
+leve, mas sistemático. É a versão real e mensurada da preocupação levantada em C3 (que, no nível
+de curva-mãe, foi refutada).
+
+**Mitigação:** `StratifiedGroupKFold` / `GroupShuffleSplit` agrupando por `(objeto, data)`.
+
+---
+
+### V8. O `dataset_final.csv` versionado é incompatível com o código — CRÍTICO (reprodutibilidade)
+
+**Arquivos:** `outputs/dataset_final.csv` vs. `occ_features.py` e `train_model.py:88`
+
+O CSV versionado tem colunas com prefixo **`IOTA_`**; `occ_features.py` e a lista
+`EXCLUDED_FEATURES` usam **`Occ_`**. A exclusão é *match* por string, **sem validação**. Portanto,
+quem clonar o repositório e rodar `train_model.py` obtém **19 features em vez de 11** e números que
+não reproduzem a tese. Os `feature_names.pkl` dos diretórios `resultado*/` confirmam que as
+rodadas reais usaram `Occ_`.
+
+Problema relacionado, em `train_model.py:175`:
+
+```python
+df = pd.read_csv(from_csv).dropna()
+```
+
+O `dropna()` roda **antes** do split e sobre **todas** as colunas, inclusive as excluídas. Um NaN
+em `Deriv_Kurtosis` (que só ocorre em curvas com poucos pontos) elimina a curva inteira, mesmo a
+feature não sendo usada — descartando preferencialmente curvas curtas, que são as difíceis. E
+torna o `SimpleImputer` um no-op, contradizendo o Cap. 4 ("valores faltantes preenchidos pela
+mediana calculada no conjunto de treino").
+
+**Mitigação:**
+```python
+faltando = set(EXCLUDED_FEATURES) - set(df.columns)
+assert not faltando, f"EXCLUDED_FEATURES não encontradas no dataset: {faltando}"
+```
+mais: regerar o CSV versionado, e restringir o `dropna()` às colunas efetivamente usadas (ou
+removê-lo, deixando o imputer trabalhar como o Cap. 4 descreve).
+
+---
+
+### V9. Inconsistências texto↔código — MENOR (mas a banca cutuca)
+
+| # | Item | Onde | Situação |
+|---|---|---|---|
+| a | **Ponderação de classes no XGBoost** | `train_model.py:123`; Cap. 5 linha 228; Seção 5.11.1; `apendice_hiperparametros.tex:36` | `XGB_PARAMS` não tem `scale_pos_weight`. O Cap. 5 afirma "ponderação das classes nos quatro algoritmos" e o apêndice diz que "o desbalanceamento é tratado indiretamente pelo algoritmo" — **isso não é verdade**, o default é `scale_pos_weight=1`, sem tratamento algum. Numericamente irrelevante (802/891 é quase balanceado); corrigir só o texto. |
+| b | **McNemar: definição de b e c** | `train_model.py:923`; Cap. 5 linha 682 vs. legenda da Tabela 5.11 | O corpo do texto define "b = A erra e B acerta"; código e legenda usam o inverso. Os seis p-valores foram recalculados e **estão corretos** (a estatística é simétrica em \|b−c\|), mas texto e legenda se contradizem. |
+| c | **McNemar: teste errado para o regime** | `train_model.py:930` | Com b+c ≤ 6 a aproximação χ² não vale (regra de bolso: b+c ≥ 25). Usar binomial exato — `statsmodels.stats.contingency_tables.mcnemar(exact=True)`, uma linha. A tese já reconhece que o teste é "pouco potente"; trocar blinda a afirmação. |
+| d | **Curva de aprendizado** | `train_model.py:968-1005` | `n_train` hardcoded por nome de diretório, com convenções inconsistentes entre eles (`0.4-0.6` = 40% treino; `0.35-0.65` = 65% treino), e `set_ylim([0.96, 1.0])`. A conclusão de "saturação" (contribuição 4 do Cap. 6) repousa em 3 pontos com o eixo y comprimido em 0,04. Ampliar para 5–6 pontos ou suavizar a afirmação. |
+| e | **Escala de Fresnel** | `capitulo2.tex:90` | "Essa escala define a resolução espacial efetiva na direção **perpendicular à corda**" — a difração de Fresnel borra o perfil **ao longo** da corda (direção do movimento da sombra); a resolução perpendicular é dada pelo espaçamento entre cordas. O cálculo numérico (1,2 km a 40 UA) está correto. |
+| f | **Rastreabilidade dos experimentos** | `outputs/resultado*/feature_names.pkl` | Contagens salvas: 28, 13, 12, 12, 11, 11, 11. A tese cita "Experimento 4 (14 features)" — **não existe rodada com 14 features salva**. Cada experimento foi produzido editando constantes globais à mão, então o repositório guarda só um estado. Para a defesa basta uma tabela mapeando experimento da tese → diretório de resultado; para o artigo, um `experiments.yaml` + loop. |
+| g | **Path de figura quebrado** | `capitulo2.tex:104` | `Tese/pngs/LimbFitCircle.png`, inconsistente com o `pngs/...` do resto do capítulo (já registrado como M3). |
+
+---
+
+## Parte III — Reenquadramento recomendado do Capítulo 5
+
+O achado V1 exige uma mudança de narrativa, mas ela é **a favor** da tese. Hoje o Cap. 5 reporta
+F1 ≈ 0,99 sem baseline trivial na tabela principal, o que deixa aberta a pergunta óbvia da banca:
+*"por que ML e não um `if`?"*
+
+Narrativa recomendada, sustentada pelos números desta rodada:
+
+1. Uma heurística de limiar fixo atinge **F1 = 0,92** em condições honestas (construção sem
+   circularidade).
+2. Os modelos atingem **F1 = 0,97** nas mesmas condições — vantagem de **+5,7 pp**, ~6× maior do
+   que a comparação ingênua sugeria.
+3. No regime em que a heurística vale **exatamente zero** (dip raso, sem ponto abaixo de 0,78), os
+   modelos ainda recuperam **F1 ≈ 0,64**.
+4. Esse regime é precisamente o do anel fino Q2R de Quaoar (Seção 5.7.2), fechando o laço entre
+   experimento formal e estudo de caso — que hoje aparecem desconectados.
+
+Resposta de 30 segundos a ter pronta para a banca:
+> *"Seu conjunto negativo foi construído com um corte em 0,78; o modelo não está só reaprendendo
+> esse corte?"*
+> — "Em 96% das curvas, sim, e é por isso que reporto separadamente os 4% em que ele não está.
+> Testei removendo a circularidade: o F1 dos modelos cai 1,6 pp, o da heurística cai 6,3 pp."
+
+---
+
+## Parte IV — Prioridades revisadas
+
+**(a) Antes da defesa — baixo custo, alto retorno**
+
+| Ação | Custo | Fecha |
+|---|---|---|
+| Aplicar o clip físico do `test_quaoar.py` no `build_dataset.py` e reportar o F1 | 1 h | **V2** |
+| Reportar a regra trivial na tabela principal + seção "regime difícil" | 4 h | **V1** |
+| Levar os números multi-semente (F1 = 0,985 ± 0,005, 10 sementes) | pronto | **C9** |
+| Bootstrap CI nas métricas finais | 4 h | **C8** |
+| Corrigir os itens (a), (b), (e) de **V9** e a afirmação de baixo SNR do Cap. 6 | 1 tarde | **V3**, **V9** |
+| Tabela mapeando experimento da tese → diretório de resultado | 30 min | **V9-f** |
+| `assert` da lista `EXCLUDED_FEATURES` + regerar o CSV versionado | 1 h | **V8** |
+
+**(b) Antes de submeter artigo**
+
+- Recorte de negativos com bordas independentes de nível de fluxo (**V1**)
+- Mesmo pré-processamento nas duas classes, com MAD (**V4**, C2)
+- χ² reduzidos por N (**V5**)
+- `Occ_SNR_dip` com distribuição nula em ≈ 0 (**V3**)
+- Split agrupado por `(objeto, data)` (**V7**)
+- *Adversarial validation* sintética vs. real reportada (**V6**)
+- Calibração de probabilidades, Optuna, permutation importance / SHAP (I3, I4, C7)
+- Conjunto de validação separado do teste (**C10**)
+
+---
+
+## Anexo: como reproduzir os números desta rodada
+
+Todos os resultados vêm de `outputs/dataset_final.csv` e de
+`pipeline/data_warehouse/stellar_occultations.db`, ambos versionados. Os dois scripts do teste de
+falsificação (**V1**) foram executados fora do repositório:
+
+- `recorte_sem_limiar.py` — reconstrói o conjunto negativo com bordas por fração de comprimento e
+  dip localizado por 5·σ_MAD; grava `dataset_sem_limiar.csv`.
+- `compara.py` — compara construções (A) e (B) com as mesmas 11 features, mesmos modelos e 10
+  sementes.
+
+Parâmetros usados na construção (B): `FRAC_JANELA = 0.40`, `MARGEM = 0.05`, `K_SIGMA = 5.0`,
+`MIN_PTS = 20`; positivas lidas do banco com ≥ 50 pontos (898 curvas); 660 descartadas por dip
+invadindo a janela ou não detectado; 238 negativos gerados.
+
+**Nota de método.** Os modelos usados na comparação foram `RandomForestClassifier` com os
+hiperparâmetros de `RF_PARAMS` e `HistGradientBoostingClassifier` como substituto do XGBoost
+(`xgboost` não estava instalado no ambiente do auditor). Como toda a comparação é **relativa**
+entre as construções (A) e (B), com o mesmo modelo nas duas pontas, a substituição não afeta a
+conclusão — mas os valores absolutos de F1 não são diretamente comparáveis aos da tese, que usa
+XGBoost. Recomenda-se reexecutar `compara.py` no ambiente do `requirements_frozen.txt` antes de
+citar qualquer número desta rodada na dissertação.
+
+---
+
+## Comentários do painel — segunda rodada
+
+**Cientista de Dados Sênior:** O achado V2 é o que eu corrigiria primeiro: uma curva com
+amplitude de 8×10⁴ no conjunto de treino é indefensável em qualquer revisão, e o conserto é uma
+linha. V1 é o achado intelectualmente mais interessante, mas o teste mostrou que o impacto é
+pequeno — reporte-o como força, não como fraqueza.
+
+**Richard Feynman:** *"Você formulou uma hipótese — 'o limiar explica o 0,99' — desenhou o teste
+que poderia matá-la, declarou o critério antes de rodar, e a hipótese morreu. Isso é o único jeito
+de saber alguma coisa. Escreva a hipótese refutada na tese, não só a que sobreviveu."*
+
+**Carl Sagan:** *"O SNR que dá 5 para ruído puro é o tipo de coisa que passa por três revisores
+sem ninguém olhar a distribuição nula. Sempre plote o nulo."*
+
+**Josiah Willard Gibbs:** *"F1 = 0,985 ± 0,005 sobre dez sementes é uma afirmação. F1 = 0,9906
+não era. A segunda rodada transformou uma em outra — falta agora o bootstrap."*

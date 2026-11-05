@@ -11,7 +11,7 @@ Este apêndice reúne os resultados da reanálise do Capítulo~5 que não foram 
 \section{Correspondência entre as versões}
 \label{sec:correspondencia_experimentos}
 
-A Tabela~\ref{tab:correspondencia} relaciona a numeração dos experimentos na versão apresentada à banca com a adotada nesta versão. O número de \textit{features} de cada configuração foi conferido nos modelos salvos de cada experimento (arquivo \texttt{feature\_names.pkl}).
+A Tabela~\ref{tab:correspondencia} relaciona a numeração dos experimentos na versão apresentada à banca com a adotada nesta versão. O número de características de cada configuração foi conferido nos modelos salvos de cada experimento (arquivo \texttt{feature\_names.pkl}).
 
 \begin{table}[htbp]
 \centering
@@ -21,7 +21,7 @@ A Tabela~\ref{tab:correspondencia} relaciona a numeração dos experimentos na v
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{lllcl}
 \hline
-\textbf{Versão da banca} & \textbf{Esta versão} & \textbf{Conteúdo} & \textbf{\textit{Features}} & \textbf{Diretório antigo} \\
+\textbf{Versão da banca} & \textbf{Esta versão} & \textbf{Conteúdo} & \textbf{Características} & \textbf{Diretório antigo} \\
 \hline
 Exp.~1 & Exp.~1 & conjunto completo & 28 & \texttt{resultado1} \\
 Exp.~4\textsuperscript{a} & Exp.~1.1 & sem as 15 redundantes & 13 & \texttt{resultado2} \\
@@ -35,8 +35,8 @@ Exp.~3 (65/35) & Análise~2.2 & tamanho do treino & 12\textsuperscript{b} & \tex
 
 \smallskip
 \begin{minipage}{0.92\textwidth}
-\textsuperscript{a}\,O texto da versão da banca atribuía 14 \textit{features} ao Exp.~4 e 13 ao Exp.~5; os modelos salvos têm 13 e 12.\\
-\textsuperscript{b}\,Nesta versão, as Análises 2.1 e 2.2 usam a configuração escolhida (1.2b); na versão da banca, a de 11 \textit{features}.
+\textsuperscript{a}\,O texto da versão da banca atribuía 14 características ao Exp.~4 e 13 ao Exp.~5; os modelos salvos têm 13 e 12.\\
+\textsuperscript{b}\,Nesta versão, as Análises 2.1 e 2.2 usam a configuração escolhida (1.2b); na versão da banca, a de 11 características.
 \end{minipage}
 \end{table}
 
@@ -48,7 +48,7 @@ A Tabela~\ref{tab:cv_completa} apresenta todas as métricas da validação cruza
 
 \begin{table}[htbp]
 \centering
-\caption{Validação cruzada no conjunto de desenvolvimento: média $\pm$ desvio padrão sobre as 25 dobras. Entre parênteses, o número de \textit{features}. As três últimas configurações são suplementares (avaliadas depois da escolha).}
+\caption{Validação cruzada no conjunto de desenvolvimento: média $\pm$ desvio padrão sobre as 25 dobras. Entre parênteses, o número de características. As três últimas configurações são suplementares (avaliadas depois da escolha).}
 \label{tab:cv_completa}
 \scriptsize
 \setlength{\tabcolsep}{3pt}

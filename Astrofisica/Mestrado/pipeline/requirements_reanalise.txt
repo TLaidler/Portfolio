@@ -1,0 +1,11 @@
+# Ambiente da reanálise pós-banca (versão final da dissertação, Cap. 5 e Apêndice B).
+# Python 3.14. A partição do conjunto de teste depende da versão do scikit-learn:
+# com outras versões, a partição (e portanto os números) pode mudar.
+numpy==2.4.6
+pandas==2.3.3
+scikit-learn==1.9.0
+xgboost==3.3.0
+catboost==1.2.10
+scipy==1.18.0
+matplotlib==3.11.0
+joblib==1.6.0

@@ -19,6 +19,42 @@ Ocultações estelares são eventos astronômicos onde um objeto do Sistema Sola
 - **Ambiente exato:** `pip install -r requirements_frozen.txt` (ou `pip freeze > requirements_frozen.txt` para regenerar)
 - **Seeds:** Os scripts fixam `RANDOM_STATE=42` para numpy, random e modelos sklearn
 
+### Resultados da versão final da dissertação (reanálise pós-banca)
+
+Os números e figuras do Capítulo 5 e do Apêndice A da versão final vêm de dois programas, que usam um ambiente
+próprio (Python 3.14):
+
+```bash
+pip install -r requirements_reanalise.txt
+
+cd model_training
+python reanalise_banca.py      # ~5 min; validação cruzada agrupada, teste reservado, limiares, McNemar
+python gerar_apendice_a.py     # reescreve ../../writing_latex/Tese/apendice_experimentos.tex a partir do resumo.json
+
+cd ../model_in_practice
+python quaoar_reanalise.py     # estudo de caso de Quaoar com os modelos finais (configuração 1.2b)
+```
+
+| Entrada / saída | Caminho |
+|---|---|
+| Conjunto de dados (1693 curvas, 28 características) | `model_training/outputs/resultado1_split0.8-0.2_all-features/dataset_final.csv` |
+| Banco de curvas de luz | `data_warehouse/stellar_occultations.db` |
+| Curvas simuladas (702 arquivos `.dat`) | `model_training/synthetic_curve/output/` |
+| Tabelas e resumo da reanálise | `model_training/outputs/reanalise_banca/` (`resumo.json`, `cv_*.csv`, `teste_final.csv`, ...) |
+| Modelos finais (12 características) | `model_training/outputs/reanalise_banca/modelos/modelos_config_1.2b.joblib` |
+| Resultados de Quaoar | `model_in_practice/outputs_quaoar_1.2b/` |
+| Figuras do Cap. 5 | `../writing_latex/Tese/pngs/reanalise/` (criada pelos programas) |
+
+O arquivo `model_training/outputs/dataset_final.csv` contém os mesmos dados com os nomes antigos das colunas
+observacionais (prefixo `IOTA_`, depois renomeado para `Occ_`); a reanálise usa a cópia em `resultado1_...`.
+Os modelos finais podem ser usados diretamente:
+
+```python
+import joblib
+d = joblib.load("model_training/outputs/reanalise_banca/modelos/modelos_config_1.2b.joblib")
+p = d["modelos"]["XGBoost"].predict_proba(X[d["features"]])[:, 1]   # cada modelo já inclui o imputador
+```
+
 ## Estrutura do Repositório
 
 ### 📁 data_warehouse/

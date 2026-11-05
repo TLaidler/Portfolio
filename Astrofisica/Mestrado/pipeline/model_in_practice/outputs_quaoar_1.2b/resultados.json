@@ -1,0 +1,297 @@
+{
+ "features": [
+  "Feature_Savgol_Min",
+  "Feature_Savgol_std",
+  "Max_Drawdown",
+  "MinLogP_KS",
+  "MinLogP_Ttest",
+  "Occ_SNR_dip",
+  "Occ_baseline_std",
+  "Occ_chi2_constant",
+  "Occ_chi2_ratio",
+  "Occ_chi2_square_well",
+  "Occ_depth",
+  "Occ_duration_s"
+ ],
+ "tau_cv": {
+  "Regressão Logística": 0.1,
+  "Random Forest": 0.4,
+  "XGBoost": 0.18,
+  "CatBoost": 0.15
+ },
+ "fpr_real_oof_tau003": {
+  "Regressão Logística": 0.5870967741935483,
+  "Random Forest": 0.41935483870967744,
+  "XGBoost": 0.1032258064516129,
+  "CatBoost": 0.16129032258064516
+ },
+ "curvas_inteiras": {
+  "CFHT_Wircam_Ks_cor-time.dat": {
+   "n_pontos": 4800,
+   "Regressão Logística": 1.0,
+   "Random Forest": 1.0,
+   "XGBoost": 0.9996874332427979,
+   "CatBoost": 0.9870289830882034
+  },
+  "Gemini-Alopeke_Blue-r.dat": {
+   "n_pontos": 12000,
+   "Regressão Logística": 1.0,
+   "Random Forest": 1.0,
+   "XGBoost": 0.9996874332427979,
+   "CatBoost": 0.9875508081554136
+  },
+  "Gemini-Alopeke_Red-z.dat": {
+   "n_pontos": 12000,
+   "Regressão Logística": 1.0,
+   "Random Forest": 1.0,
+   "XGBoost": 0.9996874332427979,
+   "CatBoost": 0.9858511608208
+  }
+ },
+ "recortes": [
+  {
+   "recorte": "linha de base",
+   "assinatura": "linha de base (controle negativo)",
+   "ini_rel": -290.2599999999984,
+   "fim_rel": -250.2599999999984,
+   "n_pontos": 395,
+   "Regressão Logística": 0.003905506760822352,
+   "Random Forest": 0.0,
+   "XGBoost": 0.00038541972753591835,
+   "CatBoost": 0.001970620837176743
+  },
+  {
+   "recorte": "Q1R contínua",
+   "assinatura": "Q1R, parte contínua",
+   "ini_rel": -225.2599999999984,
+   "fim_rel": -200.2599999999984,
+   "n_pontos": 247,
+   "Regressão Logística": 0.05397411557519147,
+   "Random Forest": 0.5828253968253968,
+   "XGBoost": 0.9154484868049622,
+   "CatBoost": 0.3703041116339436
+  },
+  {
+   "recorte": "Q2R (1)",
+   "assinatura": "Q2R, anel fino (real)",
+   "ini_rel": -129.2599999999984,
+   "fim_rel": -114.2599999999984,
+   "n_pontos": 148,
+   "Regressão Logística": 0.01156132660555989,
+   "Random Forest": 0.18950000000000003,
+   "XGBoost": 0.09627258777618408,
+   "CatBoost": 0.035188907934755057
+  },
+  {
+   "recorte": "ruído",
+   "assinatura": "ruído parecido com anel",
+   "ini_rel": -109.2599999999984,
+   "fim_rel": -99.2599999999984,
+   "n_pontos": 99,
+   "Regressão Logística": 0.005244321267137177,
+   "Random Forest": 0.0,
+   "XGBoost": 0.0005127398180775344,
+   "CatBoost": 0.003589292576365309
+  },
+  {
+   "recorte": "Q2R (2)",
+   "assinatura": "Q2R, anel fino (real)",
+   "ini_rel": 120.7400000000016,
+   "fim_rel": 145.7400000000016,
+   "n_pontos": 247,
+   "Regressão Logística": 0.012238640825072403,
+   "Random Forest": 0.077,
+   "XGBoost": 0.05263091251254082,
+   "CatBoost": 0.016929255280500186
+  },
+  {
+   "recorte": "Q1R densa",
+   "assinatura": "Q1R, parte densa",
+   "ini_rel": 190.7400000000016,
+   "fim_rel": 250.7400000000016,
+   "n_pontos": 593,
+   "Regressão Logística": 0.99999851683568,
+   "Random Forest": 0.99,
+   "XGBoost": 0.9990578293800354,
+   "CatBoost": 0.9739718193213112
+  }
+ ],
+ "ampliadas": [
+  {
+   "recorte": "Q2R (1)",
+   "ini_rel": -160,
+   "fim_rel": -110,
+   "n_pontos": 495,
+   "Regressão Logística": 0.010980406784435334,
+   "Random Forest": 0.0890952380952381,
+   "XGBoost": 0.02690841443836689,
+   "CatBoost": 0.050570078459914555
+  },
+  {
+   "recorte": "ruído",
+   "ini_rel": -110,
+   "fim_rel": -85,
+   "n_pontos": 247,
+   "Regressão Logística": 0.005848289031072526,
+   "Random Forest": 0.040595238095238094,
+   "XGBoost": 0.003045771038159728,
+   "CatBoost": 0.008165679318988756
+  },
+  {
+   "recorte": "Q2R (2)",
+   "ini_rel": 80,
+   "fim_rel": 170,
+   "n_pontos": 889,
+   "Regressão Logística": 0.012476856460127797,
+   "Random Forest": 0.18633333333333332,
+   "XGBoost": 0.02447272464632988,
+   "CatBoost": 0.04787571997966976
+  }
+ ],
+ "corpo_intervalo_rel": [
+  -26.111826309999742,
+  21.65182530000311
+ ],
+ "eventos_rel": {
+  "Q1R contínua": [
+   -225,
+   -200
+  ],
+  "Q2R (1)": [
+   -129.26,
+   -114.26
+  ],
+  "corpo": [
+   -26.111826309999742,
+   21.65182530000311
+  ],
+  "Q2R (2)": [
+   120.74,
+   145.74
+  ],
+  "Q1R densa": [
+   190.74,
+   250.74
+  ]
+ },
+ "varredura": {
+  "15s": {
+   "n_janelas": 160,
+   "n_livres": 123,
+   "Regressão Logística": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.0,
+    "p_livres_max": 0.01124827643028291,
+    "p_livres_p90": 0.0071773388656450774,
+    "p_livres_mediana": 0.004605747163019728
+   },
+   "Random Forest": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.2032520325203252,
+    "p_livres_max": 0.22466666666666668,
+    "p_livres_p90": 0.0720095238095238,
+    "p_livres_mediana": 0.0
+   },
+   "XGBoost": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.032520325203252036,
+    "p_livres_max": 0.09277902543544769,
+    "p_livres_p90": 0.0066009683534502955,
+    "p_livres_mediana": 0.0003995706210844219
+   },
+   "CatBoost": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.04065040650406504,
+    "p_livres_max": 0.04739773028977989,
+    "p_livres_p90": 0.014011193587582477,
+    "p_livres_mediana": 0.0024644184249637004
+   }
+  },
+  "25s": {
+   "n_janelas": 96,
+   "n_livres": 70,
+   "Regressão Logística": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.0,
+    "p_livres_max": 0.011678704169097817,
+    "p_livres_p90": 0.007225102367782275,
+    "p_livres_mediana": 0.004614224057622716
+   },
+   "Random Forest": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.15714285714285714,
+    "p_livres_max": 0.3290238095238095,
+    "p_livres_p90": 0.06710952380952381,
+    "p_livres_mediana": 0.0
+   },
+   "XGBoost": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.02857142857142857,
+    "fpr_tau003": 0.05714285714285714,
+    "p_livres_max": 0.4058677554130554,
+    "p_livres_p90": 0.008772117085754878,
+    "p_livres_mediana": 0.0007019907934591174
+   },
+   "CatBoost": {
+    "fpr_tau05": 0.0,
+    "fpr_tau_cv": 0.0,
+    "fpr_tau003": 0.05714285714285714,
+    "p_livres_max": 0.13161427556738564,
+    "p_livres_p90": 0.012848737912873996,
+    "p_livres_mediana": 0.00245942470583128
+   }
+  }
+ },
+ "posicao_q2r": {
+  "Q2R (1)": {
+   "Regressão Logística": {
+    "p": 0.01156132660555989,
+    "frac_livres_acima": 0.0,
+    "n_livres": 123
+   },
+   "Random Forest": {
+    "p": 0.18950000000000003,
+    "frac_livres_acima": 0.016260162601626018,
+    "n_livres": 123
+   },
+   "XGBoost": {
+    "p": 0.09627258777618408,
+    "frac_livres_acima": 0.0,
+    "n_livres": 123
+   },
+   "CatBoost": {
+    "p": 0.035188907934755057,
+    "frac_livres_acima": 0.016260162601626018,
+    "n_livres": 123
+   }
+  },
+  "Q2R (2)": {
+   "Regressão Logística": {
+    "p": 0.012238640825072403,
+    "frac_livres_acima": 0.0,
+    "n_livres": 70
+   },
+   "Random Forest": {
+    "p": 0.077,
+    "frac_livres_acima": 0.08571428571428572,
+    "n_livres": 70
+   },
+   "XGBoost": {
+    "p": 0.05263091251254082,
+    "frac_livres_acima": 0.05714285714285714,
+    "n_livres": 70
+   },
+   "CatBoost": {
+    "p": 0.016929255280500186,
+    "frac_livres_acima": 0.07142857142857142,
+    "n_livres": 70
+   }
+  }
+ }
+}
