@@ -5,40 +5,7 @@
 \chapter{Resultados experimentais complementares}
 \label{ap:experimentos}
 
-Este apêndice reúne os resultados da reanálise do Capítulo~5 que não foram incluídos no corpo do texto: a correspondência entre a numeração dos experimentos na versão apresentada à banca e a numeração atual, todas as métricas da validação cruzada, a verificação da regra de seleção com outras sementes, as estimativas agregadas de falsos positivos nas negativas reais e as métricas no conjunto de teste de todas as configurações. Os resultados da versão apresentada à banca, obtidos com uma única divisão treino/teste, foram substituídos por estes e não são reproduzidos aqui.
-
-% -----------------------------------------------------------------------------
-\section{Correspondência entre as versões}
-\label{sec:correspondencia_experimentos}
-
-A Tabela~\ref{tab:correspondencia} relaciona a numeração dos experimentos na versão apresentada à banca com a adotada nesta versão. O número de características de cada configuração foi conferido nos modelos salvos de cada experimento (arquivo \texttt{feature\_names.pkl}).
-
-\begin{table}[htbp]
-\centering
-\caption{Correspondência entre os experimentos da versão apresentada à banca e os desta versão.}
-\label{tab:correspondencia}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lllcl}
-\hline
-\textbf{Versão da banca} & \textbf{Esta versão} & \textbf{Conteúdo} & \textbf{Características} & \textbf{Diretório antigo} \\
-\hline
-Exp.~1 & Exp.~1 & conjunto completo & 28 & \texttt{resultado1} \\
-Exp.~4\textsuperscript{a} & Exp.~1.1 & sem as 15 redundantes & 13 & \texttt{resultado2} \\
-Exp.~5\textsuperscript{a} & Exp.~1.2a & 1.1 sem \texttt{Feature\_Savgol\_Min} & 12 & \texttt{resultado3} \\
-Exp.~6 & Exp.~1.2b & 1.1 sem \texttt{kmeans\_centroid\_dist} & 12 & \texttt{resultado4} \\
-Exp.~2 & Exp.~2 & 1.1 sem as duas & 11 & \texttt{resultado5} \\
-Exp.~3 & Análise~2.1 & teste só em curvas reais & 12\textsuperscript{b} & \texttt{resultado6.2} \\
-Exp.~3 (65/35) & Análise~2.2 & tamanho do treino & 12\textsuperscript{b} & \texttt{resultado6.1} \\
-\hline
-\end{tabular}
-
-\smallskip
-\begin{minipage}{0.92\textwidth}
-\textsuperscript{a}\,O texto da versão da banca atribuía 14 características ao Exp.~4 e 13 ao Exp.~5; os modelos salvos têm 13 e 12.\\
-\textsuperscript{b}\,Nesta versão, as Análises 2.1 e 2.2 usam a configuração escolhida (1.2b); na versão da banca, a de 11 características.
-\end{minipage}
-\end{table}
+Este apêndice reúne os resultados do Capítulo~5 que não foram incluídos no corpo do texto: todas as métricas da validação cruzada, a verificação da regra de seleção com outras sementes, as estimativas agregadas de falsos positivos nas negativas reais e as métricas no conjunto de teste de todas as configurações.
 
 % -----------------------------------------------------------------------------
 \section{Métricas completas da validação cruzada}

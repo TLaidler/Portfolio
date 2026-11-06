@@ -4,9 +4,9 @@
 \chapter{Ambiente de software e versões}
 \label{ap:ambiente}
 
-O código da cadeia de processamento está disponível em \url{https://github.com/TLaidler/pipeline_occ_ml}. Para reprodutibilidade dos experimentos, segue a lista das principais ferramentas e bibliotecas utilizadas no projeto, em dois ambientes: o da construção do conjunto de dados e dos experimentos da versão apresentada à banca (programa \texttt{train\_model.py}), conforme o arquivo \texttt{requirements.txt} (ou \texttt{requirements\_frozen.txt}) do repositório, e o da reanálise do Capítulo~5 (programa \texttt{reanalise\_banca.py}).
+O código da cadeia de processamento está disponível em \url{https://github.com/TLaidler/pipeline_occ_ml}. Para reprodutibilidade dos experimentos, segue a lista das principais ferramentas e bibliotecas utilizadas no projeto, em dois ambientes: o da construção do conjunto de dados e do programa de treinamento \texttt{train\_model.py}, conforme o arquivo \texttt{requirements.txt} (ou \texttt{requirements\_frozen.txt}) do repositório, e o dos experimentos do Capítulo~5 (programa \texttt{reanalise\_banca.py}).
 
-\textbf{Construção do conjunto de dados e experimentos da versão apresentada à banca:}
+\textbf{Construção do conjunto de dados e treinamento (\texttt{train\_model.py}):}
 \begin{itemize}
 	\item Python 3.10 ou superior.
 	\item numpy --- 1.26.4
@@ -21,7 +21,7 @@ O código da cadeia de processamento está disponível em \url{https://github.co
 	\item scipy --- 1.13.1
 \end{itemize}
 
-\textbf{Reanálise do Capítulo~5:}
+\textbf{Experimentos do Capítulo~5 (\texttt{reanalise\_banca.py}):}
 \begin{itemize}
 	\item Python --- 3.14.6
 	\item numpy --- 2.4.6
@@ -35,4 +35,4 @@ O código da cadeia de processamento está disponível em \url{https://github.co
 
 \textbf{Outras dependências} (aquisição de dados, persistência, testes): SQLAlchemy 2.0.31, requests 2.32.3, python-dotenv 1.0.1, pyyaml 6.0.1, pytest 7.4.3. A aquisição de curvas de luz a partir do VizieR e do Grupo do Rio pode utilizar ainda \texttt{astroquery} e \texttt{aiohttp}; nesse caso, as versões devem ser registradas com \texttt{pip freeze} no ambiente em que os programas de ingestão forem executados.
 
-Para replicar o ambiente de treinamento, recomenda-se criar um ambiente virtual (venv ou conda) e instalar as dependências com \texttt{pip install -r requirements.txt} (ou \texttt{pip install -r requirements\_frozen.txt} para versões fixas). A reanálise é reproduzida executando \texttt{python reanalise\_banca.py} no diretório \texttt{pipeline/model\_training}: o programa lê o conjunto de dados e o banco de dados, grava as tabelas de resultados em \texttt{outputs/reanalise\_banca} e as figuras do Capítulo~5 em \texttt{writing\_latex/Tese/pngs/reanalise}. A partição do conjunto de teste depende da ordem dos rótulos de grupo (no formato \texttt{objeto\_AAAA-MM-DD}) e da versão do \texttt{scikit-learn}; com outra versão, a partição pode mudar. As versões da reanálise estão fixadas no arquivo \texttt{requirements\_reanalise.txt}. O estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) é reproduzido executando \texttt{python quaoar\_reanalise.py} no diretório \texttt{pipeline/model\_in\_practice}: o programa carrega os modelos finais gravados pela reanálise e grava os resultados em \texttt{outputs\_quaoar\_1.2b} e a figura dos recortes em \texttt{writing\_latex/Tese/pngs/reanalise}.
+Para replicar o ambiente de treinamento, recomenda-se criar um ambiente virtual (venv ou conda) e instalar as dependências com \texttt{pip install -r requirements.txt} (ou \texttt{pip install -r requirements\_frozen.txt} para versões fixas). Os experimentos do Capítulo~5 são reproduzidos executando \texttt{python reanalise\_banca.py} no diretório \texttt{pipeline/model\_training}: o programa lê o conjunto de dados e o banco de dados, grava as tabelas de resultados em \texttt{outputs/reanalise\_banca} e as figuras do Capítulo~5 em \texttt{writing\_latex/Tese/pngs/reanalise}. A partição do conjunto de teste depende da ordem dos rótulos de grupo (no formato \texttt{objeto\_AAAA-MM-DD}) e da versão do \texttt{scikit-learn}; com outra versão, a partição pode mudar. As versões desse ambiente estão fixadas no arquivo \texttt{requirements\_reanalise.txt}. O estudo de caso de Quaoar (Seção~\ref{sec:estudo_caso_quaoar}) é reproduzido executando \texttt{python quaoar\_reanalise.py} no diretório \texttt{pipeline/model\_in\_practice}: o programa carrega os modelos finais gravados por \texttt{reanalise\_banca.py} e grava os resultados em \texttt{outputs\_quaoar\_1.2b} e a figura dos recortes em \texttt{writing\_latex/Tese/pngs/reanalise}.

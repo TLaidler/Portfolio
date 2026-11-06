@@ -1,7 +1,8 @@
 # Pendências para o autor — em ordem, uma de cada vez
 
 > **Situação em 05/11/2026 (rodada 3).** Esta rodada fez o que estava bloqueado por falta de dados e aplicou as decisões
-> do autor de 05/11. Nada desta rodada foi commitado no Portfolio (ver item 9). O histórico das rodadas anteriores está
+> do autor de 05/11. A rodada 3 foi commitada em `c38a40f`; em 06/11 a revisão desse commit aplicou as correções finais
+> e gerou os PDFs marcados (item 2.2). O histórico das rodadas anteriores está
 > no `git log`; os itens antigos da Flavia continuam em [`pendencias_flavia.md`](pendencias_flavia.md) e os textos
 > prontos em [`correcoes_banca.md`](correcoes_banca.md).
 
@@ -82,14 +83,16 @@
    (`3354905`, `9ae5ccc`) com `reanalise_banca.py`, `gerar_apendice_a.py`, as tabelas e os modelos da reanálise, o
    `dataset_final.csv` de entrada, `quaoar_reanalise.py` e seus resultados, `requirements_reanalise.txt` e o README
    atualizado. Falta `git push origin main` (resolva antes o item 1, se escolher a opção b).
-2. **PDF marcado (diff) da rodada 3.** Esta máquina não tem LaTeX nem `latexdiff`, e o download do tectonic/latexdiff foi
-   bloqueado. Com permissão, gero:
-   - `teseon_diff_rodada3.pdf`: só o que mudou desde o último commit (`fc77553`);
-   - `teseon_diff_lillian_v2.pdf`: rodada Lillian completa (desde `099daf2`), com as correções desta rodada;
-   - `teseon_diff.pdf` atualizado (desde a versão da banca, `eca76fc`).
-
-   Sem permissão: `latexdiff --flatten --type=UNDERLINE <teseon.tex antigo> teseon.tex > teseon_diff_rodada3.tex`
-   numa máquina com TeX Live/MiKTeX (a versão antiga sai de `git worktree add ../tese_antiga fc77553`).
+2. ~~**PDF marcado (diff) da rodada 3.**~~ **Feito em 06/11** (outra máquina, com latexdiff e tectonic):
+   - `teseon_diff_rodada1.pdf`: só a rodada Flavia (`eca76fc` → `c83a4f7`), epígrafe e referências sem destaque;
+   - `teseon_diff_rodada2.pdf`: rodada Lillian completa (`c83a4f7` → versão final), com as alterações da Flavia já
+     incorporadas e sem destaque;
+   - `teseon_diff.pdf`/`.tex`: as duas rodadas destacadas (`eca76fc` → versão final), com a epígrafe e as referências
+     da rodada Flavia sem destaque, como no PDF da rodada 1. É o `.tex` que vai para o Overleaf.
+   - Ainda em 06/11, a pedido do autor, o texto deixou de mencionar a reanálise e a versão da banca (Caps. 5 e 6 e
+     apêndices). Saíram as notas de rodapé com a numeração antiga dos experimentos e a seção "Correspondência entre as
+     versões" do Apêndice A. A Tabela A.1 que estava nela (numeração da banca → numeração atual) deve ir na resposta à
+     banca. Os nomes de arquivo (`reanalise_banca.py` etc.) ficaram. Os PDFs acima já refletem isso.
 
 ## 3. Confirmar (fatos inferidos ou textos novos que dependem de você)
 
