@@ -93,6 +93,8 @@
      apêndices). Saíram as notas de rodapé com a numeração antiga dos experimentos e a seção "Correspondência entre as
      versões" do Apêndice A. A Tabela A.1 que estava nela (numeração da banca → numeração atual) deve ir na resposta à
      banca. Os nomes de arquivo (`reanalise_banca.py` etc.) ficaram. Os PDFs acima já refletem isso.
+   - Também a pedido do autor, saíram três itens de Limitações do Cap. 6: qualidade heterogênea dos dados de origem,
+     configurações não independentes do teste e barras de erro fotométricas. Os PDFs já refletem isso.
 
 ## 3. Confirmar (fatos inferidos ou textos novos que dependem de você)
 
